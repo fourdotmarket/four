@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import './Header.css';
 
 export default function Header() {
-  const { ready, authenticated, userData, isLoading, login, logout } = useAuth();
+  const { ready, authenticated, userData, isLoading, error, login, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -60,19 +60,26 @@ export default function Header() {
         
         {ready && authenticated && (
           <>
-            {userData && (
+            {isLoading && (
+              <span className="header-loading">Loading user...</span>
+            )}
+            
+            {!isLoading && userData && (
               <span className="header-user-id">
                 {userData.user_id}
               </span>
             )}
+            
+            {!isLoading && error && (
+              <span className="header-error" style={{ color: '#ff4444', fontSize: '12px' }}>
+                Error: {error}
+              </span>
+            )}
+            
             <button className="header-button" onClick={logout}>
               SIGN OUT
             </button>
           </>
-        )}
-        
-        {isLoading && authenticated && (
-          <span className="header-loading">Loading...</span>
         )}
         
         <span className="header-separator">|</span>
