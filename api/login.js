@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { PrivyClient } from '@privy-io/server-auth';
 
 // Initialize Supabase client with service role key
 const supabase = createClient(
@@ -12,6 +13,12 @@ const supabase = createClient(
   }
 );
 
+// Initialize Privy client
+const privy = new PrivyClient(
+  process.env.PRIVY_APP_ID,
+  process.env.PRIVY_APP_SECRET
+);
+
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -19,7 +26,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
   if (req.method === 'OPTIONS') {
@@ -27,35 +34,45 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { privyUserId, email } = req.body;
-
-    // Must provide at least one identifier
-    if (!privyUserId && !email) {
-      return res.status(400).json({ 
-        error: 'Must provide privyUserId or email'
+    // 🔒 SECURITY: Verify Privy authentication token
+    const authToken = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!authToken) {
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'No authentication token provided'
       });
     }
 
-    // Build query
-    let query = supabase.from('users').select('*');
-
-    if (privyUserId) {
-      query = query.eq('privy_user_id', privyUserId);
-    } else if (email) {
-      query = query.eq('email', email);
+    // Verify the token with Privy
+    let verifiedClaims;
+    try {
+      verifiedClaims = await privy.verifyAuthToken(authToken);
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'Invalid authentication token'
+      });
     }
 
-    const { data: user, error } = await query.single();
+    // Get the verified user ID from Privy
+    const privyUserId = verifiedClaims.userId;
+
+    // Query database using verified Privy user ID
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('privy_user_id', privyUserId)
+      .single();
 
     if (error) {
       if (error.code === 'PGRST116') {
-        // No user found
         return res.status(404).json({ 
           error: 'User not found',
           found: false

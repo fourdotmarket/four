@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 
 export const useAuth = () => {
-  const { ready, authenticated, user, login, logout } = usePrivy();
+  const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,7 +19,6 @@ export const useAuth = () => {
       return;
     }
 
-    // Handle user authentication
     handleUserAuth();
   }, [ready, authenticated, user]);
 
@@ -28,30 +27,32 @@ export const useAuth = () => {
       setIsLoading(true);
       setError(null);
 
+      // 🔒 SECURITY: Get Privy authentication token
+      const authToken = await getAccessToken();
+      
+      if (!authToken) {
+        throw new Error('Failed to get authentication token');
+      }
+
       // Get user details from Privy
       const privyUserId = user.id;
-      const email = user.email?.address || user.google?.email || user.twitter?.username || 'unknown';
-      const platform = user.email ? 'email' : 
-                      user.google ? 'google' : 
-                      user.twitter ? 'twitter' : 
-                      'unknown';
 
       // Try to login first (check if user exists)
+      // 🔒 Send auth token in Authorization header
       const loginResponse = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`, // 🔒 AUTH TOKEN
         },
         body: JSON.stringify({
           privyUserId: privyUserId,
-          email: email,
         }),
       });
 
       const loginData = await loginResponse.json();
 
       if (loginResponse.ok && loginData.success) {
-        // User exists, set user data
         setUserData(loginData.user);
         setIsLoading(false);
         return;
@@ -59,14 +60,15 @@ export const useAuth = () => {
 
       // User doesn't exist, register them
       if (loginResponse.status === 404) {
+        // 🔒 Send auth token in Authorization header
         const registerResponse = await fetch('/api/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`, // 🔒 AUTH TOKEN
           },
           body: JSON.stringify({
-            email: email,
-            platform: platform,
+            // Note: We still send these but API will verify and use Privy data
             privyUserId: privyUserId,
           }),
         });

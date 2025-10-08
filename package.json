@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@privy-io/react-auth": "^3.1.0",
+    "@privy-io/server-auth": "^1.8.0",
     "@supabase/supabase-js": "^2.39.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
