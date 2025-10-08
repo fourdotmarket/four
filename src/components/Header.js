@@ -1,10 +1,10 @@
 import React from 'react';
+import { usePrivy } from '@privy-io/react-auth';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import './Header.css';
 
 export default function Header() {
-  const { ready, authenticated, userData, isLoading, error, login, logout } = useAuth();
+  const { ready, authenticated, login, logout } = usePrivy();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -59,27 +59,9 @@ export default function Header() {
         )}
         
         {ready && authenticated && (
-          <>
-            {isLoading && (
-              <span className="header-loading">Loading user...</span>
-            )}
-            
-            {!isLoading && userData && (
-              <span className="header-user-id">
-                {userData.user_id}
-              </span>
-            )}
-            
-            {!isLoading && error && (
-              <span className="header-error" style={{ color: '#ff4444', fontSize: '12px' }}>
-                Error: {error}
-              </span>
-            )}
-            
-            <button className="header-button" onClick={logout}>
-              SIGN OUT
-            </button>
-          </>
+          <button className="header-button" onClick={logout}>
+            SIGN OUT
+          </button>
         )}
         
         <span className="header-separator">|</span>

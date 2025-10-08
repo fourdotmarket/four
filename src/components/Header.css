@@ -96,24 +96,6 @@
   flex-shrink: 0;
 }
 
-.header-user-id {
-  color: var(--color-yellow-primary);
-  font-family: var(--font-primary);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 12px;
-  background: rgba(255, 212, 59, 0.1);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 212, 59, 0.3);
-}
-
-.header-loading {
-  color: var(--color-gray-light);
-  font-family: var(--font-primary);
-  font-size: 12px;
-  font-weight: 500;
-}
-
 .header-button {
   background: linear-gradient(135deg, var(--color-yellow-primary) 0%, var(--color-gold) 100%);
   color: var(--color-black-pure);
@@ -214,10 +196,5 @@
   
   .header-nav-item {
     font-size: 12px;
-  }
-  
-  .header-user-id {
-    font-size: 11px;
-    padding: 3px 10px;
   }
 }
