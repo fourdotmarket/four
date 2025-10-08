@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { PrivyClient } from '@privy-io/server-auth';
 
-// Initialize Supabase client with service role key
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -13,13 +11,6 @@ const supabase = createClient(
   }
 );
 
-// Initialize Privy client for server-side verification
-const privy = new PrivyClient(
-  process.env.PRIVY_APP_ID,
-  process.env.PRIVY_APP_SECRET
-);
-
-// Helper function to generate random string
 function generateRandomString(length) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -30,18 +21,13 @@ function generateRandomString(length) {
 }
 
 export default async function handler(req, res) {
-  // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-  );
+  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
@@ -49,50 +35,58 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 🔒 SECURITY: Verify Privy authentication token
-    const authToken = req.headers.authorization?.replace('Bearer ', '');
+    const authHeader = req.headers.authorization;
     
-    if (!authToken) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ 
         error: 'Unauthorized',
         message: 'No authentication token provided'
       });
     }
 
-    // Verify the token with Privy
-    let verifiedClaims;
-    try {
-      verifiedClaims = await privy.verifyAuthToken(authToken);
-    } catch (error) {
-      console.error('Token verification failed:', error);
-      return res.status(401).json({ 
-        error: 'Unauthorized',
-        message: 'Invalid authentication token'
+    const token = authHeader.replace('Bearer ', '');
+    const { email, platform, privyUserId } = req.body;
+
+    if (!email || !platform || !privyUserId) {
+      return res.status(400).json({ 
+        error: 'Missing required fields'
       });
     }
 
-    // Get the verified user ID from Privy
-    const privyUserId = verifiedClaims.userId;
+    // Verify token matches the privy user ID by checking with Privy
+    // This prevents someone from sending a fake privyUserId
+    try {
+      const verifyResponse = await fetch('https://auth.privy.io/api/v1/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'privy-app-id': process.env.PRIVY_APP_ID || 'cmggw74r800rujm0cccr9s7np'
+        }
+      });
 
-    // Get user data from the verified token
-    const privyUser = await privy.getUser(privyUserId);
-    
-    // Extract email and platform from verified Privy user
-    const email = privyUser.email?.address || 
-                 privyUser.google?.email || 
-                 privyUser.twitter?.username || 
-                 'unknown';
-    
-    const platform = privyUser.email ? 'email' : 
-                    privyUser.google ? 'google' : 
-                    privyUser.twitter ? 'twitter' : 
-                    'unknown';
+      if (!verifyResponse.ok) {
+        return res.status(401).json({ 
+          error: 'Invalid authentication token'
+        });
+      }
 
-    // Check if user already exists
-    const { data: existingUser, error: checkError } = await supabase
+      const verifiedUser = await verifyResponse.json();
+      
+      if (verifiedUser.id !== privyUserId) {
+        return res.status(403).json({ 
+          error: 'Token does not match user ID'
+        });
+      }
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      return res.status(401).json({ 
+        error: 'Authentication verification failed'
+      });
+    }
+
+    const { data: existingUser } = await supabase
       .from('users')
       .select('*')
-      .or(`email.eq.${email},privy_user_id.eq.${privyUserId}`)
+      .eq('privy_user_id', privyUserId)
       .single();
 
     if (existingUser) {
@@ -103,11 +97,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // Generate unique IDs
     const userId = generateRandomString(12);
     const userOrderId = generateRandomString(36);
 
-    // Create new user profile
     const { data: newUser, error: insertError } = await supabase
       .from('users')
       .insert([
@@ -128,8 +120,7 @@ export default async function handler(req, res) {
       
       if (insertError.code === '23505') {
         return res.status(409).json({ 
-          error: 'User ID conflict, please try again',
-          code: 'DUPLICATE_ID'
+          error: 'User ID conflict, please try again'
         });
       }
       
@@ -145,8 +136,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Registration error:', error);
     return res.status(500).json({ 
-      error: 'Internal server error',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: 'Internal server error'
     });
   }
 }

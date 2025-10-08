@@ -27,23 +27,21 @@ export const useAuth = () => {
       setIsLoading(true);
       setError(null);
 
-      // 🔒 SECURITY: Get Privy authentication token
       const authToken = await getAccessToken();
       
       if (!authToken) {
         throw new Error('Failed to get authentication token');
       }
 
-      // Get user details from Privy
       const privyUserId = user.id;
+      const email = user.email?.address || user.google?.email || user.twitter?.username || 'unknown';
+      const platform = user.email ? 'email' : user.google ? 'google' : user.twitter ? 'twitter' : 'unknown';
 
-      // Try to login first (check if user exists)
-      // 🔒 Send auth token in Authorization header
       const loginResponse = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`, // 🔒 AUTH TOKEN
+          'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify({
           privyUserId: privyUserId,
@@ -58,17 +56,16 @@ export const useAuth = () => {
         return;
       }
 
-      // User doesn't exist, register them
       if (loginResponse.status === 404) {
-        // 🔒 Send auth token in Authorization header
         const registerResponse = await fetch('/api/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`, // 🔒 AUTH TOKEN
+            'Authorization': `Bearer ${authToken}`,
           },
           body: JSON.stringify({
-            // Note: We still send these but API will verify and use Privy data
+            email: email,
+            platform: platform,
             privyUserId: privyUserId,
           }),
         });
@@ -99,19 +96,12 @@ export const useAuth = () => {
   };
 
   return {
-    // Privy auth state
     ready,
     authenticated,
     privyUser: user,
-    
-    // Custom user data from database
     userData,
-    
-    // Loading and error states
     isLoading,
     error,
-    
-    // Auth functions
     login,
     logout: handleLogout,
   };
