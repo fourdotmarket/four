@@ -12,8 +12,6 @@ const supabase = createClient(
   }
 );
 
-const PRIVY_VERIFICATION_KEY = process.env.PRIVY_VERIFICATION_KEY;
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -42,17 +40,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'missing privyUserId' });
     }
 
-    if (!PRIVY_VERIFICATION_KEY) {
+    const rawKey = process.env.PRIVY_VERIFICATION_KEY;
+    
+    if (!rawKey) {
       console.error('missing PRIVY_VERIFICATION_KEY');
       return res.status(500).json({ error: 'server config error' });
     }
 
+    // handle escaped newlines from vercel env vars
+    const pemKey = rawKey.replace(/\\n/g, '\n');
+
     try {
-      const verificationKey = await jose.importSPKI(PRIVY_VERIFICATION_KEY, 'ES256');
+      const verificationKey = await jose.importSPKI(pemKey, 'ES256');
       
       const { payload } = await jose.jwtVerify(token, verificationKey, {
         issuer: 'privy.io',
-        audience: process.env.PRIVY_APP_ID || 'cmggw74r800rujm0cccr9s7np',
+        audience: process.env.PRIVY_APP_ID || 'cmg16uhh00026la0d4kzy14bt',
       });
 
       if (payload.sub !== privyUserId) {
