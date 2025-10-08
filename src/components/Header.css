@@ -1,0 +1,223 @@
+.header {
+  background: linear-gradient(180deg, rgba(14, 14, 14, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%);
+  backdrop-filter: blur(10px);
+  padding: 10px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 212, 59, 0.15);
+  position: relative;
+  z-index: 100;
+}
+
+/* Subtle gradient effect on header border */
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 212, 59, 0.4) 50%, 
+    transparent 100%
+  );
+  opacity: 0.6;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.header-logo-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-logo {
+  height: 48px;
+  width: auto;
+  transition: opacity 0.3s ease;
+}
+
+.header-logo-brand:hover .header-logo {
+  opacity: 0.8;
+}
+
+.header-brand {
+  color: var(--color-white);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.header-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-gray-light);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.header-nav-item:hover {
+  color: var(--color-yellow-primary);
+}
+
+/* Active tab styling - stays yellow */
+.header-nav-item.active {
+  color: var(--color-yellow-primary);
+}
+
+.trend-icon {
+  color: var(--color-yellow-primary);
+  flex-shrink: 0;
+}
+
+.header-user-id {
+  color: var(--color-yellow-primary);
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  background: rgba(255, 212, 59, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 212, 59, 0.3);
+}
+
+.header-loading {
+  color: var(--color-gray-light);
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.header-button {
+  background: linear-gradient(135deg, var(--color-yellow-primary) 0%, var(--color-gold) 100%);
+  color: var(--color-black-pure);
+  padding: 5px 15px;
+  height: auto;
+  border: none;
+  border-radius: 24px;
+  font-family: var(--font-primary);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animated ripple effect on hover */
+.header-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.header-button:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.header-button:hover {
+  opacity: 0.95;
+}
+
+.header-button:active {
+  opacity: 0.85;
+}
+
+.header-separator {
+  color: rgba(255, 212, 59, 0.3);
+  font-size: 18px;
+  font-weight: 300;
+  user-select: none;
+}
+
+.header-globe {
+  background: transparent;
+  border: none;
+  color: var(--color-yellow-primary);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.header-globe:hover {
+  background: rgba(255, 212, 59, 0.1);
+  transform: rotate(15deg);
+}
+
+.header-globe:active {
+  transform: rotate(15deg) scale(0.95);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header {
+    padding: 8px 24px;
+  }
+  
+  .header-logo {
+    height: 40px;
+  }
+  
+  .header-button {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+  
+  .header-right {
+    gap: 8px;
+  }
+  
+  .header-nav {
+    gap: 16px;
+  }
+  
+  .header-nav-item {
+    font-size: 12px;
+  }
+  
+  .header-user-id {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+}

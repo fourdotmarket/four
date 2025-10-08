@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Primary Colors - Neo-Glow Palette */
+  --color-yellow-primary: #FFD43B;
+  --color-yellow-glow: #FCD535;
+  --color-black-pure: #000000;
+  --color-black-dark: #0E0E0E;
+  --color-white: #ffffff;
+  
+  /* Yellow Variations */
+  --color-yellow-light: #FFE066;
+  --color-yellow-bright: #FFEB99;
+  --color-gold: #F4C430;
+  
+  /* Black/Gray Variations */
+  --color-gray-darkest: #1a1a1a;
+  --color-gray-dark: #2a2a2a;
+  --color-gray-medium: #808080;
+  --color-gray-light: #b8b8b8;
+  --color-gray-lighter: #d4d4d4;
+
+  /* Fonts */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Poppins', sans-serif;
+  
+  /* Glow Effects */
+  --glow-yellow: 0 0 20px rgba(255, 212, 59, 0.4),
+                 0 0 40px rgba(255, 212, 59, 0.2);
+  --glow-yellow-strong: 0 0 30px rgba(255, 212, 59, 0.6),
+                        0 0 60px rgba(255, 212, 59, 0.3);
+  --shadow-elevated: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-primary);
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% 40%, rgba(255, 212, 59, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at center, var(--color-black-dark) 0%, var(--color-black-pure) 70%);
+  color: var(--color-white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Subtle grid background pattern */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(255, 212, 59, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 212, 59, 0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Add vignette effect */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Smooth transitions for all interactive elements */
+button, a, input {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Privy Modal Neo-Glow Styling */
+[data-privy-modal] {
+  background: radial-gradient(ellipse at center, var(--color-black-dark) 0%, var(--color-black-pure) 100%) !important;
+}
+
+[data-privy-modal-content] {
+  background: linear-gradient(145deg, var(--color-black-dark) 0%, var(--color-black-pure) 100%) !important;
+  border: 1px solid rgba(255, 212, 59, 0.3) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--glow-yellow), var(--shadow-elevated) !important;
+}
+
+[data-privy-modal-backdrop] {
+  background-color: rgba(0, 0, 0, 0.92) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Privy button styling */
+button[data-testid*="login"],
+button[class*="privy"] {
+  background: linear-gradient(135deg, var(--color-yellow-primary) 0%, var(--color-gold) 100%) !important;
+  color: var(--color-black-pure) !important;
+  border: none !important;
+  border-radius: 24px !important;
+  font-weight: 700 !important;
+  font-family: var(--font-primary) !important;
+  padding: 12px 28px !important;
+  box-shadow: var(--glow-yellow) !important;
+}
+
+button[data-testid*="login"]:hover,
+button[class*="privy"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--glow-yellow-strong) !important;
+}
+
+/* Privy input fields */
+input[class*="privy"] {
+  background-color: var(--color-gray-darkest) !important;
+  border: 1px solid var(--color-gray-dark) !important;
+  border-radius: 12px !important;
+  color: var(--color-white) !important;
+  font-family: var(--font-primary) !important;
+}
+
+input[class*="privy"]:focus {
+  border-color: var(--color-yellow-primary) !important;
+  box-shadow: 0 0 0 3px rgba(255, 212, 59, 0.1) !important;
+}
+
+/* Privy text elements */
+[class*="privy"] h1,
+[class*="privy"] h2,
+[class*="privy"] h3,
+[class*="privy"] p {
+  color: var(--color-white) !important;
+}
+
+[class*="privy"] [class*="secondary"] {
+  color: var(--color-gray-light) !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-black-pure);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-dark);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-yellow-primary);
+  box-shadow: var(--glow-yellow);
+}

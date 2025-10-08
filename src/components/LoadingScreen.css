@@ -1,0 +1,123 @@
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at center, var(--color-black-dark) 0%, var(--color-black-pure) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.loading-logo {
+  height: 100px;
+  width: auto;
+  position: relative;
+  z-index: 2;
+  animation: logoFloat 2s ease-in-out infinite, logoGlow 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 30px rgba(255, 212, 59, 0.6));
+}
+
+/* Floating and rotating animation */
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+/* Glow pulse animation */
+@keyframes logoGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(255, 212, 59, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 40px rgba(255, 212, 59, 0.8));
+  }
+}
+
+/* Spinning ring around logo */
+.loading-content::before {
+  content: '';
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border: 2px solid transparent;
+  border-top-color: var(--color-yellow-primary);
+  border-right-color: var(--color-yellow-primary);
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite;
+  z-index: 1;
+}
+
+/* Secondary ring */
+.loading-content::after {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border: 2px solid transparent;
+  border-bottom-color: rgba(255, 212, 59, 0.5);
+  border-left-color: rgba(255, 212, 59, 0.5);
+  border-radius: 50%;
+  animation: spinReverse 2s linear infinite;
+  z-index: 1;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinReverse {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Particle effects */
+.loading-screen::before {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 212, 59, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulseRing 2s ease-in-out infinite;
+}
+
+@keyframes pulseRing {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.1;
+  }
+}

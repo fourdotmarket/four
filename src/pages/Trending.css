@@ -1,0 +1,10 @@
+.trending-page {
+  padding: 40px 48px;
+  color: var(--color-white);
+}
+
+.trending-page h1 {
+  font-family: var(--font-display);
+  font-size: 32px;
+  color: var(--color-yellow-primary);
+}
