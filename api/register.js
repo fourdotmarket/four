@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import * as jose from 'jose';
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -22,7 +23,7 @@ function generateRandomString(length) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -53,25 +54,15 @@ export default async function handler(req, res) {
       });
     }
 
-    // Verify token matches the privy user ID by checking with Privy
-    // This prevents someone from sending a fake privyUserId
     try {
-      const verifyResponse = await fetch('https://auth.privy.io/api/v1/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'privy-app-id': process.env.PRIVY_APP_ID || 'cmggw74r800rujm0cccr9s7np'
-        }
+      const JWKS = jose.createRemoteJWKSet(new URL('https://auth.privy.io/.well-known/jwks.json'));
+      
+      const { payload } = await jose.jwtVerify(token, JWKS, {
+        issuer: 'privy.io',
+        audience: process.env.PRIVY_APP_ID || 'cmggw74r800rujm0cccr9s7np',
       });
 
-      if (!verifyResponse.ok) {
-        return res.status(401).json({ 
-          error: 'Invalid authentication token'
-        });
-      }
-
-      const verifiedUser = await verifyResponse.json();
-      
-      if (verifiedUser.id !== privyUserId) {
+      if (payload.sub !== privyUserId) {
         return res.status(403).json({ 
           error: 'Token does not match user ID'
         });
@@ -79,7 +70,7 @@ export default async function handler(req, res) {
     } catch (error) {
       console.error('Token verification failed:', error);
       return res.status(401).json({ 
-        error: 'Authentication verification failed'
+        error: 'Invalid authentication token'
       });
     }
 
