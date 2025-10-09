@@ -1,17 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
-
-// Multiple RPC endpoints - alternates between them
-const RPC_ENDPOINTS = [
-  'https://bsc-dataseed.binance.org/',
-  'https://rpc.ankr.com/bsc',
-];
 
 export function useBalance(walletAddress) {
   const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const currentEndpointIndex = useRef(0);
 
   const fetchBalance = useCallback(async () => {
     if (!walletAddress) {
@@ -21,15 +14,10 @@ export function useBalance(walletAddress) {
     }
 
     try {
-      // Get current RPC endpoint and alternate for next call
-      const rpcUrl = RPC_ENDPOINTS[currentEndpointIndex.current];
-      console.log(`💰 Fetching balance from: ${rpcUrl}`);
+      console.log('💰 Fetching balance for:', walletAddress);
 
-      // Switch to next endpoint for next call (alternates)
-      currentEndpointIndex.current = (currentEndpointIndex.current + 1) % RPC_ENDPOINTS.length;
-
-      // Connect to RPC endpoint
-      const provider = new ethers.JsonRpcProvider(rpcUrl);
+      // Connect directly to BSC RPC node (NO API LIMITS!)
+      const provider = new ethers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
       
       // Get balance in Wei
       const balanceWei = await provider.getBalance(walletAddress);
@@ -43,7 +31,7 @@ export function useBalance(walletAddress) {
     } catch (err) {
       console.error('❌ Error fetching balance:', err);
       setError(err.message);
-      // Don't set balance to 0 on error, keep last known balance
+      setBalance(0);
     } finally {
       setLoading(false);
     }
@@ -52,10 +40,10 @@ export function useBalance(walletAddress) {
   useEffect(() => {
     fetchBalance();
 
-    // Update every 5 seconds - alternates between BSC and Ankr
+    // Real-time updates every 5 seconds (NO LIMITS with RPC!)
     const interval = setInterval(() => {
       fetchBalance();
-    }, 3500);
+    }, 9500);
 
     return () => clearInterval(interval);
   }, [fetchBalance]);
