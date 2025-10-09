@@ -16,7 +16,6 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    // Get token from Authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'No token provided' });
@@ -24,9 +23,9 @@ export default async function handler(req, res) {
 
     const token = authHeader.substring(7);
 
-    // Verify JWT with Privy's verification key
+    // Import Ed25519 public key (Privy uses EdDSA, not ES256)
     const VERIFICATION_KEY = process.env.PRIVY_VERIFICATION_KEY;
-    const verificationKey = await jose.importSPKI(VERIFICATION_KEY, 'ES256');
+    const verificationKey = await jose.importSPKI(VERIFICATION_KEY, 'EdDSA');
     
     const { payload } = await jose.jwtVerify(token, verificationKey, {
       issuer: 'privy.io',
@@ -34,8 +33,6 @@ export default async function handler(req, res) {
     });
 
     const privyUserId = payload.sub;
-
-    // Determine provider from request body
     const { provider, email } = req.body;
 
     // Check if user exists
