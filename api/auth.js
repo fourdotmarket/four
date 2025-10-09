@@ -1,26 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import * as jose from 'jose';
-import { Wallet } from 'ethers';
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
-// Cache JWKS clients
-const jwksCache = new Map();
-
-function getJWKS(appId) {
-  if (!jwksCache.has(appId)) {
-    jwksCache.set(
-      appId,
-      jose.createRemoteJWKSet(
-        new URL(`https://auth.privy.io/api/v1/apps/${appId}/jwks`)
-      )
-    );
-  }
-  return jwksCache.get(appId);
-}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -39,12 +23,14 @@ export default async function handler(req, res) {
 
     const token = authHeader.substring(7);
     
-    // Decode token without verification first
+    // Decode token to get the app ID
     const decoded = jose.decodeJwt(token);
     const appIdFromToken = decoded.aud;
 
-    // Get cached JWKS
-    const JWKS = getJWKS(appIdFromToken);
+    // Use JWKS endpoint with the actual app ID from token
+    const JWKS = jose.createRemoteJWKSet(
+      new URL(`https://auth.privy.io/api/v1/apps/${appIdFromToken}/jwks.json`)
+    );
 
     // Verify JWT
     const { payload } = await jose.jwtVerify(token, JWKS, {
@@ -75,24 +61,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // Generate BSC wallet for new user
-    const wallet = Wallet.createRandom();
-    const walletAddress = wallet.address;
-    const privateKey = wallet.privateKey;
-
-    // Generate username: first 4 + ... + last 4 characters of wallet address
-    const username = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
-
-    // Create new user with wallet
+    // Create new user
     const { data: newUser, error: insertError } = await supabase
       .from('users')
       .insert({
         privy_user_id: privyUserId,
         provider: provider || 'unknown',
-        email,
-        wallet_address: walletAddress,
-        wallet_private_key: privateKey,
-        username
+        email
       })
       .select()
       .single();
