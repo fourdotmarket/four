@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useBalance } from '../hooks/useBalance';
 import DepositModal from './DepositModal';
 import ProfileDropdown from './ProfileDropdown';
 import './Header.css';
@@ -9,6 +10,7 @@ import './Header.css';
 export default function Header() {
   const { ready, authenticated, login, logout } = usePrivy();
   const { user, loading } = useAuth();
+  const { balance, loading: balanceLoading } = useBalance(user?.wallet_address);
   const navigate = useNavigate();
   const location = useLocation();
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -21,9 +23,10 @@ export default function Header() {
       authenticated,
       loading,
       user,
-      hasWallet: !!user?.wallet_address
+      hasWallet: !!user?.wallet_address,
+      balance
     });
-  }, [ready, authenticated, loading, user]);
+  }, [ready, authenticated, loading, user, balance]);
 
   const handleDepositClick = () => {
     console.log('💰 Deposit clicked', { user, wallet: user?.wallet_address });
@@ -112,7 +115,18 @@ export default function Header() {
                 <div className="header-profile-avatar">
                   {user.username ? user.username.charAt(0).toUpperCase() : '?'}
                 </div>
-                <span className="header-profile-name">{user.username}</span>
+                <div className="header-profile-info">
+                  <span className="header-profile-name">{user.username}</span>
+                  <span className="header-profile-balance">
+                    {balanceLoading ? (
+                      '...'
+                    ) : balance !== null ? (
+                      `${balance.toFixed(4)} BNB`
+                    ) : (
+                      '0.0000 BNB'
+                    )}
+                  </span>
+                </div>
                 <svg 
                   className="header-profile-chevron" 
                   width="16" 

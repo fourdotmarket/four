@@ -197,12 +197,28 @@
   box-shadow: 0 0 15px rgba(255, 212, 59, 0.3);
 }
 
+.header-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .header-profile-name {
   color: var(--color-yellow-primary);
   font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.3px;
+  line-height: 1;
+}
+
+.header-profile-balance {
+  color: var(--color-gray-light);
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
 }
 
 .header-profile-chevron {
@@ -289,7 +305,8 @@
     font-size: 12px;
   }
   
-  .header-profile-name {
+  .header-profile-name,
+  .header-profile-balance {
     display: none;
   }
   
