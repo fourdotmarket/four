@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import SubHeader from './components/SubHeader';
 import LoadingScreen from './components/LoadingScreen';
+import { useAuth } from './hooks/useAuth';
 import Home from './pages/Home';
 import Trending from './pages/Trending';
 import FMarket from './pages/FMarket';
@@ -12,11 +13,14 @@ import Market from './pages/Market';
 import Resolved from './pages/Resolved';
 
 function AppContent() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
-    <div style={{ 
-      minHeight: '100vh',
-      position: 'relative'
-    }}>
+    <div style={{ minHeight: '100vh', position: 'relative' }}>
       <Header />
       <SubHeader />
       <Routes>
@@ -34,13 +38,8 @@ export default function App() {
   const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
-    // Random duration between 1500ms (1.5s) and 2200ms (2.2s)
     const randomDuration = Math.floor(Math.random() * (2200 - 1500 + 1)) + 1500;
-    
-    const timer = setTimeout(() => {
-      setInitialLoad(false);
-    }, randomDuration);
-    
+    const timer = setTimeout(() => setInitialLoad(false), randomDuration);
     return () => clearTimeout(timer);
   }, []);
 
