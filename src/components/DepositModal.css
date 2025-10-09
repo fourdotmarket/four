@@ -1,0 +1,327 @@
+.deposit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.deposit-modal {
+  background: linear-gradient(145deg, var(--color-black-dark) 0%, var(--color-black-pure) 100%);
+  border: 1px solid rgba(255, 212, 59, 0.3);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 
+    0 0 40px rgba(255, 212, 59, 0.2),
+    0 20px 60px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Subtle glow border animation */
+.deposit-modal::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    transparent 0%, 
+    rgba(255, 212, 59, 0.3) 50%, 
+    transparent 100%
+  );
+  border-radius: 20px;
+  z-index: -1;
+  animation: borderGlow 3s ease infinite;
+}
+
+@keyframes borderGlow {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.deposit-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 212, 59, 0.1);
+  border: 1px solid rgba(255, 212, 59, 0.3);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-yellow-primary);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.deposit-modal-close:hover {
+  background: rgba(255, 212, 59, 0.2);
+  transform: rotate(90deg);
+  box-shadow: 0 0 15px rgba(255, 212, 59, 0.3);
+}
+
+.deposit-modal-header {
+  padding: 32px 32px 24px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 212, 59, 0.1);
+}
+
+.deposit-modal-header h2 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-yellow-primary);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 20px rgba(255, 212, 59, 0.3);
+}
+
+.deposit-modal-header p {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-gray-light);
+  margin: 0;
+  font-weight: 400;
+}
+
+.deposit-modal-content {
+  padding: 32px;
+}
+
+.deposit-qr-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.deposit-qr-code {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--color-white);
+  box-shadow: 
+    0 0 30px rgba(255, 212, 59, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 212, 59, 0.2);
+  transition: all 0.3s ease;
+}
+
+.deposit-qr-code:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 0 40px rgba(255, 212, 59, 0.4),
+    0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.deposit-wallet-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.deposit-chain-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 212, 59, 0.1);
+  border: 1px solid rgba(255, 212, 59, 0.3);
+  border-radius: 24px;
+  color: var(--color-yellow-primary);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  font-weight: 600;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.deposit-address-container {
+  position: relative;
+}
+
+.deposit-address-label {
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-gray-light);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.deposit-address-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 212, 59, 0.05);
+  border: 1px solid rgba(255, 212, 59, 0.2);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.deposit-address-box:hover {
+  background: rgba(255, 212, 59, 0.08);
+  border-color: rgba(255, 212, 59, 0.3);
+}
+
+.deposit-address-text {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--color-white);
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.deposit-copy-btn {
+  background: rgba(255, 212, 59, 0.15);
+  border: 1px solid rgba(255, 212, 59, 0.3);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-yellow-primary);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.deposit-copy-btn:hover {
+  background: rgba(255, 212, 59, 0.25);
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 212, 59, 0.3);
+}
+
+.deposit-copy-btn:active {
+  transform: scale(0.95);
+}
+
+.deposit-copied-message {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  background: var(--color-yellow-primary);
+  color: var(--color-black-pure);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  animation: fadeInOut 2s ease;
+  box-shadow: 0 4px 12px rgba(255, 212, 59, 0.4);
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  10%, 90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+}
+
+.deposit-warning {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 212, 59, 0.08);
+  border: 1px solid rgba(255, 212, 59, 0.2);
+  border-left: 3px solid var(--color-yellow-primary);
+  border-radius: 8px;
+  color: var(--color-gray-lighter);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.deposit-warning svg {
+  color: var(--color-yellow-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.deposit-warning strong {
+  color: var(--color-yellow-primary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .deposit-modal {
+    width: 95%;
+    max-width: none;
+    margin: 20px;
+  }
+
+  .deposit-modal-header {
+    padding: 24px 24px 20px;
+  }
+
+  .deposit-modal-header h2 {
+    font-size: 24px;
+  }
+
+  .deposit-modal-content {
+    padding: 24px;
+  }
+
+  .deposit-qr-code {
+    width: 180px;
+    height: 180px;
+    padding: 12px;
+  }
+
+  .deposit-address-text {
+    font-size: 12px;
+  }
+
+  .deposit-warning {
+    font-size: 12px;
+  }
+}

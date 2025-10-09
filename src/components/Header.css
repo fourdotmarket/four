@@ -142,6 +142,61 @@
   opacity: 0.85;
 }
 
+/* Deposit button specific styling */
+.header-deposit-btn {
+  background: linear-gradient(135deg, rgba(255, 212, 59, 0.15) 0%, rgba(244, 196, 48, 0.15) 100%);
+  color: var(--color-yellow-primary);
+  border: 1px solid var(--color-yellow-primary);
+  box-shadow: 0 0 15px rgba(255, 212, 59, 0.2);
+}
+
+.header-deposit-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 212, 59, 0.25) 0%, rgba(244, 196, 48, 0.25) 100%);
+  box-shadow: 0 0 20px rgba(255, 212, 59, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Profile Section */
+.header-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  background: rgba(255, 212, 59, 0.08);
+  border: 1px solid rgba(255, 212, 59, 0.2);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.header-profile:hover {
+  background: rgba(255, 212, 59, 0.12);
+  border-color: rgba(255, 212, 59, 0.3);
+}
+
+.header-profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-yellow-primary) 0%, var(--color-gold) 100%);
+  color: var(--color-black-pure);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 0 15px rgba(255, 212, 59, 0.3);
+}
+
+.header-profile-name {
+  color: var(--color-yellow-primary);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
 .header-separator {
   color: rgba(255, 212, 59, 0.3);
   font-size: 18px;
@@ -196,5 +251,13 @@
   
   .header-nav-item {
     font-size: 12px;
+  }
+  
+  .header-profile-name {
+    display: none;
+  }
+  
+  .header-profile {
+    padding: 6px;
   }
 }
