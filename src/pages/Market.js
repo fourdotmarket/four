@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import './Market.css';
 import { ethers } from 'ethers';
 import { useAuth } from '../hooks/useAuth';
+import MarketCard from '../components/MarketCard';
+import { useMarkets } from '../hooks/useMarkets';
 
 const CONTRACT_ADDRESS = "0xB05bAeff61e6E2CfB85d383911912C3248e3214f";
 const BSC_RPC_URL = "https://bsc-dataseed.binance.org/";
@@ -13,6 +15,7 @@ const CONTRACT_ABI = [
 
 export default function Market() {
   const { user } = useAuth();
+  const { markets, loading: marketsLoading, error: marketsError } = useMarkets();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [prediction, setPrediction] = useState('');
@@ -230,6 +233,34 @@ export default function Market() {
           CREATE BET
         </button>
       </div>
+
+      {/* Markets Grid */}
+      {marketsLoading ? (
+        <div className="market-loading">
+          <div className="loading-spinner"></div>
+          <p>Loading markets...</p>
+        </div>
+      ) : marketsError ? (
+        <div className="market-error">
+          <p>Error loading markets: {marketsError}</p>
+        </div>
+      ) : markets.length === 0 ? (
+        <div className="market-empty">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <h3>No active markets</h3>
+          <p>Be the first to create a prediction market!</p>
+        </div>
+      ) : (
+        <div className="market-grid">
+          {markets.map((market) => (
+            <MarketCard key={market.market_id} market={market} />
+          ))}
+        </div>
+      )}
 
       {showCreateModal && (
         <div 

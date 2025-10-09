@@ -164,7 +164,7 @@ export default async function handler(req, res) {
         });
         console.log('✅ Webhook called successfully');
       } catch (webhookError) {
-        console.error('⚠️ Webhook failed (non-critical):', webhookError.message);
+        console.error(⚠️ Webhook failed (non-critical):', webhookError.message);
       }
     }
 
