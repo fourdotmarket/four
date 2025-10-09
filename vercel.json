@@ -1,8 +1,10 @@
 {
   "functions": {
-    "api/**/*.js": {
-      "maxDuration": 10,
-      "memory": 1024
+    "api/create-bet.js": {
+      "maxDuration": 60
+    },
+    "api/market-webhook.js": {
+      "maxDuration": 30
     }
   }
 }
