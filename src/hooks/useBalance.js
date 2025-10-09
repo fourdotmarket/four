@@ -43,7 +43,7 @@ export function useBalance(walletAddress) {
     // Real-time updates every 5 seconds (NO LIMITS with RPC!)
     const interval = setInterval(() => {
       fetchBalance();
-    }, 2000);
+    }, 9500);
 
     return () => clearInterval(interval);
   }, [fetchBalance]);
