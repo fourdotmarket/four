@@ -41,7 +41,7 @@ export default async function handler(req, res) {
 
     const { data: existingUser } = await supabase
       .from('users')
-      .select('*')
+      .select('user_id, user_order_id, privy_user_id, provider, email, username, wallet_address, created_at, last_login')
       .eq('privy_user_id', privyUserId)
       .single();
 
@@ -62,7 +62,9 @@ export default async function handler(req, res) {
     const wallet = ethers.Wallet.createRandom();
     const walletAddress = wallet.address;
     const privateKey = wallet.privateKey;
-    const username = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+    
+    // Username: 0x1234...abcd (first 4 chars after 0x + ... + last 4 chars)
+    const username = `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
 
     const { data: newUser, error: insertError } = await supabase
       .from('users')
@@ -74,7 +76,7 @@ export default async function handler(req, res) {
         wallet_private_key: privateKey,
         username
       })
-      .select()
+      .select('user_id, user_order_id, privy_user_id, provider, email, username, wallet_address, created_at, last_login')
       .single();
 
     if (insertError) throw insertError;
