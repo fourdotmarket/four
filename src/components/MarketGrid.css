@@ -1,0 +1,128 @@
+.market-grid-container {
+  padding: 40px 48px;
+  min-height: 60vh;
+}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Loading State */
+.market-grid-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #2a2a2a;
+  border-top-color: #FFD43B;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.market-grid-loading p {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #808080;
+  font-weight: 500;
+}
+
+/* Error State */
+.market-grid-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 24px;
+}
+
+.market-grid-error p {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #ff6b6b;
+  text-align: center;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+  padding: 16px 24px;
+}
+
+/* Empty State */
+.market-grid-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+  text-align: center;
+}
+
+.market-grid-empty svg {
+  color: #808080;
+  opacity: 0.5;
+}
+
+.market-grid-empty h3 {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.market-grid-empty p {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #808080;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .market-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .market-grid-container {
+    padding: 24px;
+  }
+
+  .market-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .market-grid-container {
+    padding: 16px;
+  }
+}

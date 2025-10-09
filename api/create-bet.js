@@ -9,9 +9,10 @@ const supabase = createClient(
 const CONTRACT_ADDRESS = "0xB05bAeff61e6E2CfB85d383911912C3248e3214f";
 const BSC_RPC_URL = "https://bsc-dataseed.binance.org/";
 
-// Contract ABI - only createMarket function
+// Contract ABI
 const CONTRACT_ABI = [
-  "function createMarket(string memory _question, uint8 _duration, uint8 _ticketAmount) external payable returns (uint256)"
+  "function createMarket(string memory _question, uint8 _duration, uint8 _ticketAmount) external payable returns (uint256)",
+  "event MarketCreated(uint256 indexed marketId, string question, address indexed marketMaker, uint256 marketMakerStake, uint256 ticketPrice, uint256 totalTickets, uint256 deadline, uint256 createdAt)"
 ];
 
 export default async function handler(req, res) {
@@ -76,7 +77,6 @@ export default async function handler(req, res) {
     
     console.log('💰 Wallet balance:', balanceInBNB, 'BNB');
     console.log('💰 Required stake:', stakeInBNB, 'BNB');
-    console.log('💰 Wallet address:', wallet.address);
 
     // Check if balance is sufficient (including gas)
     const estimatedGas = 0.001; // ~0.001 BNB for gas
@@ -110,9 +110,7 @@ export default async function handler(req, res) {
       question,
       duration,
       ticketAmount,
-      { 
-        value: stakeInWei
-      }
+      { value: stakeInWei }
     );
 
     console.log('⏳ Transaction sent:', tx.hash);
@@ -122,14 +120,52 @@ export default async function handler(req, res) {
 
     console.log('✅ Transaction confirmed!');
     console.log('Block:', receipt.blockNumber);
-    console.log('Gas used:', receipt.gasUsed.toString());
 
-    // Extract market ID from events (if your contract emits an event)
+    // Parse the MarketCreated event
     let marketId = null;
-    if (receipt.logs && receipt.logs.length > 0) {
-      // Parse logs to get market ID if available
-      // This depends on your contract's event structure
-      console.log('Events:', receipt.logs.length);
+    let eventData = null;
+
+    for (const log of receipt.logs) {
+      try {
+        const parsedLog = contract.interface.parseLog(log);
+        if (parsedLog && parsedLog.name === 'MarketCreated') {
+          marketId = parsedLog.args.marketId.toString();
+          eventData = {
+            marketId: parsedLog.args.marketId.toString(),
+            question: parsedLog.args.question,
+            marketMaker: parsedLog.args.marketMaker,
+            marketMakerStake: parsedLog.args.marketMakerStake.toString(),
+            ticketPrice: parsedLog.args.ticketPrice.toString(),
+            totalTickets: parsedLog.args.totalTickets.toString(),
+            deadline: parsedLog.args.deadline.toString(),
+            createdAt: parsedLog.args.createdAt.toString()
+          };
+          break;
+        }
+      } catch (e) {
+        // Skip logs that don't match
+      }
+    }
+
+    console.log('📊 Market ID:', marketId);
+
+    // Call webhook to save market data
+    if (eventData) {
+      try {
+        const webhookUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        await fetch(`${webhookUrl}/api/market-webhook`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...eventData,
+            txHash: tx.hash,
+            blockNumber: receipt.blockNumber
+          })
+        });
+        console.log('✅ Webhook called successfully');
+      } catch (webhookError) {
+        console.error('⚠️ Webhook failed (non-critical):', webhookError.message);
+      }
     }
 
     // Return success response
