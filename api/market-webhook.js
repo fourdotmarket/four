@@ -1,13 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
-import { ethers } from 'ethers';
+const { createClient } = require('@supabase/supabase-js');
+const { ethers } = require('ethers');
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-export default async function handler(req, res) {
-  // CORS headers
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -37,7 +36,6 @@ export default async function handler(req, res) {
 
     console.log('📥 Webhook received:', { marketId, question, marketMaker });
 
-    // Get creator info from database
     const { data: creator, error: creatorError } = await supabase
       .from('users')
       .select('user_id, username')
@@ -49,11 +47,9 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Creator not found' });
     }
 
-    // Convert Wei to BNB
     const stakeInBNB = parseFloat(ethers.formatEther(marketMakerStake));
     const ticketPriceInBNB = parseFloat(ethers.formatEther(ticketPrice));
 
-    // Insert market into database
     const { data: newMarket, error: insertError } = await supabase
       .from('markets')
       .insert({
@@ -95,4 +91,4 @@ export default async function handler(req, res) {
       details: error.message 
     });
   }
-}
+};
