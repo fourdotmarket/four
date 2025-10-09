@@ -199,6 +199,24 @@
   letter-spacing: 0.3px;
 }
 
+.header-loading {
+  color: var(--color-yellow-primary);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 12px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .header-separator {
   color: rgba(255, 212, 59, 0.3);
   font-size: 18px;

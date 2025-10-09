@@ -32,8 +32,11 @@ export function useAuth() {
           email = privyUser.twitter.username;
         }
 
+        console.log('🔐 Attempting to authenticate with backend...', { provider, email });
+
         // Get Privy access token
         const accessToken = await getAccessToken();
+        console.log('✅ Got Privy access token');
 
         const response = await axios.post('/api/auth', 
           { provider, email },
@@ -45,10 +48,33 @@ export function useAuth() {
           }
         );
 
+        console.log('✅ Backend response:', response.data);
         setUser(response.data.user);
       } catch (error) {
-        console.error('Auth error:', error);
-        setUser(null);
+        console.error('❌ Auth error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
+
+        // FALLBACK: Create temporary user from Privy data
+        console.log('⚠️ Using fallback user data from Privy');
+        const fallbackUser = {
+          username: privyUser.email?.address?.split('@')[0] || 
+                   privyUser.google?.email?.split('@')[0] || 
+                   privyUser.twitter?.username || 
+                   'User',
+          email: privyUser.email?.address || 
+                privyUser.google?.email || 
+                privyUser.twitter?.username,
+          wallet_address: privyUser.wallet?.address || null,
+          provider: privyUser.email ? 'email' : 
+                   privyUser.google ? 'google' : 
+                   privyUser.twitter ? 'twitter' : 'unknown'
+        };
+        console.log('📝 Fallback user:', fallbackUser);
+        setUser(fallbackUser);
       } finally {
         setLoading(false);
       }

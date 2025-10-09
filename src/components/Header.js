@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -11,6 +11,26 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showDepositModal, setShowDepositModal] = useState(false);
+
+  useEffect(() => {
+    console.log('🔍 Header Debug:', {
+      ready,
+      authenticated,
+      loading,
+      user,
+      hasWallet: !!user?.wallet_address
+    });
+  }, [ready, authenticated, loading, user]);
+
+  const handleDepositClick = () => {
+    console.log('💰 Deposit clicked', { user, wallet: user?.wallet_address });
+    if (user && user.wallet_address) {
+      setShowDepositModal(true);
+    } else {
+      console.warn('⚠️ No wallet address available for deposit');
+      alert('Wallet address not available. Please try refreshing the page.');
+    }
+  };
 
   return (
     <>
@@ -67,18 +87,22 @@ export default function Header() {
             <>
               <button 
                 className="header-button header-deposit-btn" 
-                onClick={() => setShowDepositModal(true)}
+                onClick={handleDepositClick}
               >
                 DEPOSIT
               </button>
               
               <div className="header-profile">
                 <div className="header-profile-avatar">
-                  {user.username ? user.username.charAt(2).toUpperCase() : 'U'}
+                  {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
                 </div>
                 <span className="header-profile-name">{user.username || 'User'}</span>
               </div>
             </>
+          )}
+          
+          {ready && authenticated && loading && (
+            <div className="header-loading">Loading...</div>
           )}
           
           <span className="header-separator">|</span>
