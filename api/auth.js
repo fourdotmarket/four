@@ -6,6 +6,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// Create JWKS client pointing to Privy's endpoint
+const JWKS = jose.createRemoteJWKSet(
+  new URL(`https://auth.privy.io/api/v1/apps/${process.env.PRIVY_APP_ID}/jwks`)
+);
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -18,26 +23,16 @@ export default async function handler(req, res) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      console.error('No auth header');
       return res.status(401).json({ error: 'No token provided' });
     }
 
     const token = authHeader.substring(7);
-    console.log('Token received, length:', token.length);
-    console.log('PRIVY_APP_ID:', process.env.PRIVY_APP_ID);
-    console.log('Verification key exists:', !!process.env.PRIVY_VERIFICATION_KEY);
 
-    // Import ES256 key
-    const VERIFICATION_KEY = process.env.PRIVY_VERIFICATION_KEY;
-    const verificationKey = await jose.importSPKI(VERIFICATION_KEY, 'ES256');
-    console.log('Key imported successfully');
-    
-    const { payload } = await jose.jwtVerify(token, verificationKey, {
+    // Verify JWT using Privy's JWKS endpoint
+    const { payload } = await jose.jwtVerify(token, JWKS, {
       issuer: 'privy.io',
       audience: process.env.PRIVY_APP_ID
     });
-
-    console.log('Token verified, user:', payload.sub);
 
     const privyUserId = payload.sub;
     const { provider, email } = req.body;
@@ -83,7 +78,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Auth error:', error.message);
-    console.error('Error code:', error.code);
-    return res.status(401).json({ error: error.message || 'Invalid token' });
+    return res.status(401).json({ error: 'Invalid token' });
   }
 }
