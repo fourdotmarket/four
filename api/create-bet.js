@@ -1,5 +1,5 @@
-const { createClient } = require('@supabase/supabase-js');
-const { ethers } = require('ethers');
+import { createClient } from '@supabase/supabase-js';
+import { ethers } from 'ethers';
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -14,7 +14,7 @@ const CONTRACT_ABI = [
   "event MarketCreated(uint256 indexed marketId, string question, address indexed marketMaker, uint256 marketMakerStake, uint256 ticketPrice, uint256 totalTickets, uint256 deadline, uint256 createdAt)"
 ];
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -204,4 +204,4 @@ module.exports = async function handler(req, res) {
       details: error.message 
     });
   }
-};
+}

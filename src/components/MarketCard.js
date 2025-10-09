@@ -41,7 +41,6 @@ export default function MarketCard({ market }) {
 
   return (
     <div className="market-card">
-      {/* Banner with fade overlay */}
       <div className="market-card-banner">
         <img 
           src={market.banner_url || '/default.png'} 
@@ -51,12 +50,9 @@ export default function MarketCard({ market }) {
         <div className="market-card-banner-fade"></div>
       </div>
 
-      {/* Content */}
       <div className="market-card-content">
-        {/* Prediction Question */}
         <h3 className="market-card-question">{market.question}</h3>
 
-        {/* Progress Bar */}
         <div className="market-card-progress-section">
           <div className="market-card-progress-bar">
             <div 
@@ -69,13 +65,11 @@ export default function MarketCard({ market }) {
           </div>
         </div>
 
-        {/* Ticket Price */}
         <div className="market-card-price">
           <span className="market-card-price-label">Ticket Price</span>
           <span className="market-card-price-value">{market.ticket_price} BNB</span>
         </div>
 
-        {/* Footer: Creator & Countdown */}
         <div className="market-card-footer">
           <div className="market-card-creator">
             <div className="market-card-creator-avatar">

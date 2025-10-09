@@ -12,10 +12,8 @@ export function useMarkets() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch initial markets
     fetchMarkets();
 
-    // Subscribe to real-time updates
     const channel = supabase
       .channel('markets-channel')
       .on(
