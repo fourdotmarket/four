@@ -1,0 +1,146 @@
+import { createClient } from '@supabase/supabase-js';
+import { ethers } from 'ethers';
+
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+const CONTRACT_ADDRESS = "0xB05bAeff61e6E2CfB85d383911912C3248e3214f";
+const BSC_RPC_URL = "https://bsc-dataseed.binance.org/";
+
+// Contract ABI - only createMarket function
+const CONTRACT_ABI = [
+  "function createMarket(string question, uint256 duration, uint256 ticketAmount) payable returns (uint256)"
+];
+
+export default async function handler(req, res) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { user_id, question, stakeAmount, duration, ticketAmount } = req.body;
+
+    // Validation
+    if (!user_id || !question || !stakeAmount || duration === undefined || ticketAmount === undefined) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        required: ['user_id', 'question', 'stakeAmount', 'duration', 'ticketAmount']
+      });
+    }
+
+    console.log('📝 Creating bet for user:', user_id);
+
+    // Fetch user's private key from Supabase
+    const { data: userData, error: fetchError } = await supabase
+      .from('users')
+      .select('wallet_address, wallet_private_key')
+      .eq('user_id', user_id)
+      .single();
+
+    if (fetchError || !userData) {
+      console.error('❌ User fetch error:', fetchError);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!userData.wallet_private_key) {
+      console.error('❌ No private key for user:', user_id);
+      return res.status(400).json({ error: 'Wallet not configured' });
+    }
+
+    console.log('✅ User found:', userData.wallet_address);
+
+    // Connect to BSC
+    const provider = new ethers.JsonRpcProvider(BSC_RPC_URL);
+    
+    // Create wallet instance with private key
+    const wallet = new ethers.Wallet(userData.wallet_private_key, provider);
+    
+    console.log('✅ Wallet connected:', wallet.address);
+
+    // Connect to contract
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
+
+    // Convert stake to Wei
+    const stakeInWei = ethers.parseEther(stakeAmount.toString());
+
+    console.log('📤 Sending transaction:', {
+      question,
+      duration,
+      ticketAmount,
+      stakeInWei: stakeInWei.toString()
+    });
+
+    // Create the market on blockchain
+    const tx = await contract.createMarket(
+      question,
+      duration,
+      ticketAmount,
+      { 
+        value: stakeInWei,
+        gasLimit: 500000 // Set a reasonable gas limit
+      }
+    );
+
+    console.log('⏳ Transaction sent:', tx.hash);
+
+    // Wait for transaction to be mined
+    const receipt = await tx.wait();
+
+    console.log('✅ Transaction confirmed!');
+    console.log('Block:', receipt.blockNumber);
+    console.log('Gas used:', receipt.gasUsed.toString());
+
+    // Extract market ID from events (if your contract emits an event)
+    let marketId = null;
+    if (receipt.logs && receipt.logs.length > 0) {
+      // Parse logs to get market ID if available
+      // This depends on your contract's event structure
+      console.log('Events:', receipt.logs.length);
+    }
+
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      txHash: tx.hash,
+      marketId: marketId,
+      blockNumber: receipt.blockNumber,
+      gasUsed: receipt.gasUsed.toString(),
+      creator: wallet.address
+    });
+
+  } catch (error) {
+    console.error('❌ Error creating bet:', error);
+    
+    // Handle specific error types
+    if (error.code === 'INSUFFICIENT_FUNDS') {
+      return res.status(400).json({ 
+        error: 'Insufficient BNB balance',
+        details: 'Your wallet does not have enough BNB to create this bet'
+      });
+    }
+
+    if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+      return res.status(400).json({ 
+        error: 'Transaction would fail',
+        details: 'The contract rejected this transaction. Check your parameters.'
+      });
+    }
+
+    return res.status(500).json({ 
+      error: 'Failed to create bet',
+      details: error.message 
+    });
+  }
+}

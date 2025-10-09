@@ -3,8 +3,535 @@
   color: var(--color-white);
 }
 
-.market-page h1 {
+.market-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.market-header h1 {
   font-family: var(--font-display);
   font-size: 32px;
   color: var(--color-yellow-primary);
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* Create Button - Sleek Yellow Pill */
+.market-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-yellow-primary);
+  color: var(--color-black-pure);
+  padding: 11px 24px;
+  border: none;
+  border-radius: 50px;
+  font-family: var(--font-primary);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.market-create-btn svg {
+  stroke-width: 3;
+}
+
+.market-create-btn:hover {
+  background: var(--color-gold);
+  transform: scale(1.02);
+}
+
+.market-create-btn:active {
+  transform: scale(0.98);
+}
+
+/* Modal Overlay with Fade Animation */
+.create-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: overlayFadeIn 0.3s ease forwards;
+}
+
+.create-modal-overlay.closing {
+  animation: overlayFadeOut 0.3s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlayFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Modal Container - Sleek & Compact */
+.create-modal {
+  background: var(--color-black-dark);
+  border: 1px solid rgba(255, 212, 59, 0.15);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 520px;
+  position: relative;
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.create-modal.closing {
+  animation: modalSlideDown 0.3s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+  pointer-events: none;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalSlideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(40px) scale(0.96);
+  }
+}
+
+.create-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255, 212, 59, 0.08);
+  border: 1px solid rgba(255, 212, 59, 0.15);
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-gray-light);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.create-modal-close:hover {
+  background: rgba(255, 212, 59, 0.15);
+  border-color: rgba(255, 212, 59, 0.3);
+  color: var(--color-yellow-primary);
+}
+
+/* Modal Header - Compact */
+.create-modal-header {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid rgba(255, 212, 59, 0.08);
+}
+
+.create-modal-header h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-yellow-primary);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.3px;
+}
+
+.create-modal-explanation {
+  font-family: var(--font-primary);
+  font-size: 12px;
+  color: var(--color-gray-light);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* 2x2 Grid Layout - Compact */
+.create-modal-grid {
+  padding: 20px 22px 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.create-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.create-field-full {
+  grid-column: 1 / -1;
+}
+
+.create-label {
+  font-family: var(--font-primary);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-gray-medium);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.create-char-count {
+  font-size: 10px;
+  color: rgba(255, 212, 59, 0.5);
+  font-weight: 600;
+}
+
+.create-optional {
+  font-size: 9px;
+  color: var(--color-gray-medium);
+  opacity: 0.6;
+}
+
+/* Input Styles - Sleek Dark */
+.create-input,
+.create-textarea {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 212, 59, 0.12);
+  border-radius: 8px;
+  color: var(--color-white);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  padding: 10px 12px;
+  transition: all 0.2s ease;
+  outline: none;
+  font-weight: 500;
+}
+
+/* Remove number input spinners */
+.create-input[type="number"]::-webkit-outer-spin-button,
+.create-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.create-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.create-input::placeholder,
+.create-textarea::placeholder {
+  color: var(--color-gray-medium);
+  opacity: 0.5;
+}
+
+.create-input:focus,
+.create-textarea:focus {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 212, 59, 0.3);
+}
+
+.create-textarea {
+  resize: none;
+  min-height: 68px;
+  line-height: 1.5;
+}
+
+.create-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.create-input-wrapper .create-input {
+  padding-right: 50px;
+}
+
+.create-input-badge {
+  position: absolute;
+  right: 10px;
+  background: rgba(255, 212, 59, 0.15);
+  color: var(--color-yellow-primary);
+  font-family: var(--font-primary);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+
+.create-hint {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: var(--color-gray-medium);
+  margin-top: -2px;
+}
+
+/* Pills - Clean & Modern */
+.create-pills {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+/* Expiry Pills - 3x2 Grid */
+.create-pills-expiry {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.create-pill {
+  padding: 9px 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 212, 59, 0.12);
+  border-radius: 6px;
+  color: var(--color-gray-light);
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.create-pill:hover {
+  background: rgba(255, 212, 59, 0.08);
+  border-color: rgba(255, 212, 59, 0.2);
+}
+
+.create-pill.active {
+  background: rgba(255, 212, 59, 0.15);
+  border-color: rgba(255, 212, 59, 0.4);
+  color: var(--color-yellow-primary);
+}
+
+/* More Options Toggle */
+.create-more-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 212, 59, 0.12);
+  border-radius: 8px;
+  color: var(--color-gray-light);
+  font-family: var(--font-primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.create-more-toggle:hover {
+  background: rgba(255, 212, 59, 0.08);
+  border-color: rgba(255, 212, 59, 0.2);
+  color: var(--color-yellow-primary);
+}
+
+.create-more-toggle svg {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.create-more-toggle svg.rotated {
+  transform: rotate(180deg);
+}
+
+/* More Options Content - Slide Down Animation */
+.create-more-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.create-more-content.open {
+  grid-template-rows: 1fr;
+}
+
+.create-more-inner {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.create-subfield {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* Banner Upload - Sleek */
+.create-banner-drop {
+  position: relative;
+  min-height: 100px;
+  border: 1.5px dashed rgba(255, 212, 59, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.2s ease;
+}
+
+.create-banner-drop:hover {
+  border-color: rgba(255, 212, 59, 0.3);
+  background: rgba(255, 212, 59, 0.04);
+}
+
+.create-banner-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100px;
+  cursor: pointer;
+}
+
+.create-banner-upload svg {
+  color: var(--color-yellow-primary);
+  opacity: 0.5;
+}
+
+.create-banner-text {
+  color: var(--color-gray-light);
+  font-family: var(--font-primary);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.create-banner-preview {
+  position: relative;
+  width: 100%;
+  height: 100px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.create-banner-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.create-banner-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 212, 59, 0.2);
+  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-white);
+  transition: all 0.2s ease;
+}
+
+.create-banner-remove:hover {
+  background: rgba(255, 59, 59, 0.9);
+  border-color: #ff6b6b;
+}
+
+/* Modal Footer */
+.create-modal-footer {
+  padding: 0 22px 20px;
+}
+
+/* Submit Button - Bold Yellow Pill */
+.create-submit-btn {
+  width: 100%;
+  padding: 13px;
+  background: var(--color-yellow-primary);
+  border: none;
+  border-radius: 50px;
+  color: var(--color-black-pure);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.create-submit-btn:hover {
+  background: var(--color-gold);
+  transform: scale(1.01);
+}
+
+.create-submit-btn:active {
+  transform: scale(0.99);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .market-page {
+    padding: 24px;
+  }
+
+  .market-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .market-create-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .create-modal {
+    max-width: none;
+    margin: 0;
+  }
+
+  .create-modal-grid {
+    grid-template-columns: 1fr;
+    padding: 18px 20px 14px;
+  }
+
+  .create-field {
+    grid-column: 1 / -1;
+  }
+
+  .create-modal-header {
+    padding: 18px 20px 14px;
+  }
+
+  .create-modal-footer {
+    padding: 0 20px 18px;
+  }
 }
