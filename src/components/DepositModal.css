@@ -274,7 +274,6 @@
   padding: 16px;
   background: rgba(255, 212, 59, 0.08);
   border: 1px solid rgba(255, 212, 59, 0.2);
-  border-left: 3px solid var(--color-yellow-primary);
   border-radius: 8px;
   color: var(--color-gray-lighter);
   font-size: 13px;

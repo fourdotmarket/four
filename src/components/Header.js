@@ -7,7 +7,7 @@ import './Header.css';
 
 export default function Header() {
   const { ready, authenticated, login } = usePrivy();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -63,7 +63,7 @@ export default function Header() {
             </button>
           )}
           
-          {ready && authenticated && user && (
+          {ready && authenticated && !loading && user && (
             <>
               <button 
                 className="header-button header-deposit-btn" 
@@ -74,9 +74,9 @@ export default function Header() {
               
               <div className="header-profile">
                 <div className="header-profile-avatar">
-                  {user.username?.charAt(2)?.toUpperCase() || 'U'}
+                  {user.username ? user.username.charAt(2).toUpperCase() : 'U'}
                 </div>
-                <span className="header-profile-name">{user.username}</span>
+                <span className="header-profile-name">{user.username || 'User'}</span>
               </div>
             </>
           )}
@@ -93,7 +93,7 @@ export default function Header() {
         </div>
       </header>
 
-      {showDepositModal && user && (
+      {showDepositModal && user && user.wallet_address && (
         <DepositModal 
           walletAddress={user.wallet_address}
           onClose={() => setShowDepositModal(false)}

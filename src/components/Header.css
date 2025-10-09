@@ -161,12 +161,14 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 14px 6px 6px;
+  padding: 5px 15px 5px 5px;
   background: rgba(255, 212, 59, 0.08);
   border: 1px solid rgba(255, 212, 59, 0.2);
   border-radius: 24px;
   cursor: pointer;
   transition: all 0.3s ease;
+  height: auto;
+  min-height: 34px;
 }
 
 .header-profile:hover {
@@ -175,8 +177,8 @@
 }
 
 .header-profile-avatar {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--color-yellow-primary) 0%, var(--color-gold) 100%);
   color: var(--color-black-pure);
@@ -184,7 +186,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   box-shadow: 0 0 15px rgba(255, 212, 59, 0.3);
 }
