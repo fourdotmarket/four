@@ -7,6 +7,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// Cache JWKS clients
+const jwksCache = new Map();
+
+function getJWKS(appId) {
+  if (!jwksCache.has(appId)) {
+    jwksCache.set(
+      appId,
+      jose.createRemoteJWKSet(
+        new URL(`https://auth.privy.io/api/v1/apps/${appId}/jwks`)
+      )
+    );
+  }
+  return jwksCache.get(appId);
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -24,14 +39,12 @@ export default async function handler(req, res) {
 
     const token = authHeader.substring(7);
     
-    // Decode token to get the app ID
+    // Decode token without verification first
     const decoded = jose.decodeJwt(token);
     const appIdFromToken = decoded.aud;
 
-    // Use JWKS endpoint with the actual app ID from token
-    const JWKS = jose.createRemoteJWKSet(
-      new URL(`https://auth.privy.io/api/v1/apps/${appIdFromToken}/jwks`)
-    );
+    // Get cached JWKS
+    const JWKS = getJWKS(appIdFromToken);
 
     // Verify JWT
     const { payload } = await jose.jwtVerify(token, JWKS, {
