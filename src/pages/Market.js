@@ -317,68 +317,96 @@ export default function Market() {
                 </div>
               </div>
 
-              {/* Tickets - REQUIRED */}
-              <div className="create-field">
-                <label className="create-label">
-                  <span>TICKETS *</span>
-                </label>
-                <div className="create-pills">
-                  {['1', '10', '50', '100'].map((count) => (
-                    <button
-                      key={count}
-                      className={`create-pill ${tickets === count ? 'active' : ''}`}
-                      onClick={() => !isCreating && setTickets(count)}
-                      disabled={isCreating}
-                    >
-                      {count}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Banner - OPTIONAL */}
+              {/* More Options */}
               <div className="create-field create-field-full">
-                <label className="create-label">
-                  <span>BANNER</span>
-                  <span className="create-optional">OPTIONAL</span>
-                </label>
-                <div 
-                  className="create-banner-drop"
-                  onDrop={handleBannerDrop}
-                  onDragOver={(e) => e.preventDefault()}
+                <button 
+                  className="create-more-toggle"
+                  onClick={() => setShowMoreOptions(!showMoreOptions)}
+                  disabled={isCreating}
                 >
-                  {bannerPreview ? (
-                    <div className="create-banner-preview">
-                      <img src={bannerPreview} alt="Banner preview" />
-                      <button 
-                        className="create-banner-remove"
-                        onClick={removeBanner}
-                        type="button"
-                        disabled={isCreating}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </button>
+                  <span>MORE OPTIONS</span>
+                  <svg 
+                    width="14" 
+                    height="14" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2.5" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className={showMoreOptions ? 'rotated' : ''}
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+
+                <div className={`create-more-content ${showMoreOptions ? 'open' : ''}`}>
+                  <div className="create-more-inner">
+                    {/* Tickets */}
+                    <div className="create-subfield">
+                      <label className="create-label">
+                        <span>TICKETS</span>
+                      </label>
+                      <div className="create-pills">
+                        {['1', '10', '50', '100'].map((count) => (
+                          <button
+                            key={count}
+                            className={`create-pill ${tickets === count ? 'active' : ''}`}
+                            onClick={() => setTickets(count)}
+                            disabled={isCreating}
+                          >
+                            {count}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  ) : (
-                    <label className="create-banner-upload">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <polyline points="21 15 16 10 5 21"></polyline>
-                      </svg>
-                      <span className="create-banner-text">Drop or click to upload</span>
-                      <input 
-                        type="file" 
-                        accept="image/*"
-                        onChange={handleBannerSelect}
-                        style={{ display: 'none' }}
-                        disabled={isCreating}
-                      />
-                    </label>
-                  )}
+
+                    {/* Banner */}
+                    <div className="create-subfield">
+                      <label className="create-label">
+                        <span>BANNER</span>
+                        <span className="create-optional">OPTIONAL</span>
+                      </label>
+                      <div 
+                        className="create-banner-drop"
+                        onDrop={handleBannerDrop}
+                        onDragOver={(e) => e.preventDefault()}
+                      >
+                        {bannerPreview ? (
+                          <div className="create-banner-preview">
+                            <img src={bannerPreview} alt="Banner preview" />
+                            <button 
+                              className="create-banner-remove"
+                              onClick={removeBanner}
+                              type="button"
+                              disabled={isCreating}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="create-banner-upload">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                              <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span className="create-banner-text">Drop or click to upload</span>
+                            <input 
+                              type="file" 
+                              accept="image/*"
+                              onChange={handleBannerSelect}
+                              style={{ display: 'none' }}
+                              disabled={isCreating}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
