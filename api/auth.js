@@ -6,11 +6,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Create JWKS client pointing to Privy's endpoint
-const JWKS = jose.createRemoteJWKSet(
-  new URL(`https://auth.privy.io/api/v1/apps/${process.env.PRIVY_APP_ID}/jwks`)
-);
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -27,11 +22,20 @@ export default async function handler(req, res) {
     }
 
     const token = authHeader.substring(7);
+    
+    // Decode token to get the app ID
+    const decoded = jose.decodeJwt(token);
+    const appIdFromToken = decoded.aud;
 
-    // Verify JWT using Privy's JWKS endpoint
+    // Use JWKS endpoint with the actual app ID from token
+    const JWKS = jose.createRemoteJWKSet(
+      new URL(`https://auth.privy.io/api/v1/apps/${appIdFromToken}/jwks.json`)
+    );
+
+    // Verify JWT
     const { payload } = await jose.jwtVerify(token, JWKS, {
       issuer: 'privy.io',
-      audience: process.env.PRIVY_APP_ID
+      audience: appIdFromToken
     });
 
     const privyUserId = payload.sub;
@@ -78,6 +82,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Auth error:', error.message);
-    return res.status(401).json({ error: 'Invalid token' });
+    return res.status(401).json({ error: 'Authentication failed' });
   }
 }
