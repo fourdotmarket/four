@@ -129,13 +129,8 @@
   transition: width 0.6s ease, height 0.6s ease;
 }
 
-.header-button:hover::before {
-  width: 300px;
-  height: 300px;
-}
-
 .header-button:hover {
-  opacity: 0.95;
+  box-shadow: var(--glow-yellow-strong);
 }
 
 .header-button:active {
@@ -148,12 +143,16 @@
   color: var(--color-yellow-primary);
   border: 1px solid var(--color-yellow-primary);
   box-shadow: 0 0 15px rgba(255, 212, 59, 0.2);
+  overflow: visible;
+}
+
+.header-deposit-btn::before {
+  display: none;
 }
 
 .header-deposit-btn:hover {
   background: linear-gradient(135deg, rgba(255, 212, 59, 0.25) 0%, rgba(244, 196, 48, 0.25) 100%);
   box-shadow: 0 0 20px rgba(255, 212, 59, 0.4);
-  transform: translateY(-1px);
 }
 
 /* Profile Section */

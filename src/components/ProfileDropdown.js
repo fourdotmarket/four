@@ -60,7 +60,7 @@ export default function ProfileDropdown({ user, onLogout, onClose }) {
           <button className="profile-dropdown-item">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3"></circle>
-              <path d="M12 1v6m0 6v6m5.657-13.657l-4.243 4.243m0 6l-4.243 4.243m13.657-5.657l-6-6m-6 6l-6-6"></path>
+              <path d="M12 1v6M12 17v6M5.64 5.64l4.24 4.24M14.12 14.12l4.24 4.24M1 12h6M17 12h6M5.64 18.36l4.24-4.24M14.12 9.88l4.24-4.24"></path>
             </svg>
             <span>Settings</span>
           </button>

@@ -138,14 +138,9 @@
   color: var(--color-yellow-primary);
 }
 
-.profile-dropdown-item:hover svg {
-  transform: translateX(2px);
-}
-
 .profile-dropdown-item svg {
   color: var(--color-yellow-primary);
   flex-shrink: 0;
-  transition: transform 0.2s ease;
 }
 
 .profile-dropdown-logout {
