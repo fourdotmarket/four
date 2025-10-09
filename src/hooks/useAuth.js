@@ -58,21 +58,34 @@ export function useAuth() {
           status: error.response?.status
         });
 
-        // FALLBACK: Create temporary user from Privy data
+        // FALLBACK: Create user from Privy data
         console.log('⚠️ Using fallback user data from Privy');
+        
+        // Get username from different sources
+        let username = null;
+        if (privyUser.email?.address) {
+          username = privyUser.email.address.split('@')[0];
+        } else if (privyUser.google?.email) {
+          username = privyUser.google.email.split('@')[0];
+        } else if (privyUser.twitter?.username) {
+          username = privyUser.twitter.username;
+        } else if (privyUser.wallet?.address) {
+          // Format wallet as username: 0x1234...abcd
+          const addr = privyUser.wallet.address;
+          username = `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+        }
+
         const fallbackUser = {
-          username: privyUser.email?.address?.split('@')[0] || 
-                   privyUser.google?.email?.split('@')[0] || 
-                   privyUser.twitter?.username || 
-                   'User',
+          username: username,
           email: privyUser.email?.address || 
                 privyUser.google?.email || 
-                privyUser.twitter?.username,
+                privyUser.twitter?.username || null,
           wallet_address: privyUser.wallet?.address || null,
           provider: privyUser.email ? 'email' : 
                    privyUser.google ? 'google' : 
                    privyUser.twitter ? 'twitter' : 'unknown'
         };
+        
         console.log('📝 Fallback user:', fallbackUser);
         setUser(fallbackUser);
       } finally {

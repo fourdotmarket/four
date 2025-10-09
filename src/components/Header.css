@@ -161,7 +161,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 5px 15px 5px 5px;
+  padding: 5px 12px 5px 5px;
   background: rgba(255, 212, 59, 0.08);
   border: 1px solid rgba(255, 212, 59, 0.2);
   border-radius: 24px;
@@ -169,11 +169,18 @@
   transition: all 0.3s ease;
   height: auto;
   min-height: 34px;
+  position: relative;
 }
 
 .header-profile:hover {
   background: rgba(255, 212, 59, 0.12);
   border-color: rgba(255, 212, 59, 0.3);
+}
+
+.header-profile.active {
+  background: rgba(255, 212, 59, 0.15);
+  border-color: rgba(255, 212, 59, 0.4);
+  box-shadow: 0 0 15px rgba(255, 212, 59, 0.2);
 }
 
 .header-profile-avatar {
@@ -197,6 +204,16 @@
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.3px;
+}
+
+.header-profile-chevron {
+  color: var(--color-yellow-primary);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.header-profile.active .header-profile-chevron {
+  transform: rotate(180deg);
 }
 
 .header-loading {

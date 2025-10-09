@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import DepositModal from './DepositModal';
+import ProfileDropdown from './ProfileDropdown';
 import './Header.css';
 
 export default function Header() {
-  const { ready, authenticated, login } = usePrivy();
+  const { ready, authenticated, login, logout } = usePrivy();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const profileRef = useRef(null);
 
   useEffect(() => {
     console.log('🔍 Header Debug:', {
@@ -30,6 +33,15 @@ export default function Header() {
       console.warn('⚠️ No wallet address available for deposit');
       alert('Wallet address not available. Please try refreshing the page.');
     }
+  };
+
+  const handleProfileClick = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setShowProfileDropdown(false);
   };
 
   return (
@@ -92,12 +104,37 @@ export default function Header() {
                 DEPOSIT
               </button>
               
-              <div className="header-profile">
+              <div 
+                ref={profileRef}
+                className={`header-profile ${showProfileDropdown ? 'active' : ''}`}
+                onClick={handleProfileClick}
+              >
                 <div className="header-profile-avatar">
-                  {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
+                  {user.username ? user.username.charAt(0).toUpperCase() : '?'}
                 </div>
-                <span className="header-profile-name">{user.username || 'User'}</span>
+                <span className="header-profile-name">{user.username}</span>
+                <svg 
+                  className="header-profile-chevron" 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
               </div>
+
+              {showProfileDropdown && (
+                <ProfileDropdown 
+                  user={user}
+                  onLogout={handleLogout}
+                  onClose={() => setShowProfileDropdown(false)}
+                />
+              )}
             </>
           )}
           
