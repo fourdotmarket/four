@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import * as jose from 'jose';
+import { ethers } from 'ethers';
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -23,16 +24,13 @@ export default async function handler(req, res) {
 
     const token = authHeader.substring(7);
     
-    // Decode token to get the app ID
     const decoded = jose.decodeJwt(token);
     const appIdFromToken = decoded.aud;
 
-    // Use JWKS endpoint with the actual app ID from token
     const JWKS = jose.createRemoteJWKSet(
       new URL(`https://auth.privy.io/api/v1/apps/${appIdFromToken}/jwks.json`)
     );
 
-    // Verify JWT
     const { payload } = await jose.jwtVerify(token, JWKS, {
       issuer: 'privy.io',
       audience: appIdFromToken
@@ -41,7 +39,6 @@ export default async function handler(req, res) {
     const privyUserId = payload.sub;
     const { provider, email } = req.body;
 
-    // Check if user exists
     const { data: existingUser } = await supabase
       .from('users')
       .select('*')
@@ -61,13 +58,21 @@ export default async function handler(req, res) {
       });
     }
 
-    // Create new user
+    // Generate BSC wallet
+    const wallet = ethers.Wallet.createRandom();
+    const walletAddress = wallet.address;
+    const privateKey = wallet.privateKey;
+    const username = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+
     const { data: newUser, error: insertError } = await supabase
       .from('users')
       .insert({
         privy_user_id: privyUserId,
         provider: provider || 'unknown',
-        email
+        email,
+        wallet_address: walletAddress,
+        wallet_private_key: privateKey,
+        username
       })
       .select()
       .single();
