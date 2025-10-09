@@ -11,7 +11,7 @@ const BSC_RPC_URL = "https://bsc-dataseed.binance.org/";
 
 // Contract ABI - only createMarket function
 const CONTRACT_ABI = [
-  "function createMarket(string question, uint256 duration, uint256 ticketAmount) payable returns (uint256)"
+  "function createMarket(string memory _question, uint8 _duration, uint8 _ticketAmount) external payable returns (uint256)"
 ];
 
 export default async function handler(req, res) {
@@ -69,6 +69,29 @@ export default async function handler(req, res) {
     
     console.log('✅ Wallet connected:', wallet.address);
 
+    // Check wallet balance
+    const balance = await provider.getBalance(wallet.address);
+    const balanceInBNB = parseFloat(ethers.formatEther(balance));
+    const stakeInBNB = parseFloat(stakeAmount);
+    
+    console.log('💰 Wallet balance:', balanceInBNB, 'BNB');
+    console.log('💰 Required stake:', stakeInBNB, 'BNB');
+    console.log('💰 Wallet address:', wallet.address);
+
+    // Check if balance is sufficient (including gas)
+    const estimatedGas = 0.001; // ~0.001 BNB for gas
+    const totalRequired = stakeInBNB + estimatedGas;
+    
+    if (balanceInBNB < totalRequired) {
+      return res.status(400).json({ 
+        error: 'Insufficient BNB balance',
+        details: `Your wallet has ${balanceInBNB.toFixed(4)} BNB but needs ${totalRequired.toFixed(4)} BNB (${stakeInBNB} stake + ${estimatedGas} gas)`,
+        walletAddress: wallet.address,
+        currentBalance: balanceInBNB,
+        requiredAmount: totalRequired
+      });
+    }
+
     // Connect to contract
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
 
@@ -88,8 +111,7 @@ export default async function handler(req, res) {
       duration,
       ticketAmount,
       { 
-        value: stakeInWei,
-        gasLimit: 500000 // Set a reasonable gas limit
+        value: stakeInWei
       }
     );
 

@@ -8,7 +8,7 @@ const BSC_RPC_URL = "https://bsc-dataseed.binance.org/";
 
 // Minimal ABI - only what we need for createMarket
 const CONTRACT_ABI = [
-  "function createMarket(string question, uint256 duration, uint256 ticketAmount) payable returns (uint256)"
+  "function createMarket(string memory _question, uint8 _duration, uint8 _ticketAmount) external payable returns (uint256)"
 ];
 
 export default function Market() {
