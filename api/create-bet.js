@@ -149,22 +149,50 @@ export default async function handler(req, res) {
 
     console.log('📊 Market ID:', marketId);
 
-    // Call webhook to save market data
+    // Save market data directly to Supabase (instead of webhook)
     if (eventData) {
       try {
-        const webhookUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        await fetch(`${webhookUrl}/api/market-webhook`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...eventData,
-            txHash: tx.hash,
-            blockNumber: receipt.blockNumber
-          })
-        });
-        console.log('✅ Webhook called successfully');
-      } catch (webhookError) {
-        console.error(⚠️ Webhook failed (non-critical):', webhookError.message);
+        // Get creator info
+        const { data: creator } = await supabase
+          .from('users')
+          .select('user_id, username')
+          .eq('wallet_address', eventData.marketMaker)
+          .single();
+
+        if (creator) {
+          // Convert Wei to BNB
+          const stakeInBNB = parseFloat(ethers.formatEther(eventData.marketMakerStake));
+          const ticketPriceInBNB = parseFloat(ethers.formatEther(eventData.ticketPrice));
+
+          // Insert market into database
+          const { error: insertError } = await supabase
+            .from('markets')
+            .insert({
+              market_id: eventData.marketId,
+              question: eventData.question,
+              creator_id: creator.user_id,
+              creator_username: creator.username,
+              creator_wallet: eventData.marketMaker,
+              stake: stakeInBNB,
+              ticket_price: ticketPriceInBNB,
+              total_tickets: parseInt(eventData.totalTickets),
+              tickets_sold: 0,
+              deadline: parseInt(eventData.deadline),
+              created_at_timestamp: parseInt(eventData.createdAt),
+              tx_hash: tx.hash,
+              block_number: receipt.blockNumber,
+              status: 'active',
+              banner_url: null
+            });
+
+          if (insertError) {
+            console.error(⚠️ Failed to save market to DB:', insertError);
+          } else {
+            console.log('✅ Market saved to database');
+          }
+        }
+      } catch (dbError) {
+        console.error('⚠️ Database save failed (non-critical):', dbError.message);
       }
     }
 
