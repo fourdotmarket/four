@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { useAuth } from '../hooks/useAuth';
+import { useTransactions } from '../hooks/useTransactions';
+import { usePositions } from '../hooks/usePositions';
 import './Bet.css';
 
 const supabase = createClient(
@@ -12,11 +15,18 @@ const supabase = createClient(
 export default function Bet() {
   const { betId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('history');
+  const [activeTab, setActiveTab] = useState('transactions');
   const [ticketAmount, setTicketAmount] = useState(1);
+  const [isBuying, setIsBuying] = useState(false);
+  const [buyStatus, setBuyStatus] = useState('');
+
+  // Real-time data hooks
+  const { transactions, loading: txLoading } = useTransactions(market?.market_id);
+  const { positions, totalTickets, totalSpent, loading: posLoading } = usePositions(user?.user_id, market?.market_id);
 
   // Convert bet ID back to market_id
   const getMarketIdFromBetId = async (betId) => {
@@ -51,6 +61,32 @@ export default function Bet() {
     fetchMarket();
   }, [betId]);
 
+  // Real-time market updates
+  useEffect(() => {
+    if (!market) return;
+
+    const channel = supabase
+      .channel(`market-${market.market_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'markets',
+          filter: `market_id=eq.${market.market_id}`
+        },
+        (payload) => {
+          console.log('📊 Market updated:', payload.new);
+          setMarket(payload.new);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [market]);
+
   const fetchMarket = async () => {
     try {
       setLoading(true);
@@ -83,9 +119,101 @@ export default function Bet() {
     navigate(-1);
   };
 
-  const handleBuyTickets = () => {
-    // TODO: Implement buy tickets functionality
-    alert(`Buying ${ticketAmount} ticket(s)`);
+  const handleBuyTickets = async () => {
+    if (!user || !user.user_id) {
+      alert('Please sign in to buy tickets');
+      return;
+    }
+
+    if (ticketAmount < 1) {
+      alert('Please select at least 1 ticket');
+      return;
+    }
+
+    if (ticketAmount > ticketsRemaining) {
+      alert(`Only ${ticketsRemaining} tickets remaining`);
+      return;
+    }
+
+    try {
+      setIsBuying(true);
+      setBuyStatus('Preparing transaction...');
+
+      console.log('🎟️ Buying tickets:', {
+        user_id: user.user_id,
+        market_id: market.market_id,
+        ticket_count: ticketAmount
+      });
+
+      setBuyStatus('Submitting to blockchain...');
+
+      const response = await fetch('/api/buy-tickets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user.user_id,
+          market_id: market.market_id,
+          ticket_count: ticketAmount
+        })
+      });
+
+      const contentType = response.headers.get('content-type');
+      let result;
+
+      if (contentType && contentType.includes('application/json')) {
+        result = await response.json();
+      } else {
+        const text = await response.text();
+        console.error('❌ Server returned HTML instead of JSON:', text.substring(0, 200));
+        throw new Error('Server error: Received HTML instead of JSON response. Check server logs.');
+      }
+
+      if (!response.ok) {
+        throw new Error(result.error || result.details || 'Failed to buy tickets');
+      }
+      
+      console.log('✅ Tickets purchased!');
+      console.log('TX Hash:', result.txHash);
+
+      setBuyStatus(`Success! TX: ${result.txHash.slice(0, 10)}...`);
+
+      // Reset after 2 seconds
+      setTimeout(() => {
+        setBuyStatus('');
+        setIsBuying(false);
+        setTicketAmount(1);
+      }, 2000);
+
+    } catch (error) {
+      console.error('❌ Error buying tickets:', error);
+      setBuyStatus('');
+      setIsBuying(false);
+      
+      let errorMessage = error.message;
+      
+      if (error.message.includes('Received HTML instead of JSON')) {
+        errorMessage = 'Server error occurred. Please check that:\n1. Your API endpoint is working\n2. Environment variables are set\n3. Check Vercel logs for details';
+      }
+      
+      alert(`Failed to buy tickets: ${errorMessage}`);
+    }
+  };
+
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp * 1000);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  };
+
+  const getBSCScanUrl = (txHash) => {
+    return `https://bscscan.com/tx/${txHash}`;
   };
 
   if (loading) {
@@ -252,7 +380,7 @@ export default function Bet() {
                 <button 
                   className="bet-amount-btn"
                   onClick={() => setTicketAmount(Math.max(1, ticketAmount - 1))}
-                  disabled={ticketAmount <= 1}
+                  disabled={ticketAmount <= 1 || isBuying}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -265,11 +393,12 @@ export default function Bet() {
                   onChange={(e) => setTicketAmount(Math.max(1, Math.min(ticketsRemaining, parseInt(e.target.value) || 1)))}
                   min="1"
                   max={ticketsRemaining}
+                  disabled={isBuying}
                 />
                 <button 
                   className="bet-amount-btn"
                   onClick={() => setTicketAmount(Math.min(ticketsRemaining, ticketAmount + 1))}
-                  disabled={ticketAmount >= ticketsRemaining}
+                  disabled={ticketAmount >= ticketsRemaining || isBuying}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -284,24 +413,28 @@ export default function Bet() {
               <button 
                 className={`bet-quick-btn ${ticketAmount === 1 ? 'active' : ''}`}
                 onClick={() => setTicketAmount(1)}
+                disabled={isBuying}
               >
                 1
               </button>
               <button 
                 className={`bet-quick-btn ${ticketAmount === 5 ? 'active' : ''}`}
                 onClick={() => setTicketAmount(Math.min(5, ticketsRemaining))}
+                disabled={isBuying}
               >
                 5
               </button>
               <button 
                 className={`bet-quick-btn ${ticketAmount === 10 ? 'active' : ''}`}
                 onClick={() => setTicketAmount(Math.min(10, ticketsRemaining))}
+                disabled={isBuying}
               >
                 10
               </button>
               <button 
                 className="bet-quick-btn"
                 onClick={() => setTicketAmount(ticketsRemaining)}
+                disabled={isBuying}
               >
                 MAX
               </button>
@@ -315,9 +448,33 @@ export default function Bet() {
               </div>
             </div>
 
+            {/* Buy Status */}
+            {buyStatus && (
+              <div style={{ 
+                textAlign: 'center', 
+                color: 'var(--color-yellow-primary)', 
+                fontSize: '12px',
+                marginTop: '-8px',
+                fontWeight: '600',
+                fontFamily: "'Courier New', monospace"
+              }}>
+                {buyStatus}
+              </div>
+            )}
+
             {/* Buy Button */}
-            <button className="bet-buy-button" onClick={handleBuyTickets}>
-              <span>BUY {ticketAmount} TICKET{ticketAmount > 1 ? 'S' : ''}</span>
+            <button 
+              className="bet-buy-button" 
+              onClick={handleBuyTickets}
+              disabled={isBuying || ticketsRemaining === 0}
+              style={{ 
+                opacity: (isBuying || ticketsRemaining === 0) ? 0.6 : 1, 
+                cursor: (isBuying || ticketsRemaining === 0) ? 'not-allowed' : 'pointer' 
+              }}
+            >
+              <span>
+                {isBuying ? 'BUYING...' : ticketsRemaining === 0 ? 'SOLD OUT' : `BUY ${ticketAmount} TICKET${ticketAmount > 1 ? 'S' : ''}`}
+              </span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
                 <polyline points="12 5 19 12 12 19"></polyline>
@@ -331,10 +488,10 @@ export default function Bet() {
       <div className="bet-tabs-container">
         <div className="bet-tabs-header">
           <button 
-            className={`bet-tab ${activeTab === 'history' ? 'active' : ''}`}
-            onClick={() => setActiveTab('history')}
+            className={`bet-tab ${activeTab === 'transactions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('transactions')}
           >
-            HISTORY
+            TRANSACTIONS
           </button>
           <button 
             className={`bet-tab ${activeTab === 'positions' ? 'active' : ''}`}
@@ -351,28 +508,127 @@ export default function Bet() {
         </div>
 
         <div className="bet-tabs-content">
-          {activeTab === 'history' && (
+          {activeTab === 'transactions' && (
             <div className="bet-tab-panel">
-              <div className="bet-empty-state">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                <p>No transaction history yet</p>
-              </div>
+              {txLoading ? (
+                <div className="bet-empty-state">
+                  <div className="loading-spinner"></div>
+                  <p>Loading transactions...</p>
+                </div>
+              ) : transactions.length === 0 ? (
+                <div className="bet-empty-state">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="9" y1="21" x2="9" y2="9"></line>
+                  </svg>
+                  <p>No transactions yet</p>
+                </div>
+              ) : (
+                <div className="bet-transactions-table">
+                  <div className="bet-table-header">
+                    <div className="bet-table-cell">USER</div>
+                    <div className="bet-table-cell">TICKETS</div>
+                    <div className="bet-table-cell">BNB</div>
+                    <div className="bet-table-cell">TIME</div>
+                    <div className="bet-table-cell">TX</div>
+                  </div>
+                  {transactions.map((tx) => (
+                    <div key={tx.transaction_id} className="bet-table-row">
+                      <div className="bet-table-cell bet-table-user">
+                        {tx.buyer_username}
+                        {user && tx.buyer_id === user.user_id && (
+                          <span className="bet-table-badge">YOU</span>
+                        )}
+                      </div>
+                      <div className="bet-table-cell">{tx.ticket_count}</div>
+                      <div className="bet-table-cell">{tx.total_cost.toFixed(4)}</div>
+                      <div className="bet-table-cell">{formatTime(tx.timestamp)}</div>
+                      <div className="bet-table-cell">
+                        <a 
+                          href={getBSCScanUrl(tx.tx_hash)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="bet-table-link"
+                        >
+                          {tx.tx_hash.slice(0, 6)}...{tx.tx_hash.slice(-4)}
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {activeTab === 'positions' && (
             <div className="bet-tab-panel">
-              <div className="bet-empty-state">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="3" y1="9" x2="21" y2="9"></line>
-                  <line x1="9" y1="21" x2="9" y2="9"></line>
-                </svg>
-                <p>You don't have any positions yet</p>
-              </div>
+              {!user ? (
+                <div className="bet-empty-state">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <p>Sign in to view your positions</p>
+                </div>
+              ) : posLoading ? (
+                <div className="bet-empty-state">
+                  <div className="loading-spinner"></div>
+                  <p>Loading positions...</p>
+                </div>
+              ) : positions.length === 0 ? (
+                <div className="bet-empty-state">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="9" y1="21" x2="9" y2="9"></line>
+                  </svg>
+                  <p>You don't have any positions yet</p>
+                </div>
+              ) : (
+                <div className="bet-positions-container">
+                  <div className="bet-positions-summary">
+                    <div className="bet-position-stat">
+                      <span className="bet-position-label">TOTAL TICKETS</span>
+                      <span className="bet-position-value">{totalTickets}</span>
+                    </div>
+                    <div className="bet-position-stat">
+                      <span className="bet-position-label">TOTAL SPENT</span>
+                      <span className="bet-position-value">{totalSpent.toFixed(4)} BNB</span>
+                    </div>
+                    <div className="bet-position-stat">
+                      <span className="bet-position-label">AVG PRICE</span>
+                      <span className="bet-position-value">{(totalSpent / totalTickets).toFixed(4)} BNB</span>
+                    </div>
+                  </div>
+
+                  <div className="bet-transactions-table">
+                    <div className="bet-table-header">
+                      <div className="bet-table-cell">TICKETS</div>
+                      <div className="bet-table-cell">BNB</div>
+                      <div className="bet-table-cell">TIME</div>
+                      <div className="bet-table-cell">TX</div>
+                    </div>
+                    {positions.map((pos) => (
+                      <div key={pos.transaction_id} className="bet-table-row">
+                        <div className="bet-table-cell">{pos.ticket_count}</div>
+                        <div className="bet-table-cell">{pos.total_cost.toFixed(4)}</div>
+                        <div className="bet-table-cell">{formatTime(pos.timestamp)}</div>
+                        <div className="bet-table-cell">
+                          <a 
+                            href={getBSCScanUrl(pos.tx_hash)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="bet-table-link"
+                          >
+                            {pos.tx_hash.slice(0, 6)}...{pos.tx_hash.slice(-4)}
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
