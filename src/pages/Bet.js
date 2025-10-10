@@ -28,6 +28,245 @@ const COLORS = [
   '#6C5CE7', // Deep Purple
 ];
 
+// Component to show all user positions across all markets
+function AllUserPositions({ userId }) {
+  const navigate = useNavigate();
+  const [allPositions, setAllPositions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Function to generate bet ID from market ID
+  const generateBetId = (marketId) => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const seed = parseInt(marketId);
+    let result = '';
+    let num = seed;
+    
+    for (let i = 0; i < 8; i++) {
+      result += chars[num % chars.length];
+      num = Math.floor(num / chars.length) + seed * (i + 1);
+    }
+    
+    return result;
+  };
+
+  useEffect(() => {
+    fetchAllPositions();
+
+    // Real-time subscription to all user transactions
+    const channel = supabase
+      .channel(`all-user-positions-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'transactions',
+          filter: `buyer_id=eq.${userId}`
+        },
+        (payload) => {
+          console.log('🆕 New position:', payload.new);
+          fetchAllPositions(); // Refetch to get market info
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
+  const fetchAllPositions = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch all transactions for this user with market info
+      const { data: transactions, error: txError } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          markets (
+            market_id,
+            question,
+            status
+          )
+        `)
+        .eq('buyer_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (txError) throw txError;
+
+      // Group by market and calculate totals
+      const marketMap = {};
+      
+      transactions.forEach(tx => {
+        const marketId = tx.market_id;
+        
+        if (!marketMap[marketId]) {
+          marketMap[marketId] = {
+            market_id: marketId,
+            question: tx.markets?.question || 'Unknown Market',
+            status: tx.markets?.status || 'unknown',
+            tickets: 0,
+            spent: 0,
+            transactions: []
+          };
+        }
+        
+        marketMap[marketId].tickets += tx.ticket_count;
+        marketMap[marketId].spent += tx.total_cost;
+        marketMap[marketId].transactions.push(tx);
+      });
+
+      // Convert to array and add bet IDs
+      const positionsArray = Object.values(marketMap).map(market => ({
+        ...market,
+        betId: generateBetId(market.market_id),
+        lastTransaction: market.transactions[0] // Most recent
+      }));
+
+      setAllPositions(positionsArray);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching all positions:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+
+  const getBSCScanUrl = (txHash) => {
+    return `https://bscscan.com/tx/${txHash}`;
+  };
+
+  const handleBetClick = (betId) => {
+    navigate(`/bet/${betId}`);
+  };
+
+  const totalTickets = allPositions.reduce((sum, pos) => sum + pos.tickets, 0);
+  const totalSpent = allPositions.reduce((sum, pos) => sum + pos.spent, 0);
+
+  if (loading) {
+    return (
+      <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
+        <div className="loading-spinner"></div>
+        <p>Loading positions...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
+        <p style={{ color: '#ff6b6b' }}>Error loading positions</p>
+      </div>
+    );
+  }
+
+  if (allPositions.length === 0) {
+    return (
+      <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        <p>You don't have any positions yet</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bet-positions-container" style={{ padding: '24px' }}>
+      <div className="bet-positions-summary">
+        <div className="bet-position-stat">
+          <span className="bet-position-label">TOTAL TICKETS</span>
+          <span className="bet-position-value">{totalTickets}</span>
+        </div>
+        <div className="bet-position-stat">
+          <span className="bet-position-label">TOTAL SPENT</span>
+          <span className="bet-position-value">{totalSpent.toFixed(4)} BNB</span>
+        </div>
+      </div>
+
+      <div className="bet-transactions-table" style={{ marginTop: '24px' }}>
+        <div className="bet-table-header" style={{ gridTemplateColumns: '0.8fr 2.5fr 1fr 1fr 1.2fr' }}>
+          <div className="bet-table-cell">TICKETS</div>
+          <div className="bet-table-cell">BET</div>
+          <div className="bet-table-cell">BET ID</div>
+          <div className="bet-table-cell">DATE</div>
+          <div className="bet-table-cell">TX</div>
+        </div>
+        <div className="bet-table-body">
+          {allPositions.map((position) => (
+            <div key={position.market_id} className="bet-table-row" style={{ gridTemplateColumns: '0.8fr 2.5fr 1fr 1fr 1.2fr' }}>
+              <div className="bet-table-cell">{position.tickets}</div>
+              <div className="bet-table-cell" style={{ 
+                overflow: 'hidden', 
+                textOverflow: 'ellipsis', 
+                whiteSpace: 'nowrap' 
+              }}>
+                {position.question}
+              </div>
+              <div className="bet-table-cell">
+                <button
+                  onClick={() => handleBetClick(position.betId)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#FFD43B',
+                    cursor: 'pointer',
+                    fontFamily: "'Courier New', monospace",
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    textDecoration: 'underline',
+                    padding: 0
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = '#FCD535'}
+                  onMouseLeave={(e) => e.target.style.color = '#FFD43B'}
+                >
+                  {position.betId}
+                </button>
+              </div>
+              <div className="bet-table-cell">
+                {formatDate(position.lastTransaction.created_at)}
+              </div>
+              <div className="bet-table-cell">
+                <a 
+                  href={getBSCScanUrl(position.lastTransaction.tx_hash)} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="bet-table-link"
+                >
+                  {position.lastTransaction.tx_hash.slice(0, 6)}...{position.lastTransaction.tx_hash.slice(-4)}
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Bet() {
   const { betId } = useParams();
   const navigate = useNavigate();
@@ -655,65 +894,8 @@ export default function Bet() {
                   </svg>
                   <p>Sign in to view your positions</p>
                 </div>
-              ) : posLoading ? (
-                <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
-                  <div className="loading-spinner"></div>
-                  <p>Loading positions...</p>
-                </div>
-              ) : positions.length === 0 ? (
-                <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="3" y1="9" x2="21" y2="9"></line>
-                    <line x1="9" y1="21" x2="9" y2="9"></line>
-                  </svg>
-                  <p>You don't have any positions yet</p>
-                </div>
               ) : (
-                <div className="bet-positions-container" style={{ padding: '24px' }}>
-                  <div className="bet-positions-summary">
-                    <div className="bet-position-stat">
-                      <span className="bet-position-label">TOTAL TICKETS</span>
-                      <span className="bet-position-value">{totalTickets}</span>
-                    </div>
-                    <div className="bet-position-stat">
-                      <span className="bet-position-label">TOTAL SPENT</span>
-                      <span className="bet-position-value">{totalSpent.toFixed(4)} BNB</span>
-                    </div>
-                    <div className="bet-position-stat">
-                      <span className="bet-position-label">AVG PRICE</span>
-                      <span className="bet-position-value">{(totalSpent / totalTickets).toFixed(4)} BNB</span>
-                    </div>
-                  </div>
-
-                  <div className="bet-transactions-table" style={{ marginTop: '24px' }}>
-                    <div className="bet-table-header">
-                      <div className="bet-table-cell">TICKETS</div>
-                      <div className="bet-table-cell">BNB</div>
-                      <div className="bet-table-cell">TIME</div>
-                      <div className="bet-table-cell">TX</div>
-                    </div>
-                    <div className="bet-table-body">
-                      {positions.map((pos) => (
-                        <div key={pos.transaction_id} className="bet-table-row">
-                          <div className="bet-table-cell">{pos.ticket_count}</div>
-                          <div className="bet-table-cell">{pos.total_cost.toFixed(4)}</div>
-                          <div className="bet-table-cell">{formatTime(pos.timestamp)}</div>
-                          <div className="bet-table-cell">
-                            <a 
-                              href={getBSCScanUrl(pos.tx_hash)} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="bet-table-link"
-                            >
-                              {pos.tx_hash.slice(0, 6)}...{pos.tx_hash.slice(-4)}
-                            </a>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <AllUserPositions userId={user.user_id} />
               )}
             </div>
           )}
