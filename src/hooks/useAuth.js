@@ -59,7 +59,7 @@ export function useAuth() {
         });
 
         // FALLBACK: Create user from Privy data
-        console.log(⚠️ Using fallback user data from Privy');
+        console.log('⚠️ Using fallback user data from Privy');
         
         // Get username from different sources
         let username = null;
