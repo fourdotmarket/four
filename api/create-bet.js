@@ -1,5 +1,5 @@
-const { createClient } = require('@supabase/supabase-js');
-const { ethers } = require('ethers');
+import { createClient } from '@supabase/supabase-js';
+import { ethers } from 'ethers';
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -14,18 +14,22 @@ const CONTRACT_ABI = [
   "event MarketCreated(uint256 indexed marketId, string question, address indexed marketMaker, uint256 marketMakerStake, uint256 ticketPrice, uint256 totalTickets, uint256 deadline, uint256 createdAt)"
 ];
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
+  // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   try {
     const { user_id, question, stakeAmount, duration, ticketAmount } = req.body;
 
+    // Validation
     if (!user_id || !question || !stakeAmount || duration === undefined || ticketAmount === undefined) {
       return res.status(400).json({ 
         error: 'Missing required fields',
@@ -33,8 +37,9 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    console.log('📝 Creating bet for user:', user_id);
+    console.log('🔍 Creating bet for user:', user_id);
 
+    // Fetch user from database
     const { data: userData, error: fetchError } = await supabase
       .from('users')
       .select('wallet_address, wallet_private_key, username')
@@ -53,11 +58,13 @@ module.exports = async function handler(req, res) {
 
     console.log('✅ User found:', userData.wallet_address);
 
+    // Connect to BSC
     const provider = new ethers.JsonRpcProvider(BSC_RPC_URL);
     const wallet = new ethers.Wallet(userData.wallet_private_key, provider);
     
     console.log('✅ Wallet connected:', wallet.address);
 
+    // Check balance
     const balance = await provider.getBalance(wallet.address);
     const balanceInBNB = parseFloat(ethers.formatEther(balance));
     const stakeInBNB = parseFloat(stakeAmount);
@@ -65,7 +72,7 @@ module.exports = async function handler(req, res) {
     console.log('💰 Wallet balance:', balanceInBNB, 'BNB');
     console.log('💰 Required stake:', stakeInBNB, 'BNB');
 
-    const estimatedGas = 0.001;
+    const estimatedGas = 0.001; // ~0.001 BNB for gas
     const totalRequired = stakeInBNB + estimatedGas;
     
     if (balanceInBNB < totalRequired) {
@@ -78,6 +85,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // Create contract instance
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
     const stakeInWei = ethers.parseEther(stakeAmount.toString());
 
@@ -88,9 +96,14 @@ module.exports = async function handler(req, res) {
       stakeInWei: stakeInWei.toString()
     });
 
-    const tx = await contract.createMarket(question, duration, ticketAmount, { value: stakeInWei });
+    // Send transaction
+    const tx = await contract.createMarket(question, duration, ticketAmount, { 
+      value: stakeInWei 
+    });
+    
     console.log('⏳ Transaction sent:', tx.hash);
 
+    // Wait for confirmation with timeout
     const receipt = await Promise.race([
       tx.wait(),
       new Promise((_, reject) => 
@@ -100,6 +113,7 @@ module.exports = async function handler(req, res) {
 
     console.log('✅ Transaction confirmed! Block:', receipt.blockNumber);
 
+    // Parse event logs to get market ID
     let marketId = null;
     let eventData = null;
 
@@ -121,12 +135,13 @@ module.exports = async function handler(req, res) {
           break;
         }
       } catch (e) {
-        // Skip logs that don't match
+        // Skip logs that don't match our event
       }
     }
 
     console.log('📊 Market ID:', marketId);
 
+    // Save to database
     if (eventData) {
       try {
         const stakeInBNB = parseFloat(ethers.formatEther(eventData.marketMakerStake));
@@ -157,7 +172,7 @@ module.exports = async function handler(req, res) {
           .single();
 
         if (insertError) {
-          console.error(⚠️ Failed to save market to DB:', insertError);
+          console.error('⚠️ Failed to save market to DB:', insertError);
         } else {
           console.log('✅ Market saved to database:', insertedMarket);
         }
@@ -178,6 +193,7 @@ module.exports = async function handler(req, res) {
   } catch (error) {
     console.error('❌ Error creating bet:', error);
     
+    // Handle specific error types
     if (error.code === 'INSUFFICIENT_FUNDS') {
       return res.status(400).json({ 
         error: 'Insufficient BNB balance',
@@ -204,4 +220,4 @@ module.exports = async function handler(req, res) {
       details: error.message 
     });
   }
-};
+}

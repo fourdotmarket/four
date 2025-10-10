@@ -164,7 +164,7 @@ export default function Market() {
       const duration = expiryToDuration[expiry];
       const ticketAmount = ticketsToAmount[tickets];
 
-      console.log('📝 Creating market with:', {
+      console.log('🔍 Creating market with:', {
         user_id: user.user_id,
         question: prediction,
         stakeAmount: stake,
@@ -189,12 +189,22 @@ export default function Market() {
         })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create bet');
+      // Better error handling for non-JSON responses
+      const contentType = response.headers.get('content-type');
+      let result;
+
+      if (contentType && contentType.includes('application/json')) {
+        result = await response.json();
+      } else {
+        // Server returned HTML error page
+        const text = await response.text();
+        console.error('❌ Server returned HTML instead of JSON:', text.substring(0, 200));
+        throw new Error('Server error: Received HTML instead of JSON response. Check server logs.');
       }
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || result.details || 'Failed to create bet');
+      }
       
       console.log('✅ Market created!');
       console.log('TX Hash:', result.txHash);
@@ -217,7 +227,15 @@ export default function Market() {
       console.error('❌ Error creating bet:', error);
       setCreationStatus('');
       setIsCreating(false);
-      alert(`Failed to create bet: ${error.message}`);
+      
+      // More user-friendly error messages
+      let errorMessage = error.message;
+      
+      if (error.message.includes('Received HTML instead of JSON')) {
+        errorMessage = 'Server error occurred. Please check that:\n1. Your API endpoint is working\n2. Environment variables are set\n3. Check Vercel logs for details';
+      }
+      
+      alert(`Failed to create bet: ${errorMessage}`);
     }
   };
 
