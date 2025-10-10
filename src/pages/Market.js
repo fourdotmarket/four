@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
 import './Market.css';
-import { ethers } from 'ethers';
 import { useAuth } from '../hooks/useAuth';
 import MarketCard from '../components/MarketCard';
 import { useMarkets } from '../hooks/useMarkets';
 
 const CONTRACT_ADDRESS = "0xB05bAeff61e6E2CfB85d383911912C3248e3214f";
-const BSC_RPC_URL = "https://bsc-dataseed.binance.org/";
-
-// Minimal ABI - only what we need for createMarket
-const CONTRACT_ABI = [
-  "function createMarket(string memory _question, uint8 _duration, uint8 _ticketAmount) external payable returns (uint256)"
-];
+const MIN_STAKE = 0.05;
+const MIN_PREDICTION_LENGTH = 50;
+const MAX_PREDICTION_LENGTH = 256;
 
 export default function Market() {
   const { user } = useAuth();
@@ -20,46 +16,23 @@ export default function Market() {
   const [isClosing, setIsClosing] = useState(false);
   const [prediction, setPrediction] = useState('');
   const [stake, setStake] = useState('0.05');
-  const [expiry, setExpiry] = useState('6');
+  const [expiry, setExpiry] = useState('24');
   const [tickets, setTickets] = useState('100');
-  const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [banner, setBanner] = useState(null);
   const [bannerPreview, setBannerPreview] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [creationStatus, setCreationStatus] = useState('');
 
-  const allowedChars = 'qwertyuiopasdfghjklzxcvbnm,.-;:1234567890 ';
-  const MIN_STAKE = 0.05;
+  const allowedChars = 'abcdefghijklmnopqrstuvwxyz0123456789 .,?!-';
 
   // Map expiry to duration index
   const expiryToDuration = {
-    '6': 0,   // 6h
-    '12': 1,  // 12h
-    '18': 2,  // 18h
-    '24': 3,  // 24h
-    '3d': 4,  // 3 days
-    '7d': 5   // 7 days
+    '6': 0, '12': 1, '24': 2, '3d': 3, '7d': 4
   };
 
   // Map tickets to ticketAmount index
   const ticketsToAmount = {
-    '1': 0,   // 1 ticket
-    '10': 1,  // 10 tickets
-    '50': 2,  // 50 tickets
-    '100': 3  // 100 tickets
-  };
-
-  const handleBannerDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      setBanner(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBannerPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+    '10': 0, '50': 1, '100': 2, '500': 3
   };
 
   const handleBannerSelect = (e) => {
@@ -67,9 +40,7 @@ export default function Market() {
     if (file && file.type.startsWith('image/')) {
       setBanner(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setBannerPreview(reader.result);
-      };
+      reader.onloadend = () => setBannerPreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
@@ -82,24 +53,20 @@ export default function Market() {
   const handlePredictionChange = (e) => {
     const value = e.target.value.toLowerCase();
     const filtered = value.split('').filter(char => allowedChars.includes(char)).join('');
-    if (filtered.length <= 256) {
+    if (filtered.length <= MAX_PREDICTION_LENGTH) {
       setPrediction(filtered);
     }
   };
 
   const handleStakeChange = (e) => {
     const value = e.target.value;
-    // Allow empty string for editing
     if (value === '') {
       setStake('');
       return;
     }
-    
     const numValue = parseFloat(value);
     if (!isNaN(numValue) && numValue >= MIN_STAKE) {
       setStake(value);
-    } else if (!isNaN(numValue) && numValue < MIN_STAKE) {
-      setStake(MIN_STAKE.toString());
     }
   };
 
@@ -112,18 +79,16 @@ export default function Market() {
   const resetForm = () => {
     setPrediction('');
     setStake('0.05');
-    setExpiry('6');
+    setExpiry('24');
     setTickets('100');
-    setShowMoreOptions(false);
+    setShowAdvanced(false);
     setBanner(null);
     setBannerPreview('');
-    setCreationStatus('');
     setIsCreating(false);
   };
 
   const handleClose = () => {
-    if (isCreating) return; // Prevent closing while creating
-    
+    if (isCreating) return;
     setIsClosing(true);
     setTimeout(() => {
       setShowCreateModal(false);
@@ -132,7 +97,7 @@ export default function Market() {
     }, 300);
   };
 
-  const handleOverlayMouseDown = (e) => {
+  const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget && !isCreating) {
       handleClose();
     }
@@ -145,6 +110,11 @@ export default function Market() {
       return;
     }
 
+    if (prediction.length < MIN_PREDICTION_LENGTH) {
+      alert(`Prediction must be at least ${MIN_PREDICTION_LENGTH} characters (currently ${prediction.length})`);
+      return;
+    }
+
     const stakeValue = parseFloat(stake);
     if (!stake || isNaN(stakeValue) || stakeValue < MIN_STAKE) {
       alert(`Please enter a valid stake amount (minimum ${MIN_STAKE} BNB)`);
@@ -152,19 +122,17 @@ export default function Market() {
     }
 
     if (!user || !user.user_id) {
-      alert('User not found. Please refresh and try again.');
+      alert('User not found. Please sign in and try again.');
       return;
     }
 
     try {
       setIsCreating(true);
-      setCreationStatus('Preparing transaction...');
 
-      // Convert parameters
       const duration = expiryToDuration[expiry];
       const ticketAmount = ticketsToAmount[tickets];
 
-      console.log('🔍 Creating market with:', {
+      console.log('📝 Creating market:', {
         user_id: user.user_id,
         question: prediction,
         stakeAmount: stake,
@@ -172,14 +140,9 @@ export default function Market() {
         ticketAmount
       });
 
-      setCreationStatus('Submitting to blockchain...');
-
-      // Call backend API to create the bet
       const response = await fetch('/api/create-bet', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: user.user_id,
           question: prediction,
@@ -189,17 +152,15 @@ export default function Market() {
         })
       });
 
-      // Better error handling for non-JSON responses
       const contentType = response.headers.get('content-type');
       let result;
 
       if (contentType && contentType.includes('application/json')) {
         result = await response.json();
       } else {
-        // Server returned HTML error page
         const text = await response.text();
-        console.error('❌ Server returned HTML instead of JSON:', text.substring(0, 200));
-        throw new Error('Server error: Received HTML instead of JSON response. Check server logs.');
+        console.error('❌ Server error:', text.substring(0, 200));
+        throw new Error('Server error occurred. Check server logs.');
       }
 
       if (!response.ok) {
@@ -210,41 +171,36 @@ export default function Market() {
       console.log('TX Hash:', result.txHash);
       console.log('Market ID:', result.marketId);
 
-      setCreationStatus(`Success! TX: ${result.txHash.slice(0, 10)}...`);
-
-      // Optional: Upload banner to storage if exists
+      // Banner upload would go here if needed
       if (banner) {
-        console.log('📸 Banner would be uploaded here for market:', result.marketId);
-        // TODO: Implement banner upload to IPFS or cloud storage
+        console.log('📸 Banner upload for market:', result.marketId);
       }
 
-      // Show success for 2 seconds then close
       setTimeout(() => {
         handleClose();
-      }, 2000);
+      }, 1500);
 
     } catch (error) {
       console.error('❌ Error creating bet:', error);
-      setCreationStatus('');
       setIsCreating(false);
-      
-      // More user-friendly error messages
-      let errorMessage = error.message;
-      
-      if (error.message.includes('Received HTML instead of JSON')) {
-        errorMessage = 'Server error occurred. Please check that:\n1. Your API endpoint is working\n2. Environment variables are set\n3. Check Vercel logs for details';
-      }
-      
-      alert(`Failed to create bet: ${errorMessage}`);
+      alert(`Failed to create bet: ${error.message}`);
     }
   };
 
+  const isPredictionValid = prediction.length >= MIN_PREDICTION_LENGTH;
+  const isStakeValid = parseFloat(stake) >= MIN_STAKE;
+  const canSubmit = isPredictionValid && isStakeValid && !isCreating;
+
   return (
     <div className="market-page">
+      {/* Header */}
       <div className="market-header">
-        <h1></h1>
+        <div className="market-title-section">
+          <h1 className="market-title">PREDICTION MARKETS</h1>
+          <p className="market-subtitle">Create or challenge predictions on the blockchain</p>
+        </div>
         <button className="market-create-btn" onClick={() => setShowCreateModal(true)}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
@@ -256,21 +212,29 @@ export default function Market() {
       {marketsLoading ? (
         <div className="market-loading">
           <div className="loading-spinner"></div>
-          <p>Loading markets...</p>
+          <p>LOADING MARKETS...</p>
         </div>
       ) : marketsError ? (
         <div className="market-error">
-          <p>Error loading markets: {marketsError}</p>
+          <div className="error-box">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p>ERROR LOADING MARKETS</p>
+            <span>{marketsError}</span>
+          </div>
         </div>
       ) : markets.length === 0 ? (
         <div className="market-empty">
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="3" y1="9" x2="21" y2="9"></line>
+            <line x1="9" y1="21" x2="9" y2="9"></line>
           </svg>
-          <h3>No active markets</h3>
-          <p>Be the first to create a prediction market!</p>
+          <h3>NO ACTIVE MARKETS</h3>
+          <p>Be the first to create a prediction market</p>
         </div>
       ) : (
         <div className="market-grid">
@@ -280,43 +244,48 @@ export default function Market() {
         </div>
       )}
 
+      {/* Create Modal */}
       {showCreateModal && (
         <div 
-          className={`create-modal-overlay ${isClosing ? 'closing' : ''}`} 
-          onMouseDown={handleOverlayMouseDown}
+          className={`create-modal-overlay ${isClosing ? 'closing' : ''}`}
+          onClick={handleOverlayClick}
         >
           <div 
-            className={`create-modal ${isClosing ? 'closing' : ''}`} 
+            className={`create-modal ${isClosing ? 'closing' : ''}`}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Close Button */}
             <button 
               className="create-modal-close" 
               onClick={handleClose}
               disabled={isCreating}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
 
+            {/* Header */}
             <div className="create-modal-header">
-              <h2>Create Bet</h2>
-              <p className="create-modal-explanation">
-                Challengers buy tickets. If you're wrong, challengers split your stake.
-              </p>
+              <h2>CREATE BET</h2>
+              <p>Make a prediction. Challengers buy tickets. Winner takes the pot.</p>
             </div>
 
-            <div className="create-modal-grid">
-              {/* Prediction - REQUIRED */}
-              <div className="create-field create-field-full">
+            {/* Content */}
+            <div className="create-modal-content">
+              {/* Prediction */}
+              <div className="create-field">
                 <label className="create-label">
-                  <span>PREDICTION *</span>
-                  <span className="create-char-count">{prediction.length}/256</span>
+                  <span>PREDICTION</span>
+                  <span className={`create-char-count ${prediction.length < MIN_PREDICTION_LENGTH ? 'invalid' : ''}`}>
+                    {prediction.length}/{MAX_PREDICTION_LENGTH} 
+                    {prediction.length < MIN_PREDICTION_LENGTH && ` (min ${MIN_PREDICTION_LENGTH})`}
+                  </span>
                 </label>
                 <textarea
-                  className="create-textarea"
-                  placeholder="enter your prediction..."
+                  className={`create-textarea ${prediction.length > 0 && prediction.length < MIN_PREDICTION_LENGTH ? 'invalid' : ''}`}
+                  placeholder="what will happen? be specific and clear..."
                   value={prediction}
                   onChange={handlePredictionChange}
                   rows="3"
@@ -324,84 +293,79 @@ export default function Market() {
                 />
               </div>
 
-              {/* Stake - REQUIRED, MIN 0.05 BNB */}
-              <div className="create-field">
-                <label className="create-label">
-                  <span>STAKE *</span>
-                </label>
-                <div className="create-input-wrapper">
-                  <input
-                    type="number"
-                    className="create-input"
-                    placeholder="0.05"
-                    value={stake}
-                    onChange={handleStakeChange}
-                    min={MIN_STAKE}
-                    step="0.01"
-                    disabled={isCreating}
-                  />
-                  <span className="create-input-badge">BNB</span>
-                </div>
-                <div className="create-hint">
-                  min {MIN_STAKE} BNB • {tickets} tickets × {calculateTicketPrice()} BNB
-                </div>
-              </div>
-
-              {/* Expiry - REQUIRED */}
-              <div className="create-field">
-                <label className="create-label">
-                  <span>EXPIRY *</span>
-                </label>
-                <div className="create-pills-expiry">
-                  {['6', '12', '18', '24', '3d', '7d'].map((time) => (
-                    <button
-                      key={time}
-                      className={`create-pill ${expiry === time ? 'active' : ''}`}
-                      onClick={() => !isCreating && setExpiry(time)}
+              {/* Grid: Stake + Expiry */}
+              <div className="create-grid">
+                <div className="create-field">
+                  <label className="create-label">STAKE</label>
+                  <div className="create-input-group">
+                    <input
+                      type="number"
+                      className="create-input"
+                      placeholder="0.05"
+                      value={stake}
+                      onChange={handleStakeChange}
+                      min={MIN_STAKE}
+                      step="0.01"
                       disabled={isCreating}
-                    >
-                      {time.includes('d') ? time : `${time}h`}
-                    </button>
-                  ))}
+                    />
+                    <span className="create-input-suffix">BNB</span>
+                  </div>
+                  <div className="create-hint">
+                    min {MIN_STAKE} • ticket price: {calculateTicketPrice()} BNB
+                  </div>
+                </div>
+
+                <div className="create-field">
+                  <label className="create-label">EXPIRES IN</label>
+                  <div className="create-pills">
+                    {['6', '12', '24', '3d', '7d'].map((time) => (
+                      <button
+                        key={time}
+                        className={`create-pill ${expiry === time ? 'active' : ''}`}
+                        onClick={() => !isCreating && setExpiry(time)}
+                        disabled={isCreating}
+                      >
+                        {time.includes('d') ? time : `${time}h`}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* More Options */}
-              <div className="create-field create-field-full">
+              {/* Advanced Options */}
+              <div className="create-field">
                 <button 
-                  className="create-more-toggle"
-                  onClick={() => setShowMoreOptions(!showMoreOptions)}
+                  className="create-advanced-toggle"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
                   disabled={isCreating}
                 >
-                  <span>MORE OPTIONS</span>
+                  <span>ADVANCED OPTIONS</span>
                   <svg 
-                    width="14" 
-                    height="14" 
+                    width="16" 
+                    height="16" 
                     viewBox="0 0 24 24" 
                     fill="none" 
                     stroke="currentColor" 
-                    strokeWidth="2.5" 
+                    strokeWidth="2" 
                     strokeLinecap="round" 
                     strokeLinejoin="round"
-                    className={showMoreOptions ? 'rotated' : ''}
+                    className={showAdvanced ? 'rotated' : ''}
                   >
                     <polyline points="6 9 12 15 18 9"></polyline>
                   </svg>
                 </button>
 
-                <div className={`create-more-content ${showMoreOptions ? 'open' : ''}`}>
-                  <div className="create-more-inner">
+                <div className={`create-advanced-content ${showAdvanced ? 'open' : ''}`}>
+                  <div className="create-advanced-inner">
                     {/* Tickets */}
                     <div className="create-subfield">
-                      <label className="create-label">
-                        <span>TICKETS</span>
-                      </label>
+                      <label className="create-label">TOTAL TICKETS</label>
                       <div className="create-pills">
-                        {['1', '10', '50', '100'].map((count) => (
+                        {['10', '50', '100', '500'].map((count) => (
                           <button
                             key={count}
                             className={`create-pill ${tickets === count ? 'active' : ''}`}
-                            onClick={() => setTickets(count)}
+                            onClick={() => !isCreating && setTickets(count)}
                             disabled={isCreating}
                           >
                             {count}
@@ -413,72 +377,61 @@ export default function Market() {
                     {/* Banner */}
                     <div className="create-subfield">
                       <label className="create-label">
-                        <span>BANNER</span>
+                        <span>BANNER IMAGE</span>
                         <span className="create-optional">OPTIONAL</span>
                       </label>
-                      <div 
-                        className="create-banner-drop"
-                        onDrop={handleBannerDrop}
-                        onDragOver={(e) => e.preventDefault()}
-                      >
-                        {bannerPreview ? (
-                          <div className="create-banner-preview">
-                            <img src={bannerPreview} alt="Banner preview" />
-                            <button 
-                              className="create-banner-remove"
-                              onClick={removeBanner}
-                              type="button"
-                              disabled={isCreating}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                              </svg>
-                            </button>
-                          </div>
-                        ) : (
-                          <label className="create-banner-upload">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                              <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                              <polyline points="21 15 16 10 5 21"></polyline>
+                      {bannerPreview ? (
+                        <div className="create-banner-preview">
+                          <img src={bannerPreview} alt="Banner" />
+                          <button 
+                            className="create-banner-remove"
+                            onClick={removeBanner}
+                            disabled={isCreating}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
                             </svg>
-                            <span className="create-banner-text">Drop or click to upload</span>
-                            <input 
-                              type="file" 
-                              accept="image/*"
-                              onChange={handleBannerSelect}
-                              style={{ display: 'none' }}
-                              disabled={isCreating}
-                            />
-                          </label>
-                        )}
-                      </div>
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="create-banner-upload">
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                          </svg>
+                          <span>Click to upload image</span>
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={handleBannerSelect}
+                            style={{ display: 'none' }}
+                            disabled={isCreating}
+                          />
+                        </label>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Footer */}
             <div className="create-modal-footer">
-              {creationStatus && (
-                <div style={{ 
-                  textAlign: 'center', 
-                  color: 'var(--color-yellow-primary)', 
-                  fontSize: '12px',
-                  marginBottom: '12px',
-                  fontWeight: '600'
-                }}>
-                  {creationStatus}
-                </div>
-              )}
               <button 
                 className="create-submit-btn" 
                 onClick={handleCreateBet}
-                disabled={isCreating}
-                style={{ opacity: isCreating ? 0.6 : 1, cursor: isCreating ? 'not-allowed' : 'pointer' }}
+                disabled={!canSubmit}
               >
-                {isCreating ? 'CREATING...' : 'CREATE BET'}
+                {isCreating ? (
+                  <>
+                    <div className="btn-spinner"></div>
+                    CREATING BET...
+                  </>
+                ) : (
+                  'CREATE BET'
+                )}
               </button>
             </div>
           </div>
