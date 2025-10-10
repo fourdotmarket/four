@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { ethers } from 'ethers';
+import { verifyAuth, validateInput, checkRateLimit, logAudit } from './auth-middleware';
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -15,72 +16,134 @@ const CONTRACT_ABI = [
   "event TicketsPurchased(uint256 indexed marketId, address indexed buyer, uint256 ticketCount, uint256 totalCost, uint256 timestamp)"
 ];
 
+// Allowed origins - UPDATE WITH YOUR ACTUAL DOMAINS
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://four-lovat-mu.vercel.app',
+  'https://four.market'
+];
+
 export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Strict CORS
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    const { user_id, market_id, ticket_count } = req.body;
+  let authenticatedUser = null;
+  let auditLog = {
+    endpoint: 'buy-ticket',
+    timestamp: new Date().toISOString(),
+    ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    success: false
+  };
 
-    // Validation
-    if (!user_id || !market_id || !ticket_count) {
-      return res.status(400).json({ 
-        error: 'Missing required fields',
-        required: ['user_id', 'market_id', 'ticket_count']
+  try {
+    // 1. VERIFY JWT TOKEN - Extract user from token, NOT from request body
+    try {
+      authenticatedUser = await verifyAuth(req.headers.authorization);
+      auditLog.user_id = authenticatedUser.user_id;
+      auditLog.wallet = authenticatedUser.wallet_address;
+    } catch (authError) {
+      auditLog.error = 'Authentication failed';
+      await logAudit(auditLog);
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        details: 'Please sign in to buy tickets'
       });
     }
 
-    if (ticket_count < 1) {
-      return res.status(400).json({ error: 'Ticket count must be at least 1' });
+    // 2. RATE LIMITING - Max 5 purchases per minute per user
+    const rateLimit = checkRateLimit(authenticatedUser.user_id, 5, 60000);
+    if (!rateLimit.allowed) {
+      auditLog.error = 'Rate limit exceeded';
+      await logAudit(auditLog);
+      return res.status(429).json({ 
+        error: 'Too many requests',
+        details: `Please wait ${rateLimit.resetIn} seconds before trying again`
+      });
     }
 
-    console.log('🎟️ Buying tickets for user:', user_id);
+    // 3. VALIDATE INPUT - NO user_id in body anymore!
+    const { market_id, ticket_count } = req.body;
+    
+    const validationErrors = validateInput(req.body, {
+      market_id: { 
+        required: true, 
+        type: 'string',
+        pattern: /^\d+$/  // Only numeric strings
+      },
+      ticket_count: { 
+        required: true, 
+        type: 'number',
+        min: 1,
+        max: 100  // Prevent abuse
+      }
+    });
 
-    // Fetch user from database
-    const { data: userData, error: fetchError } = await supabase
-      .from('users')
-      .select('wallet_address, wallet_private_key, username')
-      .eq('user_id', user_id)
-      .single();
-
-    if (fetchError || !userData) {
-      console.error('❌ User fetch error:', fetchError);
-      return res.status(404).json({ error: 'User not found' });
+    if (validationErrors.length > 0) {
+      auditLog.error = 'Validation failed';
+      auditLog.validation_errors = validationErrors;
+      await logAudit(auditLog);
+      return res.status(400).json({ 
+        error: 'Invalid input',
+        details: validationErrors
+      });
     }
 
-    if (!userData.wallet_private_key) {
-      console.error('❌ No private key for user:', user_id);
+    auditLog.market_id = market_id;
+    auditLog.ticket_count = ticket_count;
+
+    console.log('🎟️ Buying tickets for authenticated user:', authenticatedUser.user_id);
+
+    // User is already fetched from JWT token
+    if (!authenticatedUser.wallet_private_key) {
+      console.error('❌ No private key for user:', authenticatedUser.user_id);
       return res.status(400).json({ error: 'Wallet not configured' });
     }
 
-    console.log('✅ User found:', userData.wallet_address);
+    console.log('✅ User authenticated:', authenticatedUser.wallet_address);
 
     // Connect to BSC
     const provider = new ethers.JsonRpcProvider(BSC_RPC_URL);
-    const wallet = new ethers.Wallet(userData.wallet_private_key, provider);
+    const wallet = new ethers.Wallet(authenticatedUser.wallet_private_key, provider);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
     
     console.log('✅ Wallet connected:', wallet.address);
 
     // Get market details to calculate cost
     const marketDetails = await contract.getMarketDetails(market_id);
-    const ticketPrice = marketDetails[3]; // ticketPrice is 4th return value
-    const ticketsSold = marketDetails[5]; // ticketsSold is 6th return value
-    const totalTickets = marketDetails[4]; // totalTickets is 5th return value
+    const ticketPrice = marketDetails[3];
+    const ticketsSold = marketDetails[5];
+    const totalTickets = marketDetails[4];
+    const marketMaker = marketDetails[1];
     
     console.log('📊 Market details:', {
       ticketPrice: ethers.formatEther(ticketPrice),
       ticketsSold: ticketsSold.toString(),
-      totalTickets: totalTickets.toString()
+      totalTickets: totalTickets.toString(),
+      marketMaker: marketMaker
     });
+
+    // CRITICAL: Prevent market maker from buying their own tickets
+    if (marketMaker.toLowerCase() === wallet.address.toLowerCase()) {
+      auditLog.error = 'Market maker cannot buy own tickets';
+      await logAudit(auditLog);
+      return res.status(403).json({ 
+        error: 'Cannot buy your own tickets',
+        details: 'Market creators cannot purchase tickets in their own markets'
+      });
+    }
 
     // Check if enough tickets available
     const ticketsAvailable = totalTickets - ticketsSold;
@@ -104,7 +167,7 @@ export default async function handler(req, res) {
     
     console.log('💰 Wallet balance:', balanceInBNB, 'BNB');
 
-    const estimatedGas = 0.001; // ~0.001 BNB for gas
+    const estimatedGas = 0.001;
     const totalRequired = totalCostInBNB + estimatedGas;
     
     if (balanceInBNB < totalRequired) {
@@ -129,6 +192,7 @@ export default async function handler(req, res) {
     });
     
     console.log('⏳ Transaction sent:', tx.hash);
+    auditLog.tx_hash = tx.hash;
 
     // Wait for confirmation with timeout
     const receipt = await Promise.race([
@@ -139,14 +203,13 @@ export default async function handler(req, res) {
     ]);
 
     console.log('✅ Transaction confirmed! Block:', receipt.blockNumber);
+    auditLog.block_number = receipt.blockNumber;
 
     // Get timestamp from block
     const block = await provider.getBlock(receipt.blockNumber);
     const timestamp = block.timestamp;
 
-    console.log('⏰ Block timestamp:', timestamp);
-
-    // ALWAYS save to database - don't rely on event parsing
+    // Save to database
     try {
       console.log('💾 Saving transaction to database...');
 
@@ -154,8 +217,8 @@ export default async function handler(req, res) {
         .from('transactions')
         .insert({
           market_id: market_id.toString(),
-          buyer_id: user_id,
-          buyer_username: userData.username,
+          buyer_id: authenticatedUser.user_id,  // From JWT token
+          buyer_username: authenticatedUser.username,
           buyer_wallet: wallet.address,
           ticket_count: ticket_count,
           total_cost: totalCostInBNB,
@@ -169,7 +232,6 @@ export default async function handler(req, res) {
 
       if (insertError) {
         console.error('❌ Failed to save transaction to DB:', insertError);
-        // Still return success since blockchain transaction succeeded
       } else {
         console.log('✅ Transaction saved to database:', insertedTransaction);
       }
@@ -191,9 +253,11 @@ export default async function handler(req, res) {
       }
     } catch (dbError) {
       console.error('❌ Database error:', dbError);
-      console.error('Full error:', JSON.stringify(dbError, null, 2));
-      // Still return success since blockchain transaction succeeded
     }
+
+    // Log successful audit
+    auditLog.success = true;
+    await logAudit(auditLog);
 
     return res.status(200).json({
       success: true,
@@ -207,6 +271,10 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('❌ Error buying tickets:', error);
+    
+    // Log failed audit
+    auditLog.error = error.message;
+    await logAudit(auditLog);
     
     // Handle specific error types
     if (error.code === 'INSUFFICIENT_FUNDS') {

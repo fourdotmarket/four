@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { ethers } from 'ethers';
+import { verifyAuth, validateInput, checkRateLimit, logAudit } from './auth-middleware';
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -14,53 +15,119 @@ const CONTRACT_ABI = [
   "event MarketCreated(uint256 indexed marketId, string question, address indexed marketMaker, uint256 marketMakerStake, uint256 ticketPrice, uint256 totalTickets, uint256 deadline, uint256 createdAt)"
 ];
 
+// Allowed origins
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://four-lovat-mu.vercel.app',
+  'https://four.market'
+];
+
 export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Strict CORS
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    const { user_id, question, stakeAmount, duration, ticketAmount } = req.body;
+  let authenticatedUser = null;
+  let auditLog = {
+    endpoint: 'create-bet',
+    timestamp: new Date().toISOString(),
+    ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    success: false
+  };
 
-    // Validation
-    if (!user_id || !question || !stakeAmount || duration === undefined || ticketAmount === undefined) {
-      return res.status(400).json({ 
-        error: 'Missing required fields',
-        required: ['user_id', 'question', 'stakeAmount', 'duration', 'ticketAmount']
+  try {
+    // 1. VERIFY JWT TOKEN
+    try {
+      authenticatedUser = await verifyAuth(req.headers.authorization);
+      auditLog.user_id = authenticatedUser.user_id;
+      auditLog.wallet = authenticatedUser.wallet_address;
+    } catch (authError) {
+      auditLog.error = 'Authentication failed';
+      await logAudit(auditLog);
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        details: 'Please sign in to create a bet'
       });
     }
 
-    console.log('🔍 Creating bet for user:', user_id);
-
-    // Fetch user from database
-    const { data: userData, error: fetchError } = await supabase
-      .from('users')
-      .select('wallet_address, wallet_private_key, username')
-      .eq('user_id', user_id)
-      .single();
-
-    if (fetchError || !userData) {
-      console.error('❌ User fetch error:', fetchError);
-      return res.status(404).json({ error: 'User not found' });
+    // 2. RATE LIMITING - Max 3 market creations per hour per user
+    const rateLimit = checkRateLimit(`create-${authenticatedUser.user_id}`, 3, 3600000);
+    if (!rateLimit.allowed) {
+      auditLog.error = 'Rate limit exceeded';
+      await logAudit(auditLog);
+      return res.status(429).json({ 
+        error: 'Too many markets created',
+        details: `Please wait ${Math.ceil(rateLimit.resetIn / 60)} minutes before creating another market`
+      });
     }
 
-    if (!userData.wallet_private_key) {
-      console.error('❌ No private key for user:', user_id);
+    // 3. VALIDATE INPUT - NO user_id in body!
+    const { question, stakeAmount, duration, ticketAmount } = req.body;
+    
+    const validationErrors = validateInput(req.body, {
+      question: { 
+        required: true, 
+        type: 'string',
+        minLength: 10,
+        maxLength: 256
+      },
+      stakeAmount: {
+        required: true,
+        type: 'number',
+        min: 0.05,  // Minimum stake
+        max: 100    // Maximum stake to prevent errors
+      },
+      duration: {
+        required: true,
+        type: 'number',
+        min: 0,
+        max: 4  // Valid duration indices
+      },
+      ticketAmount: {
+        required: true,
+        type: 'number',
+        min: 0,
+        max: 3  // Valid ticket amount indices
+      }
+    });
+
+    if (validationErrors.length > 0) {
+      auditLog.error = 'Validation failed';
+      auditLog.validation_errors = validationErrors;
+      await logAudit(auditLog);
+      return res.status(400).json({ 
+        error: 'Invalid input',
+        details: validationErrors
+      });
+    }
+
+    auditLog.question = question;
+    auditLog.stake_amount = stakeAmount;
+
+    console.log('📝 Creating bet for authenticated user:', authenticatedUser.user_id);
+
+    // User already fetched from JWT token
+    if (!authenticatedUser.wallet_private_key) {
+      console.error('❌ No private key for user:', authenticatedUser.user_id);
       return res.status(400).json({ error: 'Wallet not configured' });
     }
 
-    console.log('✅ User found:', userData.wallet_address);
+    console.log('✅ User authenticated:', authenticatedUser.wallet_address);
 
     // Connect to BSC
     const provider = new ethers.JsonRpcProvider(BSC_RPC_URL);
-    const wallet = new ethers.Wallet(userData.wallet_private_key, provider);
+    const wallet = new ethers.Wallet(authenticatedUser.wallet_private_key, provider);
     
     console.log('✅ Wallet connected:', wallet.address);
 
@@ -72,7 +139,7 @@ export default async function handler(req, res) {
     console.log('💰 Wallet balance:', balanceInBNB, 'BNB');
     console.log('💰 Required stake:', stakeInBNB, 'BNB');
 
-    const estimatedGas = 0.001; // ~0.001 BNB for gas
+    const estimatedGas = 0.001;
     const totalRequired = stakeInBNB + estimatedGas;
     
     if (balanceInBNB < totalRequired) {
@@ -102,6 +169,7 @@ export default async function handler(req, res) {
     });
     
     console.log('⏳ Transaction sent:', tx.hash);
+    auditLog.tx_hash = tx.hash;
 
     // Wait for confirmation with timeout
     const receipt = await Promise.race([
@@ -112,6 +180,7 @@ export default async function handler(req, res) {
     ]);
 
     console.log('✅ Transaction confirmed! Block:', receipt.blockNumber);
+    auditLog.block_number = receipt.blockNumber;
 
     // Parse event logs to get market ID
     let marketId = null;
@@ -140,6 +209,7 @@ export default async function handler(req, res) {
     }
 
     console.log('📊 Market ID:', marketId);
+    auditLog.market_id = marketId;
 
     // Save to database
     if (eventData) {
@@ -154,8 +224,8 @@ export default async function handler(req, res) {
           .insert({
             market_id: eventData.marketId,
             question: eventData.question,
-            creator_id: user_id,
-            creator_username: userData.username,
+            creator_id: authenticatedUser.user_id,  // From JWT token
+            creator_username: authenticatedUser.username,
             creator_wallet: eventData.marketMaker,
             stake: stakeInBNB,
             ticket_price: ticketPriceInBNB,
@@ -181,6 +251,10 @@ export default async function handler(req, res) {
       }
     }
 
+    // Log successful audit
+    auditLog.success = true;
+    await logAudit(auditLog);
+
     return res.status(200).json({
       success: true,
       txHash: tx.hash,
@@ -192,6 +266,10 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('❌ Error creating bet:', error);
+    
+    // Log failed audit
+    auditLog.error = error.message;
+    await logAudit(auditLog);
     
     // Handle specific error types
     if (error.code === 'INSUFFICIENT_FUNDS') {

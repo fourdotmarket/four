@@ -3,6 +3,7 @@ import './Market.css';
 import { useAuth } from '../hooks/useAuth';
 import MarketCard from '../components/MarketCard';
 import { useMarkets } from '../hooks/useMarkets';
+import { usePrivy } from '@privy-io/react-auth';
 
 const CONTRACT_ADDRESS = "0xB05bAeff61e6E2CfB85d383911912C3248e3214f";
 const MIN_STAKE = 0.05;
@@ -10,7 +11,8 @@ const MIN_PREDICTION_LENGTH = 50;
 const MAX_PREDICTION_LENGTH = 256;
 
 export default function Market() {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
+  const { getAccessToken } = usePrivy();
   const { markets, loading: marketsLoading, error: marketsError } = useMarkets();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -32,7 +34,7 @@ export default function Market() {
 
   // Map tickets to ticketAmount index
   const ticketsToAmount = {
-    '10': 0, '50': 1, '100': 2, '500': 3
+    '1': 0, '10': 1, '50': 2, '100': 3
   };
 
   const handleBannerSelect = (e) => {
@@ -121,8 +123,8 @@ export default function Market() {
       return;
     }
 
-    if (!user || !user.user_id) {
-      alert('User not found. Please sign in and try again.');
+    if (!user) {
+      alert('Please sign in to create a bet');
       return;
     }
 
@@ -132,19 +134,23 @@ export default function Market() {
       const duration = expiryToDuration[expiry];
       const ticketAmount = ticketsToAmount[tickets];
 
-      console.log('📝 Creating market:', {
-        user_id: user.user_id,
-        question: prediction,
-        stakeAmount: stake,
-        duration,
-        ticketAmount
-      });
+      // Get fresh JWT token
+      const token = await getAccessToken();
+      if (!token) {
+        throw new Error('Failed to get authentication token');
+      }
 
+      console.log('📝 Creating market with JWT authentication');
+
+      // SECURITY FIX: No user_id in body, only JWT token in header
       const response = await fetch('/api/create-bet', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`  // JWT token for auth
+        },
         body: JSON.stringify({
-          user_id: user.user_id,
+          // NO user_id here! It comes from JWT token
           question: prediction,
           stakeAmount: stake,
           duration: duration,
@@ -183,7 +189,15 @@ export default function Market() {
     } catch (error) {
       console.error('❌ Error creating bet:', error);
       setIsCreating(false);
-      alert(`Failed to create bet: ${error.message}`);
+      
+      // Handle specific error messages
+      if (error.message.includes('Authentication required')) {
+        alert('Please sign in again to create a bet');
+      } else if (error.message.includes('Too many markets created')) {
+        alert('You have created too many markets recently. Please wait before creating another.');
+      } else {
+        alert(`Failed to create bet: ${error.message}`);
+      }
     }
   };
 

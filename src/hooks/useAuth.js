@@ -6,12 +6,14 @@ export function useAuth() {
   const { ready, authenticated, user: privyUser, getAccessToken } = usePrivy();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [accessToken, setAccessToken] = useState(null);
 
   useEffect(() => {
     if (!ready) return;
     
     if (!authenticated) {
       setUser(null);
+      setAccessToken(null);
       setLoading(false);
       return;
     }
@@ -35,14 +37,15 @@ export function useAuth() {
         console.log('🔐 Attempting to authenticate with backend...', { provider, email });
 
         // Get Privy access token
-        const accessToken = await getAccessToken();
+        const token = await getAccessToken();
+        setAccessToken(token);  // Store token for API calls
         console.log('✅ Got Privy access token');
 
         const response = await axios.post('/api/auth', 
           { provider, email },
           {
             headers: {
-              'Authorization': `Bearer ${accessToken}`,
+              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }
@@ -59,7 +62,7 @@ export function useAuth() {
         });
 
         // FALLBACK: Create user from Privy data
-        console.log('⚠️ Using fallback user data from Privy');
+        console.log(⚠️ Using fallback user data from Privy');
         
         // Get username from different sources
         let username = null;
@@ -70,7 +73,6 @@ export function useAuth() {
         } else if (privyUser.twitter?.username) {
           username = privyUser.twitter.username;
         } else if (privyUser.wallet?.address) {
-          // Format wallet as username: skip 0x prefix, take 4 chars
           const addr = privyUser.wallet.address;
           username = `${addr.slice(2, 6)}...${addr.slice(-4)}`;
         }
@@ -96,5 +98,5 @@ export function useAuth() {
     registerOrLogin();
   }, [ready, authenticated, privyUser, getAccessToken]);
 
-  return { user, loading, authenticated };
+  return { user, loading, authenticated, accessToken };
 }

@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useAuth } from '../hooks/useAuth';
 import { useTransactions } from '../hooks/useTransactions';
 import { usePositions } from '../hooks/usePositions';
+import { usePrivy } from '@privy-io/react-auth';
 import './Bet.css';
 
 const supabase = createClient(
@@ -14,18 +15,8 @@ const supabase = createClient(
 
 // Generate consistent colors for users
 const COLORS = [
-  '#FFD43B', // Yellow
-  '#FF6B6B', // Red
-  '#4ECDC4', // Teal
-  '#45B7D1', // Blue
-  '#96CEB4', // Green
-  '#FFEAA7', // Light Yellow
-  '#DFE6E9', // Light Gray
-  '#74B9FF', // Light Blue
-  '#A29BFE', // Purple
-  '#FD79A8', // Pink
-  '#FDCB6E', // Orange
-  '#6C5CE7', // Deep Purple
+  '#FFD43B', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+  '#DFE6E9', '#74B9FF', '#A29BFE', '#FD79A8', '#FDCB6E', '#6C5CE7',
 ];
 
 // Component to show all user positions across all markets
@@ -35,7 +26,6 @@ function AllUserPositions({ userId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Function to generate bet ID from market ID
   const generateBetId = (marketId) => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     const seed = parseInt(marketId);
@@ -53,7 +43,6 @@ function AllUserPositions({ userId }) {
   useEffect(() => {
     fetchAllPositions();
 
-    // Real-time subscription to all user transactions
     const channel = supabase
       .channel(`all-user-positions-${userId}`)
       .on(
@@ -66,7 +55,7 @@ function AllUserPositions({ userId }) {
         },
         (payload) => {
           console.log('🆕 New position:', payload.new);
-          fetchAllPositions(); // Refetch to get market info
+          fetchAllPositions();
         }
       )
       .subscribe();
@@ -80,7 +69,6 @@ function AllUserPositions({ userId }) {
     try {
       setLoading(true);
 
-      // Fetch all transactions for this user with market info
       const { data: transactions, error: txError } = await supabase
         .from('transactions')
         .select(`
@@ -96,7 +84,6 @@ function AllUserPositions({ userId }) {
 
       if (txError) throw txError;
 
-      // Group by market and calculate totals
       const marketMap = {};
       
       transactions.forEach(tx => {
@@ -118,11 +105,10 @@ function AllUserPositions({ userId }) {
         marketMap[marketId].transactions.push(tx);
       });
 
-      // Convert to array and add bet IDs
       const positionsArray = Object.values(marketMap).map(market => ({
         ...market,
         betId: generateBetId(market.market_id),
-        lastTransaction: market.transactions[0] // Most recent
+        lastTransaction: market.transactions[0]
       }));
 
       setAllPositions(positionsArray);
@@ -133,15 +119,6 @@ function AllUserPositions({ userId }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
   };
 
   const formatDate = (dateString) => {
@@ -271,6 +248,7 @@ export default function Bet() {
   const { betId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { getAccessToken } = usePrivy();
   const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -280,11 +258,9 @@ export default function Bet() {
   const [isBuying, setIsBuying] = useState(false);
   const [buyStatus, setBuyStatus] = useState('');
 
-  // Real-time data hooks
   const { transactions, loading: txLoading } = useTransactions(market?.market_id);
   const { positions, totalTickets, totalSpent, loading: posLoading } = usePositions(user?.user_id, market?.market_id);
 
-  // Convert bet ID back to market_id
   const getMarketIdFromBetId = async (betId) => {
     const { data: markets, error: fetchError } = await supabase
       .from('markets')
@@ -317,7 +293,6 @@ export default function Bet() {
     fetchMarket();
   }, [betId]);
 
-  // Real-time market updates
   useEffect(() => {
     if (!market) return;
 
@@ -395,21 +370,25 @@ export default function Bet() {
       setIsBuying(true);
       setBuyStatus('Preparing transaction...');
 
-      console.log('🎟️ Buying tickets:', {
-        user_id: user.user_id,
-        market_id: market.market_id,
-        ticket_count: ticketAmount
-      });
+      // Get fresh JWT token
+      const token = await getAccessToken();
+      if (!token) {
+        throw new Error('Failed to get authentication token');
+      }
+
+      console.log('🎟️ Buying tickets with JWT authentication');
 
       setBuyStatus('Submitting to blockchain...');
 
+      // SECURITY FIX: No user_id in body, only JWT token in header
       const response = await fetch('/api/buy-ticket', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`  // JWT token for auth
         },
         body: JSON.stringify({
-          user_id: user.user_id,
+          // NO user_id here! It comes from JWT token
           market_id: market.market_id,
           ticket_count: ticketAmount
         })
@@ -422,8 +401,8 @@ export default function Bet() {
         result = await response.json();
       } else {
         const text = await response.text();
-        console.error('❌ Server returned HTML instead of JSON:', text.substring(0, 200));
-        throw new Error('Server error: Received HTML instead of JSON response. Check server logs.');
+        console.error('❌ Server returned HTML:', text.substring(0, 200));
+        throw new Error('Server error occurred');
       }
 
       if (!response.ok) {
@@ -435,7 +414,6 @@ export default function Bet() {
 
       setBuyStatus(`Success! TX: ${result.txHash.slice(0, 10)}...`);
 
-      // Reset after 2 seconds
       setTimeout(() => {
         setBuyStatus('');
         setIsBuying(false);
@@ -447,15 +425,18 @@ export default function Bet() {
       console.error('❌ Error buying tickets:', error);
       setBuyStatus('');
       setIsBuying(false);
-      setTicketInputValue(ticketAmount.toString()); // Reset to current valid value
+      setTicketInputValue(ticketAmount.toString());
       
-      let errorMessage = error.message;
-      
-      if (error.message.includes('Received HTML instead of JSON')) {
-        errorMessage = 'Server error occurred. Please check that:\n1. Your API endpoint is working\n2. Environment variables are set\n3. Check Vercel logs for details';
+      // Handle specific error messages
+      if (error.message.includes('Authentication required')) {
+        alert('Please sign in again to buy tickets');
+      } else if (error.message.includes('Too many requests')) {
+        alert('You are making too many purchases. Please wait a moment and try again.');
+      } else if (error.message.includes('Cannot buy your own tickets')) {
+        alert('Market creators cannot purchase tickets in their own markets');
+      } else {
+        alert(`Failed to buy tickets: ${error.message}`);
       }
-      
-      alert(`Failed to buy tickets: ${errorMessage}`);
     }
   };
 
@@ -474,13 +455,11 @@ export default function Bet() {
     return `https://bscscan.com/tx/${txHash}`;
   };
 
-  // Calculate user distribution for pie chart including remaining tickets
   const getUserDistribution = () => {
     if (!market) return [];
 
     const userMap = {};
     
-    // Aggregate tickets by user
     if (transactions && transactions.length > 0) {
       transactions.forEach(tx => {
         if (!userMap[tx.buyer_id]) {
@@ -494,13 +473,11 @@ export default function Bet() {
       });
     }
 
-    // Convert to array and assign colors
     const userDistribution = Object.values(userMap).map((userData, index) => ({
       ...userData,
       color: userData.isCurrentUser ? '#FFD43B' : COLORS[index % COLORS.length]
     }));
 
-    // Add remaining tickets as a segment
     const ticketsRemaining = market.total_tickets - market.tickets_sold;
     if (ticketsRemaining > 0) {
       userDistribution.push({
@@ -514,7 +491,6 @@ export default function Bet() {
     return userDistribution;
   };
 
-  // Calculate unique holders count
   const getUniqueHoldersCount = () => {
     if (!transactions || transactions.length === 0) return 0;
     const uniqueBuyers = new Set(transactions.map(tx => tx.buyer_id));
@@ -546,15 +522,11 @@ export default function Bet() {
   const ticketsSold = market.tickets_sold;
   const progressPercentage = (ticketsSold / market.total_tickets) * 100;
   const holdersCount = getUniqueHoldersCount();
-
-  // Get user distribution for pie chart
   const userDistribution = getUserDistribution();
-
   const totalCost = (ticketAmount * parseFloat(market.ticket_price)).toFixed(4);
 
   return (
     <div className="bet-page">
-      {/* Back Button */}
       <button className="bet-back-btn" onClick={handleBack}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -563,26 +535,17 @@ export default function Bet() {
         <span>BACK</span>
       </button>
 
-      {/* Main Content - Split Layout */}
       <div className="bet-split-container">
-        {/* LEFT SIDE - Market Info & Chart */}
         <div className="bet-left-section">
           <div className="bet-info-card">
-            {/* Status Badge */}
             <div className="bet-status-badge">ACTIVE</div>
-
-            {/* Question */}
             <div className="bet-question-section">
               <h1 className="bet-question">{market.question}</h1>
             </div>
-
-            {/* Creator Info */}
             <div className="bet-creator-section">
               <span className="bet-label">CREATED BY</span>
               <span className="bet-creator-name">{market.creator_username}</span>
             </div>
-
-            {/* Stats Grid */}
             <div className="bet-stats-grid">
               <div className="bet-stat-item">
                 <span className="bet-stat-label">STAKE</span>
@@ -602,7 +565,6 @@ export default function Bet() {
               </div>
             </div>
 
-            {/* Pie Chart - User Distribution */}
             <div className="bet-chart-section">
               <h3 className="bet-chart-title">TICKET HOLDERS</h3>
               <div className="bet-chart-container">
@@ -670,20 +632,15 @@ export default function Bet() {
           </div>
         </div>
 
-        {/* RIGHT SIDE - Buy Tickets */}
         <div className="bet-right-section">
           <div className="bet-buy-card">
             <h2 className="bet-buy-title">BUY TICKETS</h2>
-
-            {/* Banner Preview */}
             <div className="bet-buy-banner">
               <img 
                 src={market.banner_url || '/default.png'} 
                 alt="Market banner"
               />
             </div>
-
-            {/* Progress Bar */}
             <div className="bet-progress-section">
               <div className="bet-progress-bar">
                 <div 
@@ -696,8 +653,6 @@ export default function Bet() {
                 <span>{progressPercentage.toFixed(0)}%</span>
               </div>
             </div>
-
-            {/* Ticket Amount Selector */}
             <div className="bet-ticket-selector">
               <label className="bet-input-label">NUMBER OF TICKETS</label>
               <div className="bet-amount-controls">
@@ -721,29 +676,23 @@ export default function Bet() {
                   onChange={(e) => {
                     const value = e.target.value;
                     
-                    // Allow empty input (user is deleting)
                     if (value === '') {
                       setTicketInputValue('');
                       return;
                     }
                     
-                    // Parse the value
                     const numValue = parseInt(value);
                     
-                    // If invalid number, ignore
                     if (isNaN(numValue)) {
                       return;
                     }
                     
-                    // Update display value immediately (allow free typing)
                     setTicketInputValue(value);
                     
-                    // Clamp actual value for calculations
                     const clampedValue = Math.max(1, Math.min(ticketsRemaining, numValue));
                     setTicketAmount(clampedValue);
                   }}
                   onBlur={() => {
-                    // On blur, ensure we have a valid value
                     if (ticketInputValue === '' || parseInt(ticketInputValue) < 1) {
                       setTicketInputValue('1');
                       setTicketAmount(1);
@@ -775,7 +724,6 @@ export default function Bet() {
               </div>
             </div>
 
-            {/* Quick Select Buttons */}
             <div className="bet-quick-select">
               <button 
                 className={`bet-quick-btn ${ticketAmount === 1 ? 'active' : ''}`}
@@ -821,7 +769,6 @@ export default function Bet() {
               </button>
             </div>
 
-            {/* Total Cost */}
             <div className="bet-total-section">
               <div className="bet-total-row">
                 <span className="bet-total-label">TOTAL COST</span>
@@ -829,7 +776,6 @@ export default function Bet() {
               </div>
             </div>
 
-            {/* Buy Status */}
             {buyStatus && (
               <div style={{ 
                 textAlign: 'center', 
@@ -843,7 +789,6 @@ export default function Bet() {
               </div>
             )}
 
-            {/* Buy Button */}
             <button 
               className="bet-buy-button" 
               onClick={handleBuyTickets}
@@ -865,7 +810,6 @@ export default function Bet() {
         </div>
       </div>
 
-      {/* Bottom Section - Tabs */}
       <div className="bet-tabs-container">
         <div className="bet-tabs-header">
           <button 
