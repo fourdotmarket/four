@@ -232,28 +232,44 @@ export default function Bet() {
     return `https://bscscan.com/tx/${txHash}`;
   };
 
-  // Calculate user distribution for pie chart
+  // Calculate user distribution for pie chart including remaining tickets
   const getUserDistribution = () => {
-    if (!transactions || transactions.length === 0) return [];
+    if (!market) return [];
 
-    // Aggregate tickets by user
     const userMap = {};
-    transactions.forEach(tx => {
-      if (!userMap[tx.buyer_id]) {
-        userMap[tx.buyer_id] = {
-          name: tx.buyer_username,
-          value: 0,
-          isCurrentUser: user && tx.buyer_id === user.user_id
-        };
-      }
-      userMap[tx.buyer_id].value += tx.ticket_count;
-    });
+    
+    // Aggregate tickets by user
+    if (transactions && transactions.length > 0) {
+      transactions.forEach(tx => {
+        if (!userMap[tx.buyer_id]) {
+          userMap[tx.buyer_id] = {
+            name: tx.buyer_username,
+            value: 0,
+            isCurrentUser: user && tx.buyer_id === user.user_id
+          };
+        }
+        userMap[tx.buyer_id].value += tx.ticket_count;
+      });
+    }
 
     // Convert to array and assign colors
-    return Object.values(userMap).map((userData, index) => ({
+    const userDistribution = Object.values(userMap).map((userData, index) => ({
       ...userData,
       color: userData.isCurrentUser ? '#FFD43B' : COLORS[index % COLORS.length]
     }));
+
+    // Add remaining tickets as a segment
+    const ticketsRemaining = market.total_tickets - market.tickets_sold;
+    if (ticketsRemaining > 0) {
+      userDistribution.push({
+        name: 'Available',
+        value: ticketsRemaining,
+        color: '#2a2a2a',
+        isRemaining: true
+      });
+    }
+
+    return userDistribution;
   };
 
   // Calculate unique holders count
@@ -348,81 +364,63 @@ export default function Bet() {
             <div className="bet-chart-section">
               <h3 className="bet-chart-title">TICKET HOLDERS</h3>
               <div className="bet-chart-container">
-                {userDistribution.length > 0 ? (
-                  <>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <PieChart>
-                        <Pie
-                          data={userDistribution}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={90}
-                          paddingAngle={2}
-                          dataKey="value"
-                          startAngle={90}
-                          endAngle={-270}
-                        >
-                          {userDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              const data = payload[0].payload;
-                              return (
-                                <div style={{
-                                  background: '#0a0a0a',
-                                  border: '1px solid #FFD43B',
-                                  borderRadius: '4px',
-                                  padding: '8px 12px',
-                                  fontFamily: "'Courier New', monospace",
-                                  fontSize: '12px'
-                                }}>
-                                  <div style={{ color: '#FFD43B', fontWeight: 700, marginBottom: '4px' }}>
-                                    {data.name}
-                                  </div>
-                                  <div style={{ color: '#ffffff' }}>
-                                    {data.value} ticket{data.value > 1 ? 's' : ''}
-                                  </div>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="bet-chart-legend">
-                      {userDistribution.slice(0, 4).map((entry, index) => (
-                        <div className="bet-legend-item" key={index}>
-                          <div className="bet-legend-color" style={{ background: entry.color }}></div>
-                          <span>{entry.name}: {entry.value}</span>
-                        </div>
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={userDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      {userDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
-                      {userDistribution.length > 4 && (
-                        <div className="bet-legend-item">
-                          <span>+{userDistribution.length - 4} more</span>
-                        </div>
-                      )}
-                    </div>
-                    <div style={{
-                      fontFamily: "'Courier New', monospace",
-                      fontSize: '11px',
-                      color: '#808080',
-                      textAlign: 'center',
-                      marginTop: '8px',
-                      padding: '8px',
-                      background: 'rgba(255, 212, 59, 0.05)',
-                      border: '1px solid rgba(255, 212, 59, 0.2)'
-                    }}>
-                      <span style={{ color: '#FFD43B', fontWeight: 700 }}>{ticketsRemaining}</span> tickets remaining
-                    </div>
-                  </>
-                ) : (
-                  <div className="bet-empty-state">
-                    <p>No ticket holders yet</p>
+                    </Pie>
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div style={{
+                              background: '#0a0a0a',
+                              border: '1px solid #FFD43B',
+                              borderRadius: '4px',
+                              padding: '8px 12px',
+                              fontFamily: "'Courier New', monospace",
+                              fontSize: '12px'
+                            }}>
+                              <div style={{ color: '#FFD43B', fontWeight: 700, marginBottom: '4px' }}>
+                                {data.name}
+                              </div>
+                              <div style={{ color: '#ffffff' }}>
+                                {data.value} ticket{data.value > 1 ? 's' : ''}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                {userDistribution.filter(u => !u.isRemaining).length > 0 && (
+                  <div className="bet-chart-legend">
+                    {userDistribution.filter(u => !u.isRemaining).slice(0, 4).map((entry, index) => (
+                      <div className="bet-legend-item" key={index}>
+                        <div className="bet-legend-color" style={{ background: entry.color }}></div>
+                        <span>{entry.name}: {entry.value}</span>
+                      </div>
+                    ))}
+                    {userDistribution.filter(u => !u.isRemaining).length > 4 && (
+                      <div className="bet-legend-item">
+                        <span>+{userDistribution.filter(u => !u.isRemaining).length - 4} more</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

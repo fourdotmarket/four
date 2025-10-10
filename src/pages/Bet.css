@@ -245,9 +245,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   flex: 1;
-  justify-content: space-between;
+  justify-content: center;
 }
 
 .bet-buy-card::before,
@@ -527,7 +527,6 @@
   gap: 10px;
   clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
   position: relative;
-  margin-top: auto;
 }
 
 .bet-buy-button::before {
