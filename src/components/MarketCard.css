@@ -12,16 +12,16 @@
   flex-direction: column;
 }
 
-/* Diagonal SOLD OUT Banner */
+/* Diagonal SOLD OUT Banner - FIXED */
 .market-card-sold-out-banner {
   position: absolute;
-  top: 50px;
-  right: -80px;
-  width: 280px;
+  top: 40px;
+  right: -70px;
+  width: 250px;
   background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
   color: #000000;
   text-align: center;
-  padding: 10px 0;
+  padding: 8px 0;
   transform: rotate(45deg);
   z-index: 10;
   box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5);
@@ -32,7 +32,7 @@
   justify-content: center;
 }
 
-/* Diagonal AWAITING RESOLUTION Banner */
+/* Diagonal AWAITING RESOLUTION Banner - FIXED */
 .market-card-sold-out-banner.awaiting {
   background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
   box-shadow: 0 4px 12px rgba(255, 165, 0, 0.5);
@@ -42,12 +42,14 @@
 
 .market-card-sold-out-banner span {
   font-family: 'Courier New', monospace;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
-  letter-spacing: 2.5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   white-space: nowrap;
+  text-align: center;
+  width: 100%;
 }
 
 .market-card-sold-out-banner::before {
@@ -474,15 +476,15 @@
   }
 
   .market-card-sold-out-banner {
-    top: 45px;
-    right: -75px;
-    width: 240px;
-    padding: 8px 0;
+    top: 35px;
+    right: -65px;
+    width: 220px;
+    padding: 7px 0;
   }
 
   .market-card-sold-out-banner span {
-    font-size: 11px;
-    letter-spacing: 2px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
   }
 }
 

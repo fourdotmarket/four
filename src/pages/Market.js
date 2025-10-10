@@ -34,7 +34,7 @@ export default function Market() {
 
   // Map tickets to ticketAmount index
   const ticketsToAmount = {
-    '10': 0, '50': 1, '100': 2, '500': 3
+    '1': 0, '10': 1, '50': 2, '100': 3
   };
 
   const handleBannerSelect = (e) => {
@@ -379,7 +379,7 @@ export default function Market() {
                     <div className="create-subfield">
                       <label className="create-label">TOTAL TICKETS</label>
                       <div className="create-pills">
-                        {['10', '50', '100', '500'].map((count) => (
+                        {['1', '10', '50', '100'].map((count) => (
                           <button
                             key={count}
                             className={`create-pill ${tickets === count ? 'active' : ''}`}
