@@ -256,6 +256,13 @@ export default function Bet() {
     }));
   };
 
+  // Calculate unique holders count
+  const getUniqueHoldersCount = () => {
+    if (!transactions || transactions.length === 0) return 0;
+    const uniqueBuyers = new Set(transactions.map(tx => tx.buyer_id));
+    return uniqueBuyers.size;
+  };
+
   if (loading) {
     return (
       <div className="bet-page">
@@ -280,6 +287,7 @@ export default function Bet() {
   const ticketsRemaining = market.total_tickets - market.tickets_sold;
   const ticketsSold = market.tickets_sold;
   const progressPercentage = (ticketsSold / market.total_tickets) * 100;
+  const holdersCount = getUniqueHoldersCount();
 
   // Get user distribution for pie chart
   const userDistribution = getUserDistribution();
@@ -420,7 +428,7 @@ export default function Bet() {
                 ></div>
               </div>
               <div className="bet-progress-text">
-                <span>{ticketsRemaining} LEFT</span>
+                <span>{holdersCount} {holdersCount === 1 ? 'HOLDER' : 'HOLDERS'} • {ticketsRemaining} LEFT</span>
                 <span>{progressPercentage.toFixed(0)}%</span>
               </div>
             </div>
@@ -559,16 +567,16 @@ export default function Bet() {
           </button>
         </div>
 
-        <div className="bet-tabs-content">
+        <div className="bet-tabs-content" style={{ padding: activeTab === 'transactions' || activeTab === 'positions' ? 0 : '40px' }}>
           {activeTab === 'transactions' && (
             <div className="bet-tab-panel">
               {txLoading ? (
-                <div className="bet-empty-state">
+                <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
                   <div className="loading-spinner"></div>
                   <p>Loading transactions...</p>
                 </div>
               ) : transactions.length === 0 ? (
-                <div className="bet-empty-state">
+                <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                     <line x1="3" y1="9" x2="21" y2="9"></line>
@@ -577,40 +585,38 @@ export default function Bet() {
                   <p>No transactions yet</p>
                 </div>
               ) : (
-                <div className="bet-transactions-table-wrapper">
-                  <div className="bet-transactions-table">
-                    <div className="bet-table-header">
-                      <div className="bet-table-cell">USER</div>
-                      <div className="bet-table-cell">TICKETS</div>
-                      <div className="bet-table-cell">BNB</div>
-                      <div className="bet-table-cell">TIME</div>
-                      <div className="bet-table-cell">TX</div>
-                    </div>
-                    <div className="bet-table-body">
-                      {transactions.map((tx) => (
-                        <div key={tx.transaction_id} className="bet-table-row">
-                          <div className="bet-table-cell bet-table-user">
-                            {tx.buyer_username}
-                            {user && tx.buyer_id === user.user_id && (
-                              <span className="bet-table-badge">YOU</span>
-                            )}
-                          </div>
-                          <div className="bet-table-cell">{tx.ticket_count}</div>
-                          <div className="bet-table-cell">{tx.total_cost.toFixed(4)}</div>
-                          <div className="bet-table-cell">{formatTime(tx.timestamp)}</div>
-                          <div className="bet-table-cell">
-                            <a 
-                              href={getBSCScanUrl(tx.tx_hash)} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="bet-table-link"
-                            >
-                              {tx.tx_hash.slice(0, 6)}...{tx.tx_hash.slice(-4)}
-                            </a>
-                          </div>
+                <div className="bet-transactions-table">
+                  <div className="bet-table-header">
+                    <div className="bet-table-cell">USER</div>
+                    <div className="bet-table-cell">TICKETS</div>
+                    <div className="bet-table-cell">BNB</div>
+                    <div className="bet-table-cell">TIME</div>
+                    <div className="bet-table-cell">TX</div>
+                  </div>
+                  <div className="bet-table-body">
+                    {transactions.map((tx) => (
+                      <div key={tx.transaction_id} className="bet-table-row">
+                        <div className="bet-table-cell bet-table-user">
+                          {tx.buyer_username}
+                          {user && tx.buyer_id === user.user_id && (
+                            <span className="bet-table-badge">YOU</span>
+                          )}
                         </div>
-                      ))}
-                    </div>
+                        <div className="bet-table-cell">{tx.ticket_count}</div>
+                        <div className="bet-table-cell">{tx.total_cost.toFixed(4)}</div>
+                        <div className="bet-table-cell">{formatTime(tx.timestamp)}</div>
+                        <div className="bet-table-cell">
+                          <a 
+                            href={getBSCScanUrl(tx.tx_hash)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="bet-table-link"
+                          >
+                            {tx.tx_hash.slice(0, 6)}...{tx.tx_hash.slice(-4)}
+                          </a>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -620,7 +626,7 @@ export default function Bet() {
           {activeTab === 'positions' && (
             <div className="bet-tab-panel">
               {!user ? (
-                <div className="bet-empty-state">
+                <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
@@ -628,12 +634,12 @@ export default function Bet() {
                   <p>Sign in to view your positions</p>
                 </div>
               ) : posLoading ? (
-                <div className="bet-empty-state">
+                <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
                   <div className="loading-spinner"></div>
                   <p>Loading positions...</p>
                 </div>
               ) : positions.length === 0 ? (
-                <div className="bet-empty-state">
+                <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                     <line x1="3" y1="9" x2="21" y2="9"></line>
@@ -642,7 +648,7 @@ export default function Bet() {
                   <p>You don't have any positions yet</p>
                 </div>
               ) : (
-                <div className="bet-positions-container">
+                <div className="bet-positions-container" style={{ padding: '24px' }}>
                   <div className="bet-positions-summary">
                     <div className="bet-position-stat">
                       <span className="bet-position-label">TOTAL TICKETS</span>
@@ -658,33 +664,31 @@ export default function Bet() {
                     </div>
                   </div>
 
-                  <div className="bet-transactions-table-wrapper">
-                    <div className="bet-transactions-table">
-                      <div className="bet-table-header">
-                        <div className="bet-table-cell">TICKETS</div>
-                        <div className="bet-table-cell">BNB</div>
-                        <div className="bet-table-cell">TIME</div>
-                        <div className="bet-table-cell">TX</div>
-                      </div>
-                      <div className="bet-table-body">
-                        {positions.map((pos) => (
-                          <div key={pos.transaction_id} className="bet-table-row">
-                            <div className="bet-table-cell">{pos.ticket_count}</div>
-                            <div className="bet-table-cell">{pos.total_cost.toFixed(4)}</div>
-                            <div className="bet-table-cell">{formatTime(pos.timestamp)}</div>
-                            <div className="bet-table-cell">
-                              <a 
-                                href={getBSCScanUrl(pos.tx_hash)} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="bet-table-link"
-                              >
-                                {pos.tx_hash.slice(0, 6)}...{pos.tx_hash.slice(-4)}
-                              </a>
-                            </div>
+                  <div className="bet-transactions-table" style={{ marginTop: '24px' }}>
+                    <div className="bet-table-header">
+                      <div className="bet-table-cell">TICKETS</div>
+                      <div className="bet-table-cell">BNB</div>
+                      <div className="bet-table-cell">TIME</div>
+                      <div className="bet-table-cell">TX</div>
+                    </div>
+                    <div className="bet-table-body">
+                      {positions.map((pos) => (
+                        <div key={pos.transaction_id} className="bet-table-row">
+                          <div className="bet-table-cell">{pos.ticket_count}</div>
+                          <div className="bet-table-cell">{pos.total_cost.toFixed(4)}</div>
+                          <div className="bet-table-cell">{formatTime(pos.timestamp)}</div>
+                          <div className="bet-table-cell">
+                            <a 
+                              href={getBSCScanUrl(pos.tx_hash)} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="bet-table-link"
+                            >
+                              {pos.tx_hash.slice(0, 6)}...{pos.tx_hash.slice(-4)}
+                            </a>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
