@@ -43,26 +43,39 @@ export default function MarketGrid() {
     );
   }
 
-  // Sort markets: Active (with tickets) first, then sold out
+  // Sort markets: Active (non-expired, non-sold-out) first, then Awaiting Resolution (expired), then Sold Out
   const sortedMarkets = [...markets].sort((a, b) => {
-    // Ensure we're working with numbers
+    const now = Math.floor(Date.now() / 1000);
+    
+    // Calculate tickets remaining
     const aTicketsLeft = Number(a.total_tickets) - Number(a.tickets_sold);
     const bTicketsLeft = Number(b.total_tickets) - Number(b.tickets_sold);
     
+    // Determine status for each market
+    const aIsExpired = a.deadline <= now;
+    const bIsExpired = b.deadline <= now;
     const aIsSoldOut = aTicketsLeft <= 0;
     const bIsSoldOut = bTicketsLeft <= 0;
     
-    // If a is sold out but b is not, b comes first (return 1 to move a down)
-    if (aIsSoldOut && !bIsSoldOut) {
+    // Determine priority:
+    // 1 = Active (not expired, not sold out)
+    // 2 = Awaiting Resolution (expired, not sold out)
+    // 3 = Sold Out
+    const getPriority = (isExpired, isSoldOut) => {
+      if (isSoldOut) return 3;
+      if (isExpired) return 2;
       return 1;
+    };
+    
+    const aPriority = getPriority(aIsExpired, aIsSoldOut);
+    const bPriority = getPriority(bIsExpired, bIsSoldOut);
+    
+    // Sort by priority
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
     }
     
-    // If b is sold out but a is not, a comes first (return -1 to move b down)
-    if (!aIsSoldOut && bIsSoldOut) {
-      return -1;
-    }
-    
-    // Both same status - maintain creation order (already sorted by created_at desc)
+    // If same priority, maintain creation order (already sorted by created_at desc)
     return 0;
   });
 

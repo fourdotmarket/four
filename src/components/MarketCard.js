@@ -7,6 +7,7 @@ export default function MarketCard({ market }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState('');
+  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -16,8 +17,11 @@ export default function MarketCard({ market }) {
 
       if (diff <= 0) {
         setTimeLeft('EXPIRED');
+        setIsExpired(true);
         return;
       }
+
+      setIsExpired(false);
 
       const days = Math.floor(diff / 86400);
       const hours = Math.floor((diff % 86400) / 3600);
@@ -64,12 +68,49 @@ export default function MarketCard({ market }) {
   const progressPercentage = (market.tickets_sold / market.total_tickets) * 100;
   const isSoldOut = ticketsRemaining === 0;
 
+  // Determine if market is HOT
+  const isHot = () => {
+    if (isSoldOut || isExpired) return false;
+    
+    const totalTickets = Number(market.total_tickets);
+    const remaining = Number(ticketsRemaining);
+    const percentRemaining = (remaining / totalTickets) * 100;
+    
+    // If total tickets is 100, mark HOT at 10% or less (10 tickets or less)
+    if (totalTickets === 100 && percentRemaining <= 10) {
+      return true;
+    }
+    
+    // If total tickets is 50, mark HOT at 5% or less (2.5 tickets, so <= 2 tickets)
+    if (totalTickets === 50 && remaining <= 2) {
+      return true;
+    }
+    
+    // For other ticket amounts, use 10% threshold
+    if (totalTickets !== 100 && totalTickets !== 50 && percentRemaining <= 10) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  const hot = isHot();
+
+  // Determine status: Active, Awaiting Resolution, or Sold Out
+  const getStatus = () => {
+    if (isExpired) return 'AWAITING RESOLUTION';
+    if (isSoldOut) return 'SOLD OUT';
+    return 'ACTIVE';
+  };
+
+  const status = getStatus();
+
   return (
     <div className="market-card" onClick={handleCardClick}>
-      {/* Diagonal SOLD OUT banner */}
-      {isSoldOut && (
-        <div className="market-card-sold-out-banner">
-          <span>SOLD OUT</span>
+      {/* Diagonal banner for SOLD OUT or AWAITING RESOLUTION */}
+      {(isSoldOut || isExpired) && (
+        <div className={`market-card-sold-out-banner ${isExpired ? 'awaiting' : ''}`}>
+          <span>{status}</span>
         </div>
       )}
 
@@ -80,7 +121,10 @@ export default function MarketCard({ market }) {
           alt="Market banner" 
           className="market-card-banner-img"
         />
-        <div className="market-card-status-badge">ACTIVE</div>
+        <div className={`market-card-status-badge ${status.toLowerCase().replace(/ /g, '-')} ${hot ? 'hot' : ''}`}>
+          {status}
+          {hot && status === 'ACTIVE' && <span className="hot-tag">HOT</span>}
+        </div>
       </div>
 
       {/* Content section */}
@@ -92,7 +136,7 @@ export default function MarketCard({ market }) {
         <div className="market-card-progress-section">
           <div className="market-card-progress-bar">
             <div 
-              className="market-card-progress-fill"
+              className={`market-card-progress-fill ${hot ? 'hot' : ''}`}
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
