@@ -45,11 +45,12 @@ export default function MarketGrid() {
 
   // Sort markets: Active (with tickets) first, then sold out
   const sortedMarkets = [...markets].sort((a, b) => {
-    const aTicketsLeft = a.total_tickets - a.tickets_sold;
-    const bTicketsLeft = b.total_tickets - b.tickets_sold;
+    // Ensure we're working with numbers
+    const aTicketsLeft = Number(a.total_tickets) - Number(a.tickets_sold);
+    const bTicketsLeft = Number(b.total_tickets) - Number(b.tickets_sold);
     
-    const aIsSoldOut = aTicketsLeft === 0;
-    const bIsSoldOut = bTicketsLeft === 0;
+    const aIsSoldOut = aTicketsLeft <= 0;
+    const bIsSoldOut = bTicketsLeft <= 0;
     
     // If a is sold out but b is not, b comes first (return 1 to move a down)
     if (aIsSoldOut && !bIsSoldOut) {
@@ -61,7 +62,7 @@ export default function MarketGrid() {
       return -1;
     }
     
-    // Both sold out or both active - maintain creation order (newer first)
+    // Both same status - maintain creation order (already sorted by created_at desc)
     return 0;
   });
 
