@@ -276,6 +276,7 @@ export default function Bet() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('transactions');
   const [ticketAmount, setTicketAmount] = useState(1);
+  const [ticketInputValue, setTicketInputValue] = useState('1');
   const [isBuying, setIsBuying] = useState(false);
   const [buyStatus, setBuyStatus] = useState('');
 
@@ -439,12 +440,14 @@ export default function Bet() {
         setBuyStatus('');
         setIsBuying(false);
         setTicketAmount(1);
+        setTicketInputValue('1');
       }, 2000);
 
     } catch (error) {
       console.error('❌ Error buying tickets:', error);
       setBuyStatus('');
       setIsBuying(false);
+      setTicketInputValue(ticketAmount.toString()); // Reset to current valid value
       
       let errorMessage = error.message;
       
@@ -700,7 +703,11 @@ export default function Bet() {
               <div className="bet-amount-controls">
                 <button 
                   className="bet-amount-btn"
-                  onClick={() => setTicketAmount(Math.max(1, ticketAmount - 1))}
+                  onClick={() => {
+                    const newValue = Math.max(1, ticketAmount - 1);
+                    setTicketAmount(newValue);
+                    setTicketInputValue(newValue.toString());
+                  }}
                   disabled={ticketAmount <= 1 || isBuying}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -710,15 +717,54 @@ export default function Bet() {
                 <input
                   type="number"
                   className="bet-amount-input"
-                  value={ticketAmount}
-                  onChange={(e) => setTicketAmount(Math.max(1, Math.min(ticketsRemaining, parseInt(e.target.value) || 1)))}
+                  value={ticketInputValue}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    
+                    // Allow empty input (user is deleting)
+                    if (value === '') {
+                      setTicketInputValue('');
+                      return;
+                    }
+                    
+                    // Parse the value
+                    const numValue = parseInt(value);
+                    
+                    // If invalid number, ignore
+                    if (isNaN(numValue)) {
+                      return;
+                    }
+                    
+                    // Update display value immediately (allow free typing)
+                    setTicketInputValue(value);
+                    
+                    // Clamp actual value for calculations
+                    const clampedValue = Math.max(1, Math.min(ticketsRemaining, numValue));
+                    setTicketAmount(clampedValue);
+                  }}
+                  onBlur={() => {
+                    // On blur, ensure we have a valid value
+                    if (ticketInputValue === '' || parseInt(ticketInputValue) < 1) {
+                      setTicketInputValue('1');
+                      setTicketAmount(1);
+                    } else {
+                      const numValue = parseInt(ticketInputValue);
+                      const clampedValue = Math.max(1, Math.min(ticketsRemaining, numValue));
+                      setTicketInputValue(clampedValue.toString());
+                      setTicketAmount(clampedValue);
+                    }
+                  }}
                   min="1"
                   max={ticketsRemaining}
                   disabled={isBuying}
                 />
                 <button 
                   className="bet-amount-btn"
-                  onClick={() => setTicketAmount(Math.min(ticketsRemaining, ticketAmount + 1))}
+                  onClick={() => {
+                    const newValue = Math.min(ticketsRemaining, ticketAmount + 1);
+                    setTicketAmount(newValue);
+                    setTicketInputValue(newValue.toString());
+                  }}
                   disabled={ticketAmount >= ticketsRemaining || isBuying}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -733,28 +779,42 @@ export default function Bet() {
             <div className="bet-quick-select">
               <button 
                 className={`bet-quick-btn ${ticketAmount === 1 ? 'active' : ''}`}
-                onClick={() => setTicketAmount(1)}
+                onClick={() => {
+                  setTicketAmount(1);
+                  setTicketInputValue('1');
+                }}
                 disabled={isBuying}
               >
                 1
               </button>
               <button 
                 className={`bet-quick-btn ${ticketAmount === 5 ? 'active' : ''}`}
-                onClick={() => setTicketAmount(Math.min(5, ticketsRemaining))}
+                onClick={() => {
+                  const value = Math.min(5, ticketsRemaining);
+                  setTicketAmount(value);
+                  setTicketInputValue(value.toString());
+                }}
                 disabled={isBuying}
               >
                 5
               </button>
               <button 
                 className={`bet-quick-btn ${ticketAmount === 10 ? 'active' : ''}`}
-                onClick={() => setTicketAmount(Math.min(10, ticketsRemaining))}
+                onClick={() => {
+                  const value = Math.min(10, ticketsRemaining);
+                  setTicketAmount(value);
+                  setTicketInputValue(value.toString());
+                }}
                 disabled={isBuying}
               >
                 10
               </button>
               <button 
                 className="bet-quick-btn"
-                onClick={() => setTicketAmount(ticketsRemaining)}
+                onClick={() => {
+                  setTicketAmount(ticketsRemaining);
+                  setTicketInputValue(ticketsRemaining.toString());
+                }}
                 disabled={isBuying}
               >
                 MAX
