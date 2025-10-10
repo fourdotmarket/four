@@ -372,7 +372,7 @@ export default function Bet() {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    navigate('/market');
   };
 
   const handleBuyTickets = async () => {
