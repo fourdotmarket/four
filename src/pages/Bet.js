@@ -368,17 +368,29 @@ export default function Bet() {
                           ))}
                         </Pie>
                         <Tooltip 
-                          contentStyle={{
-                            background: '#0a0a0a',
-                            border: '1px solid #FFD43B',
-                            borderRadius: '4px',
-                            fontFamily: "'Courier New', monospace",
-                            fontSize: '12px'
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div style={{
+                                  background: '#0a0a0a',
+                                  border: '1px solid #FFD43B',
+                                  borderRadius: '4px',
+                                  padding: '8px 12px',
+                                  fontFamily: "'Courier New', monospace",
+                                  fontSize: '12px'
+                                }}>
+                                  <div style={{ color: '#FFD43B', fontWeight: 700, marginBottom: '4px' }}>
+                                    {data.name}
+                                  </div>
+                                  <div style={{ color: '#ffffff' }}>
+                                    {data.value} ticket{data.value > 1 ? 's' : ''}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
                           }}
-                          formatter={(value, name, props) => [
-                            `${value} ticket${value > 1 ? 's' : ''}`,
-                            props.payload.name
-                          ]}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -394,6 +406,18 @@ export default function Bet() {
                           <span>+{userDistribution.length - 4} more</span>
                         </div>
                       )}
+                    </div>
+                    <div style={{
+                      fontFamily: "'Courier New', monospace",
+                      fontSize: '11px',
+                      color: '#808080',
+                      textAlign: 'center',
+                      marginTop: '8px',
+                      padding: '8px',
+                      background: 'rgba(255, 212, 59, 0.05)',
+                      border: '1px solid rgba(255, 212, 59, 0.2)'
+                    }}>
+                      <span style={{ color: '#FFD43B', fontWeight: 700 }}>{ticketsRemaining}</span> tickets remaining
                     </div>
                   </>
                 ) : (
