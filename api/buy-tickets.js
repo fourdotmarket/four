@@ -140,75 +140,59 @@ export default async function handler(req, res) {
 
     console.log('✅ Transaction confirmed! Block:', receipt.blockNumber);
 
-    // Parse event logs to get purchase details
-    let eventData = null;
+    // Get timestamp from block
+    const block = await provider.getBlock(receipt.blockNumber);
+    const timestamp = block.timestamp;
 
-    for (const log of receipt.logs) {
-      try {
-        const parsedLog = contract.interface.parseLog(log);
-        if (parsedLog && parsedLog.name === 'TicketsPurchased') {
-          eventData = {
-            marketId: parsedLog.args.marketId.toString(),
-            buyer: parsedLog.args.buyer,
-            ticketCount: parsedLog.args.ticketCount.toString(),
-            totalCost: parsedLog.args.totalCost.toString(),
-            timestamp: parsedLog.args.timestamp.toString()
-          };
-          break;
-        }
-      } catch (e) {
-        // Skip logs that don't match our event
+    console.log('⏰ Block timestamp:', timestamp);
+
+    // ALWAYS save to database - don't rely on event parsing
+    try {
+      console.log('💾 Saving transaction to database...');
+
+      const { data: insertedTransaction, error: insertError } = await supabase
+        .from('transactions')
+        .insert({
+          market_id: market_id.toString(),
+          buyer_id: user_id,
+          buyer_username: userData.username,
+          buyer_wallet: wallet.address,
+          ticket_count: ticket_count,
+          total_cost: totalCostInBNB,
+          tx_hash: tx.hash,
+          block_number: receipt.blockNumber,
+          timestamp: timestamp,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('❌ Failed to save transaction to DB:', insertError);
+        // Still return success since blockchain transaction succeeded
+      } else {
+        console.log('✅ Transaction saved to database:', insertedTransaction);
       }
-    }
 
-    console.log('📊 Event data:', eventData);
+      // Update market tickets_sold count
+      const newTicketsSold = parseInt(ticketsSold.toString()) + ticket_count;
+      
+      const { error: updateError } = await supabase
+        .from('markets')
+        .update({ 
+          tickets_sold: newTicketsSold
+        })
+        .eq('market_id', market_id.toString());
 
-    // Save transaction to database
-    if (eventData) {
-      try {
-        const costInBNB = parseFloat(ethers.formatEther(eventData.totalCost));
-
-        console.log('💾 Saving transaction to database...');
-
-        const { data: insertedTransaction, error: insertError } = await supabase
-          .from('transactions')
-          .insert({
-            market_id: eventData.marketId,
-            buyer_id: user_id,
-            buyer_username: userData.username,
-            buyer_wallet: eventData.buyer,
-            ticket_count: parseInt(eventData.ticketCount),
-            total_cost: costInBNB,
-            tx_hash: tx.hash,
-            block_number: receipt.blockNumber,
-            timestamp: parseInt(eventData.timestamp),
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error('⚠️ Failed to save transaction to DB:', insertError);
-        } else {
-          console.log('✅ Transaction saved to database:', insertedTransaction);
-        }
-
-        // Update market tickets_sold count
-        const { error: updateError } = await supabase
-          .from('markets')
-          .update({ 
-            tickets_sold: (parseInt(ticketsSold.toString()) + parseInt(eventData.ticketCount))
-          })
-          .eq('market_id', eventData.marketId);
-
-        if (updateError) {
-          console.error('⚠️ Failed to update tickets_sold:', updateError);
-        } else {
-          console.log('✅ Market tickets_sold updated');
-        }
-      } catch (dbError) {
-        console.error('⚠️ Database save failed (non-critical):', dbError.message);
+      if (updateError) {
+        console.error('❌ Failed to update tickets_sold:', updateError);
+      } else {
+        console.log('✅ Market tickets_sold updated to:', newTicketsSold);
       }
+    } catch (dbError) {
+      console.error('❌ Database error:', dbError);
+      console.error('Full error:', JSON.stringify(dbError, null, 2));
+      // Still return success since blockchain transaction succeeded
     }
 
     return res.status(200).json({
