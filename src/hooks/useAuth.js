@@ -59,7 +59,7 @@ export function useAuth() {
         });
 
         // FALLBACK: Create user from Privy data
-        console.log('⚠️ Using fallback user data from Privy');
+        console.log(⚠️ Using fallback user data from Privy');
         
         // Get username from different sources
         let username = null;
@@ -70,9 +70,9 @@ export function useAuth() {
         } else if (privyUser.twitter?.username) {
           username = privyUser.twitter.username;
         } else if (privyUser.wallet?.address) {
-          // Format wallet as username: skip 0x prefix
+          // Format wallet as username: skip 0x prefix, take 4 chars
           const addr = privyUser.wallet.address;
-          username = `${addr.slice(2, 4)}...${addr.slice(-4)}`;
+          username = `${addr.slice(2, 6)}...${addr.slice(-4)}`;
         }
 
         const fallbackUser = {
