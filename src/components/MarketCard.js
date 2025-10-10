@@ -62,9 +62,17 @@ export default function MarketCard({ market }) {
 
   const ticketsRemaining = market.total_tickets - market.tickets_sold;
   const progressPercentage = (market.tickets_sold / market.total_tickets) * 100;
+  const isSoldOut = ticketsRemaining === 0;
 
   return (
     <div className="market-card" onClick={handleCardClick}>
+      {/* Diagonal SOLD OUT banner */}
+      {isSoldOut && (
+        <div className="market-card-sold-out-banner">
+          <span>SOLD OUT</span>
+        </div>
+      )}
+
       {/* Banner with tech status badge */}
       <div className="market-card-banner">
         <img 

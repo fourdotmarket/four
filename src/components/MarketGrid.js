@@ -43,10 +43,33 @@ export default function MarketGrid() {
     );
   }
 
+  // Sort markets: Active (with tickets) first, then sold out
+  const sortedMarkets = [...markets].sort((a, b) => {
+    const aTicketsLeft = a.total_tickets - a.tickets_sold;
+    const bTicketsLeft = b.total_tickets - b.tickets_sold;
+    
+    // If both sold out or both have tickets, maintain original order
+    if ((aTicketsLeft === 0 && bTicketsLeft === 0) || (aTicketsLeft > 0 && bTicketsLeft > 0)) {
+      return 0;
+    }
+    
+    // If a is sold out but b is not, b comes first
+    if (aTicketsLeft === 0) {
+      return 1;
+    }
+    
+    // If b is sold out but a is not, a comes first
+    if (bTicketsLeft === 0) {
+      return -1;
+    }
+    
+    return 0;
+  });
+
   return (
     <div className="market-grid-container">
       <div className="market-grid">
-        {markets.map((market) => (
+        {sortedMarkets.map((market) => (
           <MarketCard key={market.market_id} market={market} />
         ))}
       </div>

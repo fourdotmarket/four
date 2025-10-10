@@ -12,6 +12,49 @@
   flex-direction: column;
 }
 
+/* Diagonal SOLD OUT Banner */
+.market-card-sold-out-banner {
+  position: absolute;
+  top: 50px;
+  right: -80px;
+  width: 250px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+  color: #000000;
+  text-align: center;
+  padding: 8px 0;
+  transform: rotate(45deg);
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5);
+  border-top: 2px solid #ff4757;
+  border-bottom: 2px solid #ff4757;
+}
+
+.market-card-sold-out-banner span {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.market-card-sold-out-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+}
+
 /* Tech corner accents */
 .market-card::before,
 .market-card::after {
@@ -352,6 +395,18 @@
   
   .market-card-creator-name {
     max-width: 70px;
+  }
+
+  .market-card-sold-out-banner {
+    top: 45px;
+    right: -75px;
+    width: 220px;
+    padding: 6px 0;
+  }
+
+  .market-card-sold-out-banner span {
+    font-size: 12px;
+    letter-spacing: 2px;
   }
 }
 
