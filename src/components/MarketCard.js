@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './MarketCard.css';
+import { useAuth } from '../hooks/useAuth';
 
 export default function MarketCard({ market }) {
+  const { user } = useAuth();
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
@@ -87,10 +89,9 @@ export default function MarketCard({ market }) {
       <div className="market-card-footer">
         {/* Creator */}
         <div className="market-card-creator">
-          <div className="market-card-creator-avatar">
-            {market.creator_username.charAt(0).toUpperCase()}
-          </div>
-          <span className="market-card-creator-name">{market.creator_username}</span>
+          <span className={`market-card-creator-name ${user && market.creator_id === user.user_id ? 'own-market' : ''}`}>
+            {market.creator_username}
+          </span>
         </div>
 
         {/* Countdown */}

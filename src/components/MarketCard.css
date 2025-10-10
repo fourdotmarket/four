@@ -265,30 +265,19 @@
   gap: 6px;
 }
 
-.market-card-creator-avatar {
-  width: 20px;
-  height: 20px;
-  background: linear-gradient(135deg, #FFD43B 0%, #F4C430 100%);
-  color: #000000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Courier New', monospace;
-  font-size: 10px;
-  font-weight: 700;
-  flex-shrink: 0;
-  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
-}
-
 .market-card-creator-name {
   font-family: 'Courier New', monospace;
   font-size: 10px;
   font-weight: 600;
   color: #b8b8b8;
-  max-width: 100px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.market-card-creator-name.own-market {
+  color: #00ff88;
 }
 
 /* Countdown - Tech Style */
