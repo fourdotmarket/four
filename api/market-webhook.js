@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { ethers } = require('ethers');
+const { sanitizeResponse } = require('./auth-middleware');
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -34,7 +35,7 @@ module.exports = async function handler(req, res) {
       blockNumber
     } = req.body;
 
-    console.log('📥 Webhook received:', { marketId, question, marketMaker });
+    console.log('🔥 Webhook received:', { marketId, question, marketMaker });
 
     const { data: creator, error: creatorError } = await supabase
       .from('users')
@@ -79,9 +80,10 @@ module.exports = async function handler(req, res) {
 
     console.log('✅ Market saved to database:', newMarket);
 
+    // SECURITY: Sanitize response - remove sensitive IDs
     return res.status(200).json({
       success: true,
-      market: newMarket
+      market: sanitizeResponse(newMarket)
     });
 
   } catch (error) {

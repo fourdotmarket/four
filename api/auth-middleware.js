@@ -149,6 +149,34 @@ function cleanupRateLimitStore(now, windowMs) {
 }
 
 /**
+ * Remove sensitive IDs from API responses
+ * Never expose user_id, creator_id, buyer_id to frontend
+ */
+function sanitizeResponse(data) {
+  if (!data) return data;
+  
+  // Handle arrays
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeResponse(item));
+  }
+  
+  // Handle objects
+  if (typeof data === 'object') {
+    const sanitized = { ...data };
+    
+    // Remove sensitive ID fields
+    delete sanitized.user_id;
+    delete sanitized.creator_id;
+    delete sanitized.buyer_id;
+    delete sanitized.id; // Database UUID
+    
+    return sanitized;
+  }
+  
+  return data;
+}
+
+/**
  * Log security audit events
  */
 async function logAudit(auditData) {
@@ -166,5 +194,6 @@ module.exports = {
   verifyAuth,
   validateInput,
   checkRateLimit,
-  logAudit
+  logAudit,
+  sanitizeResponse
 };

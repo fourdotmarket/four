@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { ethers } = require('ethers');
+const { sanitizeResponse } = require('./auth-middleware');
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -94,9 +95,10 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    // SECURITY: Sanitize response - remove sensitive IDs
     return res.status(200).json({
       success: true,
-      transaction: newTransaction
+      transaction: sanitizeResponse(newTransaction)
     });
 
   } catch (error) {

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { ethers } from 'ethers';
-import { verifyAuth, validateInput, checkRateLimit, logAudit } from './auth-middleware';
+import { verifyAuth, validateInput, checkRateLimit, logAudit, sanitizeResponse } from './auth-middleware';
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -244,7 +244,8 @@ export default async function handler(req, res) {
         if (insertError) {
           console.error('⚠️ Failed to save market to DB:', insertError);
         } else {
-          console.log('✅ Market saved to database:', insertedMarket);
+          console.log('✅ Market saved to database');
+          // Don't log full market data (contains creator_id)
         }
       } catch (dbError) {
         console.error('⚠️ Database save failed (non-critical):', dbError.message);

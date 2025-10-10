@@ -34,7 +34,7 @@ export default function Market() {
 
   // Map tickets to ticketAmount index
   const ticketsToAmount = {
-    '1': 0, '10': 1, '50': 2, '100': 3
+    '10': 0, '50': 1, '100': 2, '500': 3
   };
 
   const handleBannerSelect = (e) => {
@@ -62,12 +62,16 @@ export default function Market() {
 
   const handleStakeChange = (e) => {
     const value = e.target.value;
-    if (value === '') {
-      setStake('');
+    
+    // Allow empty or just a decimal point
+    if (value === '' || value === '.') {
+      setStake(value);
       return;
     }
+    
+    // Allow valid numbers (including decimals like 0.0, 0.07, etc)
     const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue >= MIN_STAKE) {
+    if (!isNaN(numValue)) {
       setStake(value);
     }
   };

@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const jose = require('jose');
 const { ethers } = require('ethers');
+const { sanitizeResponse } = require('./auth-middleware');
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -57,9 +58,10 @@ module.exports = async function handler(req, res) {
         .update({ last_login: new Date().toISOString() })
         .eq('privy_user_id', privyUserId);
 
+      // SECURITY: Sanitize response - remove sensitive IDs
       return res.status(200).json({
         success: true,
-        user: existingUser,
+        user: sanitizeResponse(existingUser),
         isNewUser: false
       });
     }
@@ -87,9 +89,10 @@ module.exports = async function handler(req, res) {
 
     if (insertError) throw insertError;
 
+    // SECURITY: Sanitize response - remove sensitive IDs
     return res.status(201).json({
       success: true,
-      user: newUser,
+      user: sanitizeResponse(newUser),
       isNewUser: true
     });
 
