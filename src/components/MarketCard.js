@@ -119,7 +119,7 @@ export default function MarketCard({ market }) {
       <div className="market-card-footer">
         {/* Creator */}
         <div className="market-card-creator">
-          <span className={`market-card-creator-name ${user && market.creator_id === user.user_id ? 'own-market' : ''}`}>
+          <span className={`market-card-creator-name ${user && market.creator_wallet === user.wallet_address ? 'own-market' : ''}`}>
             {market.creator_username}
           </span>
         </div>

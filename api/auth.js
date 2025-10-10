@@ -1,7 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const jose = require('jose');
 const { ethers } = require('ethers');
-const { sanitizeResponse } = require('./auth-middleware');
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -58,10 +57,13 @@ module.exports = async function handler(req, res) {
         .update({ last_login: new Date().toISOString() })
         .eq('privy_user_id', privyUserId);
 
-      // SECURITY: Sanitize response - remove sensitive IDs
+      // SECURITY: User gets their own user_id (needed for app functionality)
+      // but we remove id (internal UUID)
+      const { id, ...userWithoutInternalId } = existingUser;
+      
       return res.status(200).json({
         success: true,
-        user: sanitizeResponse(existingUser),
+        user: userWithoutInternalId,
         isNewUser: false
       });
     }
@@ -89,10 +91,13 @@ module.exports = async function handler(req, res) {
 
     if (insertError) throw insertError;
 
-    // SECURITY: Sanitize response - remove sensitive IDs
+    // SECURITY: User gets their own user_id (needed for app functionality)
+    // but we remove id (internal UUID)
+    const { id, ...userWithoutInternalId } = newUser;
+
     return res.status(201).json({
       success: true,
-      user: sanitizeResponse(newUser),
+      user: userWithoutInternalId,
       isNewUser: true
     });
 

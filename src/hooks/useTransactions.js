@@ -46,9 +46,22 @@ export function useTransactions(marketId) {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
+      
+      // SECURITY FIX: Select only non-sensitive columns (no id, no buyer_id)
       const { data, error: fetchError } = await supabase
         .from('transactions')
-        .select('*')
+        .select(`
+          transaction_id,
+          market_id,
+          buyer_username,
+          buyer_wallet,
+          ticket_count,
+          total_cost,
+          tx_hash,
+          block_number,
+          timestamp,
+          created_at
+        `)
         .eq('market_id', marketId)
         .order('created_at', { ascending: false });
 

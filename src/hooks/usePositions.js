@@ -37,9 +37,14 @@ export function usePositions(userId, marketId) {
         },
         (payload) => {
           // Check if this transaction is for the current user
+          // Note: payload.new will contain buyer_id from realtime, but we sanitize before adding to state
           if (payload.new.buyer_id === userId) {
             console.log('🆕 New position for user:', payload.new);
-            setPositions((current) => [payload.new, ...current]);
+            
+            // Sanitize before adding to state - remove buyer_id
+            const { buyer_id, id, ...sanitizedTransaction } = payload.new;
+            
+            setPositions((current) => [sanitizedTransaction, ...current]);
             setTotalTickets((current) => current + payload.new.ticket_count);
             setTotalSpent((current) => current + payload.new.total_cost);
           }
@@ -55,9 +60,23 @@ export function usePositions(userId, marketId) {
   const fetchPositions = async () => {
     try {
       setLoading(true);
+      
+      // SECURITY FIX: Select only non-sensitive columns (no id, no buyer_id)
+      // We filter by buyer_id but don't return it
       const { data, error: fetchError } = await supabase
         .from('transactions')
-        .select('*')
+        .select(`
+          transaction_id,
+          market_id,
+          buyer_username,
+          buyer_wallet,
+          ticket_count,
+          total_cost,
+          tx_hash,
+          block_number,
+          timestamp,
+          created_at
+        `)
         .eq('market_id', marketId)
         .eq('buyer_id', userId)
         .order('created_at', { ascending: false });

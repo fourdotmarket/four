@@ -69,10 +69,20 @@ function AllUserPositions({ userId }) {
     try {
       setLoading(true);
 
+      // SECURITY FIX: Select specific columns instead of *
       const { data: transactions, error: txError } = await supabase
         .from('transactions')
         .select(`
-          *,
+          transaction_id,
+          market_id,
+          buyer_username,
+          buyer_wallet,
+          ticket_count,
+          total_cost,
+          tx_hash,
+          block_number,
+          timestamp,
+          created_at,
           markets (
             market_id,
             question,
@@ -462,14 +472,16 @@ export default function Bet() {
     
     if (transactions && transactions.length > 0) {
       transactions.forEach(tx => {
-        if (!userMap[tx.buyer_id]) {
-          userMap[tx.buyer_id] = {
+        // SECURITY FIX: Use buyer_wallet instead of buyer_id as unique key
+        if (!userMap[tx.buyer_wallet]) {
+          userMap[tx.buyer_wallet] = {
             name: tx.buyer_username,
             value: 0,
-            isCurrentUser: user && tx.buyer_id === user.user_id
+            // SECURITY FIX: Compare wallet addresses instead of IDs
+            isCurrentUser: user && tx.buyer_wallet === user.wallet_address
           };
         }
-        userMap[tx.buyer_id].value += tx.ticket_count;
+        userMap[tx.buyer_wallet].value += tx.ticket_count;
       });
     }
 
@@ -493,7 +505,8 @@ export default function Bet() {
 
   const getUniqueHoldersCount = () => {
     if (!transactions || transactions.length === 0) return 0;
-    const uniqueBuyers = new Set(transactions.map(tx => tx.buyer_id));
+    // SECURITY FIX: Use buyer_wallet instead of buyer_id for unique count
+    const uniqueBuyers = new Set(transactions.map(tx => tx.buyer_wallet));
     return uniqueBuyers.size;
   };
 
@@ -863,7 +876,8 @@ export default function Bet() {
                       <div key={tx.transaction_id} className="bet-table-row">
                         <div className="bet-table-cell bet-table-user">
                           {tx.buyer_username}
-                          {user && tx.buyer_id === user.user_id && (
+                          {/* SECURITY FIX: Compare wallet addresses instead of IDs */}
+                          {user && tx.buyer_wallet === user.wallet_address && (
                             <span className="bet-table-badge">YOU</span>
                           )}
                         </div>

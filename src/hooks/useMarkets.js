@@ -54,9 +54,29 @@ export function useMarkets() {
   const fetchMarkets = async () => {
     try {
       setLoading(true);
+      
+      // SECURITY FIX: Select only non-sensitive columns (no id, no creator_id)
       const { data, error: fetchError } = await supabase
         .from('markets')
-        .select('*')
+        .select(`
+          market_id,
+          question,
+          creator_username,
+          creator_wallet,
+          stake,
+          ticket_price,
+          total_tickets,
+          tickets_sold,
+          deadline,
+          created_at_timestamp,
+          tx_hash,
+          block_number,
+          status,
+          outcome,
+          banner_url,
+          created_at,
+          updated_at
+        `)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
