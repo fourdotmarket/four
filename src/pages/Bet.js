@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import './Bet.css';
 
 const supabase = createClient(
@@ -10,13 +11,15 @@ const supabase = createClient(
 
 export default function Bet() {
   const { betId } = useParams();
+  const navigate = useNavigate();
   const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('history');
+  const [ticketAmount, setTicketAmount] = useState(1);
 
-  // Convert bet ID back to market_id (reverse of the generation function)
+  // Convert bet ID back to market_id
   const getMarketIdFromBetId = async (betId) => {
-    // Fetch all markets and find the one that matches this bet ID
     const { data: markets, error: fetchError } = await supabase
       .from('markets')
       .select('*')
@@ -24,7 +27,6 @@ export default function Bet() {
 
     if (fetchError) throw fetchError;
 
-    // Generate bet IDs for all markets and find match
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     
     for (const market of markets) {
@@ -53,7 +55,6 @@ export default function Bet() {
     try {
       setLoading(true);
       
-      // Get market_id from bet_id
       const marketId = await getMarketIdFromBetId(betId);
       
       if (!marketId) {
@@ -78,6 +79,15 @@ export default function Bet() {
     }
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleBuyTickets = () => {
+    // TODO: Implement buy tickets functionality
+    alert(`Buying ${ticketAmount} ticket(s)`);
+  };
+
   if (loading) {
     return (
       <div className="bet-page">
@@ -100,58 +110,280 @@ export default function Bet() {
   }
 
   const ticketsRemaining = market.total_tickets - market.tickets_sold;
-  const progressPercentage = (market.tickets_sold / market.total_tickets) * 100;
+  const ticketsSold = market.tickets_sold;
+  const progressPercentage = (ticketsSold / market.total_tickets) * 100;
+
+  // Pie chart data - Distribution of tickets
+  const pieData = [
+    { name: 'Sold', value: ticketsSold, color: '#FFD43B' },
+    { name: 'Available', value: ticketsRemaining, color: '#2a2a2a' }
+  ];
+
+  const totalCost = (ticketAmount * parseFloat(market.ticket_price)).toFixed(4);
 
   return (
     <div className="bet-page">
-      <div className="bet-container">
-        <div className="bet-header">
-          <h1>{market.question}</h1>
-          <div className="bet-status-badge">ACTIVE</div>
-        </div>
+      {/* Back Button */}
+      <button className="bet-back-btn" onClick={handleBack}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>BACK</span>
+      </button>
 
-        <div className="bet-banner">
-          <img 
-            src={market.banner_url || '/default.png'} 
-            alt="Market banner"
-          />
-        </div>
+      {/* Main Content - Split Layout */}
+      <div className="bet-split-container">
+        {/* LEFT SIDE - Market Info & Chart */}
+        <div className="bet-left-section">
+          <div className="bet-info-card">
+            {/* Status Badge */}
+            <div className="bet-status-badge">ACTIVE</div>
 
-        <div className="bet-stats">
-          <div className="bet-stat-card">
-            <span className="bet-stat-label">STAKE</span>
-            <span className="bet-stat-value">{market.stake} BNB</span>
+            {/* Question */}
+            <div className="bet-question-section">
+              <h1 className="bet-question">{market.question}</h1>
+            </div>
+
+            {/* Creator Info */}
+            <div className="bet-creator-section">
+              <span className="bet-label">CREATED BY</span>
+              <span className="bet-creator-name">{market.creator_username}</span>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="bet-stats-grid">
+              <div className="bet-stat-item">
+                <span className="bet-stat-label">STAKE</span>
+                <span className="bet-stat-value">{market.stake} BNB</span>
+              </div>
+              <div className="bet-stat-item">
+                <span className="bet-stat-label">TICKET PRICE</span>
+                <span className="bet-stat-value">{market.ticket_price} BNB</span>
+              </div>
+              <div className="bet-stat-item">
+                <span className="bet-stat-label">TOTAL TICKETS</span>
+                <span className="bet-stat-value">{market.total_tickets}</span>
+              </div>
+              <div className="bet-stat-item">
+                <span className="bet-stat-label">SOLD</span>
+                <span className="bet-stat-value">{ticketsSold}</span>
+              </div>
+            </div>
+
+            {/* Pie Chart - Ticket Distribution */}
+            <div className="bet-chart-section">
+              <h3 className="bet-chart-title">TICKET DISTRIBUTION</h3>
+              <div className="bet-chart-container">
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{
+                        background: '#0a0a0a',
+                        border: '1px solid #FFD43B',
+                        borderRadius: '4px',
+                        fontFamily: "'Courier New', monospace",
+                        fontSize: '12px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="bet-chart-legend">
+                  <div className="bet-legend-item">
+                    <div className="bet-legend-color" style={{ background: '#FFD43B' }}></div>
+                    <span>Sold: {ticketsSold}</span>
+                  </div>
+                  <div className="bet-legend-item">
+                    <div className="bet-legend-color" style={{ background: '#2a2a2a' }}></div>
+                    <span>Available: {ticketsRemaining}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="bet-stat-card">
-            <span className="bet-stat-label">TICKET PRICE</span>
-            <span className="bet-stat-value">{market.ticket_price} BNB</span>
-          </div>
-          <div className="bet-stat-card">
-            <span className="bet-stat-label">TICKETS LEFT</span>
-            <span className="bet-stat-value">{ticketsRemaining}/{market.total_tickets}</span>
-          </div>
-          <div className="bet-stat-card">
-            <span className="bet-stat-label">PROGRESS</span>
-            <span className="bet-stat-value">{progressPercentage.toFixed(0)}%</span>
-          </div>
         </div>
 
-        <div className="bet-progress-bar">
-          <div 
-            className="bet-progress-fill"
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
-        </div>
+        {/* RIGHT SIDE - Buy Tickets */}
+        <div className="bet-right-section">
+          <div className="bet-buy-card">
+            <h2 className="bet-buy-title">BUY TICKETS</h2>
 
-        <div className="bet-creator-info">
-          <span className="bet-creator-label">Created by:</span>
-          <span className="bet-creator-name">{market.creator_username}</span>
-        </div>
+            {/* Banner Preview */}
+            <div className="bet-buy-banner">
+              <img 
+                src={market.banner_url || '/default.png'} 
+                alt="Market banner"
+              />
+            </div>
 
-        <div className="bet-actions">
-          <button className="bet-buy-btn">
-            BUY TICKETS
+            {/* Progress Bar */}
+            <div className="bet-progress-section">
+              <div className="bet-progress-bar">
+                <div 
+                  className="bet-progress-fill"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
+              </div>
+              <div className="bet-progress-text">
+                <span>{ticketsRemaining} LEFT</span>
+                <span>{progressPercentage.toFixed(0)}%</span>
+              </div>
+            </div>
+
+            {/* Ticket Amount Selector */}
+            <div className="bet-ticket-selector">
+              <label className="bet-input-label">NUMBER OF TICKETS</label>
+              <div className="bet-amount-controls">
+                <button 
+                  className="bet-amount-btn"
+                  onClick={() => setTicketAmount(Math.max(1, ticketAmount - 1))}
+                  disabled={ticketAmount <= 1}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
+                <input
+                  type="number"
+                  className="bet-amount-input"
+                  value={ticketAmount}
+                  onChange={(e) => setTicketAmount(Math.max(1, Math.min(ticketsRemaining, parseInt(e.target.value) || 1)))}
+                  min="1"
+                  max={ticketsRemaining}
+                />
+                <button 
+                  className="bet-amount-btn"
+                  onClick={() => setTicketAmount(Math.min(ticketsRemaining, ticketAmount + 1))}
+                  disabled={ticketAmount >= ticketsRemaining}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Select Buttons */}
+            <div className="bet-quick-select">
+              <button 
+                className={`bet-quick-btn ${ticketAmount === 1 ? 'active' : ''}`}
+                onClick={() => setTicketAmount(1)}
+              >
+                1
+              </button>
+              <button 
+                className={`bet-quick-btn ${ticketAmount === 5 ? 'active' : ''}`}
+                onClick={() => setTicketAmount(Math.min(5, ticketsRemaining))}
+              >
+                5
+              </button>
+              <button 
+                className={`bet-quick-btn ${ticketAmount === 10 ? 'active' : ''}`}
+                onClick={() => setTicketAmount(Math.min(10, ticketsRemaining))}
+              >
+                10
+              </button>
+              <button 
+                className="bet-quick-btn"
+                onClick={() => setTicketAmount(ticketsRemaining)}
+              >
+                MAX
+              </button>
+            </div>
+
+            {/* Total Cost */}
+            <div className="bet-total-section">
+              <div className="bet-total-row">
+                <span className="bet-total-label">TOTAL COST</span>
+                <span className="bet-total-value">{totalCost} BNB</span>
+              </div>
+            </div>
+
+            {/* Buy Button */}
+            <button className="bet-buy-button" onClick={handleBuyTickets}>
+              <span>BUY {ticketAmount} TICKET{ticketAmount > 1 ? 'S' : ''}</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Section - Tabs */}
+      <div className="bet-tabs-container">
+        <div className="bet-tabs-header">
+          <button 
+            className={`bet-tab ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveTab('history')}
+          >
+            HISTORY
           </button>
+          <button 
+            className={`bet-tab ${activeTab === 'positions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('positions')}
+          >
+            POSITIONS
+          </button>
+          <button 
+            className={`bet-tab ${activeTab === 'chat' ? 'active' : ''}`}
+            onClick={() => setActiveTab('chat')}
+          >
+            CHAT
+          </button>
+        </div>
+
+        <div className="bet-tabs-content">
+          {activeTab === 'history' && (
+            <div className="bet-tab-panel">
+              <div className="bet-empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <p>No transaction history yet</p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'positions' && (
+            <div className="bet-tab-panel">
+              <div className="bet-empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                  <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg>
+                <p>You don't have any positions yet</p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'chat' && (
+            <div className="bet-tab-panel">
+              <div className="bet-empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <p>Chat coming soon</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
