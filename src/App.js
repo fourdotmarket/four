@@ -11,6 +11,7 @@ import Trending from './pages/Trending';
 import FMarket from './pages/FMarket';
 import Market from './pages/Market';
 import Resolved from './pages/Resolved';
+import Bet from './pages/Bet';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -29,6 +30,7 @@ function AppContent() {
         <Route path="/fmarket" element={<FMarket />} />
         <Route path="/market" element={<Market />} />
         <Route path="/resolved" element={<Resolved />} />
+        <Route path="/bet/:betId" element={<Bet />} />
       </Routes>
     </div>
   );
