@@ -12,6 +12,22 @@ const supabase = createClient(
   process.env.REACT_APP_SUPABASE_ANON_KEY
 );
 
+// Generate consistent colors for users
+const COLORS = [
+  '#FFD43B', // Yellow
+  '#FF6B6B', // Red
+  '#4ECDC4', // Teal
+  '#45B7D1', // Blue
+  '#96CEB4', // Green
+  '#FFEAA7', // Light Yellow
+  '#DFE6E9', // Light Gray
+  '#74B9FF', // Light Blue
+  '#A29BFE', // Purple
+  '#FD79A8', // Pink
+  '#FDCB6E', // Orange
+  '#6C5CE7', // Deep Purple
+];
+
 export default function Bet() {
   const { betId } = useParams();
   const navigate = useNavigate();
@@ -147,7 +163,7 @@ export default function Bet() {
 
       setBuyStatus('Submitting to blockchain...');
 
-      const response = await fetch('/api/buy-tickets', {
+      const response = await fetch('/api/buy-ticket', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -216,6 +232,30 @@ export default function Bet() {
     return `https://bscscan.com/tx/${txHash}`;
   };
 
+  // Calculate user distribution for pie chart
+  const getUserDistribution = () => {
+    if (!transactions || transactions.length === 0) return [];
+
+    // Aggregate tickets by user
+    const userMap = {};
+    transactions.forEach(tx => {
+      if (!userMap[tx.buyer_id]) {
+        userMap[tx.buyer_id] = {
+          name: tx.buyer_username,
+          value: 0,
+          isCurrentUser: user && tx.buyer_id === user.user_id
+        };
+      }
+      userMap[tx.buyer_id].value += tx.ticket_count;
+    });
+
+    // Convert to array and assign colors
+    return Object.values(userMap).map((userData, index) => ({
+      ...userData,
+      color: userData.isCurrentUser ? '#FFD43B' : COLORS[index % COLORS.length]
+    }));
+  };
+
   if (loading) {
     return (
       <div className="bet-page">
@@ -241,11 +281,8 @@ export default function Bet() {
   const ticketsSold = market.tickets_sold;
   const progressPercentage = (ticketsSold / market.total_tickets) * 100;
 
-  // Pie chart data - Distribution of tickets
-  const pieData = [
-    { name: 'Sold', value: ticketsSold, color: '#FFD43B' },
-    { name: 'Available', value: ticketsRemaining, color: '#2a2a2a' }
-  ];
+  // Get user distribution for pie chart
+  const userDistribution = getUserDistribution();
 
   const totalCost = (ticketAmount * parseFloat(market.ticket_price)).toFixed(4);
 
@@ -299,48 +336,63 @@ export default function Bet() {
               </div>
             </div>
 
-            {/* Pie Chart - Ticket Distribution */}
+            {/* Pie Chart - User Distribution */}
             <div className="bet-chart-section">
-              <h3 className="bet-chart-title">TICKET DISTRIBUTION</h3>
+              <h3 className="bet-chart-title">TICKET HOLDERS</h3>
               <div className="bet-chart-container">
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={0}
-                      dataKey="value"
-                      startAngle={90}
-                      endAngle={-270}
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                {userDistribution.length > 0 ? (
+                  <>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={userDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={90}
+                          paddingAngle={2}
+                          dataKey="value"
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          {userDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{
+                            background: '#0a0a0a',
+                            border: '1px solid #FFD43B',
+                            borderRadius: '4px',
+                            fontFamily: "'Courier New', monospace",
+                            fontSize: '12px'
+                          }}
+                          formatter={(value, name, props) => [
+                            `${value} ticket${value > 1 ? 's' : ''}`,
+                            props.payload.name
+                          ]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="bet-chart-legend">
+                      {userDistribution.slice(0, 4).map((entry, index) => (
+                        <div className="bet-legend-item" key={index}>
+                          <div className="bet-legend-color" style={{ background: entry.color }}></div>
+                          <span>{entry.name}: {entry.value}</span>
+                        </div>
                       ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{
-                        background: '#0a0a0a',
-                        border: '1px solid #FFD43B',
-                        borderRadius: '4px',
-                        fontFamily: "'Courier New', monospace",
-                        fontSize: '12px'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="bet-chart-legend">
-                  <div className="bet-legend-item">
-                    <div className="bet-legend-color" style={{ background: '#FFD43B' }}></div>
-                    <span>Sold: {ticketsSold}</span>
+                      {userDistribution.length > 4 && (
+                        <div className="bet-legend-item">
+                          <span>+{userDistribution.length - 4} more</span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="bet-empty-state">
+                    <p>No ticket holders yet</p>
                   </div>
-                  <div className="bet-legend-item">
-                    <div className="bet-legend-color" style={{ background: '#2a2a2a' }}></div>
-                    <span>Available: {ticketsRemaining}</span>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -497,7 +549,7 @@ export default function Bet() {
             className={`bet-tab ${activeTab === 'positions' ? 'active' : ''}`}
             onClick={() => setActiveTab('positions')}
           >
-            POSITIONS
+            POSITION
           </button>
           <button 
             className={`bet-tab ${activeTab === 'chat' ? 'active' : ''}`}
@@ -525,37 +577,41 @@ export default function Bet() {
                   <p>No transactions yet</p>
                 </div>
               ) : (
-                <div className="bet-transactions-table">
-                  <div className="bet-table-header">
-                    <div className="bet-table-cell">USER</div>
-                    <div className="bet-table-cell">TICKETS</div>
-                    <div className="bet-table-cell">BNB</div>
-                    <div className="bet-table-cell">TIME</div>
-                    <div className="bet-table-cell">TX</div>
-                  </div>
-                  {transactions.map((tx) => (
-                    <div key={tx.transaction_id} className="bet-table-row">
-                      <div className="bet-table-cell bet-table-user">
-                        {tx.buyer_username}
-                        {user && tx.buyer_id === user.user_id && (
-                          <span className="bet-table-badge">YOU</span>
-                        )}
-                      </div>
-                      <div className="bet-table-cell">{tx.ticket_count}</div>
-                      <div className="bet-table-cell">{tx.total_cost.toFixed(4)}</div>
-                      <div className="bet-table-cell">{formatTime(tx.timestamp)}</div>
-                      <div className="bet-table-cell">
-                        <a 
-                          href={getBSCScanUrl(tx.tx_hash)} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="bet-table-link"
-                        >
-                          {tx.tx_hash.slice(0, 6)}...{tx.tx_hash.slice(-4)}
-                        </a>
-                      </div>
+                <div className="bet-transactions-table-wrapper">
+                  <div className="bet-transactions-table">
+                    <div className="bet-table-header">
+                      <div className="bet-table-cell">USER</div>
+                      <div className="bet-table-cell">TICKETS</div>
+                      <div className="bet-table-cell">BNB</div>
+                      <div className="bet-table-cell">TIME</div>
+                      <div className="bet-table-cell">TX</div>
                     </div>
-                  ))}
+                    <div className="bet-table-body">
+                      {transactions.map((tx) => (
+                        <div key={tx.transaction_id} className="bet-table-row">
+                          <div className="bet-table-cell bet-table-user">
+                            {tx.buyer_username}
+                            {user && tx.buyer_id === user.user_id && (
+                              <span className="bet-table-badge">YOU</span>
+                            )}
+                          </div>
+                          <div className="bet-table-cell">{tx.ticket_count}</div>
+                          <div className="bet-table-cell">{tx.total_cost.toFixed(4)}</div>
+                          <div className="bet-table-cell">{formatTime(tx.timestamp)}</div>
+                          <div className="bet-table-cell">
+                            <a 
+                              href={getBSCScanUrl(tx.tx_hash)} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="bet-table-link"
+                            >
+                              {tx.tx_hash.slice(0, 6)}...{tx.tx_hash.slice(-4)}
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -602,30 +658,34 @@ export default function Bet() {
                     </div>
                   </div>
 
-                  <div className="bet-transactions-table">
-                    <div className="bet-table-header">
-                      <div className="bet-table-cell">TICKETS</div>
-                      <div className="bet-table-cell">BNB</div>
-                      <div className="bet-table-cell">TIME</div>
-                      <div className="bet-table-cell">TX</div>
-                    </div>
-                    {positions.map((pos) => (
-                      <div key={pos.transaction_id} className="bet-table-row">
-                        <div className="bet-table-cell">{pos.ticket_count}</div>
-                        <div className="bet-table-cell">{pos.total_cost.toFixed(4)}</div>
-                        <div className="bet-table-cell">{formatTime(pos.timestamp)}</div>
-                        <div className="bet-table-cell">
-                          <a 
-                            href={getBSCScanUrl(pos.tx_hash)} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="bet-table-link"
-                          >
-                            {pos.tx_hash.slice(0, 6)}...{pos.tx_hash.slice(-4)}
-                          </a>
-                        </div>
+                  <div className="bet-transactions-table-wrapper">
+                    <div className="bet-transactions-table">
+                      <div className="bet-table-header">
+                        <div className="bet-table-cell">TICKETS</div>
+                        <div className="bet-table-cell">BNB</div>
+                        <div className="bet-table-cell">TIME</div>
+                        <div className="bet-table-cell">TX</div>
                       </div>
-                    ))}
+                      <div className="bet-table-body">
+                        {positions.map((pos) => (
+                          <div key={pos.transaction_id} className="bet-table-row">
+                            <div className="bet-table-cell">{pos.ticket_count}</div>
+                            <div className="bet-table-cell">{pos.total_cost.toFixed(4)}</div>
+                            <div className="bet-table-cell">{formatTime(pos.timestamp)}</div>
+                            <div className="bet-table-cell">
+                              <a 
+                                href={getBSCScanUrl(pos.tx_hash)} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="bet-table-link"
+                              >
+                                {pos.tx_hash.slice(0, 6)}...{pos.tx_hash.slice(-4)}
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
