@@ -40,12 +40,14 @@
   grid-template-columns: 1.2fr 0.8fr;
   gap: 24px;
   margin-bottom: 32px;
+  align-items: stretch;
 }
 
 /* LEFT SECTION - Market Info */
 .bet-left-section {
   display: flex;
   flex-direction: column;
+  min-height: 100%;
 }
 
 .bet-info-card {
@@ -233,6 +235,7 @@
 .bet-right-section {
   display: flex;
   flex-direction: column;
+  min-height: 100%;
 }
 
 .bet-buy-card {
@@ -243,9 +246,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: fit-content;
-  position: sticky;
-  top: 20px;
+  flex: 1;
 }
 
 .bet-buy-card::before,

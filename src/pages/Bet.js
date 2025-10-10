@@ -183,8 +183,10 @@ export default function Bet() {
                       cy="50%"
                       innerRadius={60}
                       outerRadius={90}
-                      paddingAngle={2}
+                      paddingAngle={0}
                       dataKey="value"
+                      startAngle={90}
+                      endAngle={-270}
                     >
                       {pieData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
