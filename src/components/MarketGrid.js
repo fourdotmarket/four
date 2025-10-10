@@ -43,7 +43,7 @@ export default function MarketGrid() {
     );
   }
 
-  // Sort markets: Active (non-expired, non-sold-out) first, then Awaiting Resolution (expired), then Sold Out
+  // Sort markets: HOT first, then Active (non-expired, non-sold-out), then Awaiting Resolution (expired), then Sold Out
   const sortedMarkets = [...markets].sort((a, b) => {
     const now = Math.floor(Date.now() / 1000);
     
@@ -57,26 +57,46 @@ export default function MarketGrid() {
     const aIsSoldOut = aTicketsLeft <= 0;
     const bIsSoldOut = bTicketsLeft <= 0;
     
+    // Calculate HOT status
+    const isHot = (market, ticketsLeft, isSoldOut, isExpired) => {
+      if (isSoldOut || isExpired) return false;
+      
+      const totalTickets = Number(market.total_tickets);
+      const remaining = Number(ticketsLeft);
+      const percentRemaining = (remaining / totalTickets) * 100;
+      
+      if (totalTickets === 100 && percentRemaining <= 10) return true;
+      if (totalTickets === 50 && remaining <= 2) return true;
+      if (totalTickets !== 100 && totalTickets !== 50 && percentRemaining <= 10) return true;
+      
+      return false;
+    };
+    
+    const aIsHot = isHot(a, aTicketsLeft, aIsSoldOut, aIsExpired);
+    const bIsHot = isHot(b, bTicketsLeft, bIsSoldOut, bIsExpired);
+    
     // Determine priority:
-    // 1 = Active (not expired, not sold out)
+    // 0 = HOT (active markets with low tickets)
+    // 1 = Active (not expired, not sold out, not hot)
     // 2 = Awaiting Resolution (expired, not sold out)
     // 3 = Sold Out
-    const getPriority = (isExpired, isSoldOut) => {
+    const getPriority = (isExpired, isSoldOut, isHot) => {
       if (isSoldOut) return 3;
       if (isExpired) return 2;
+      if (isHot) return 0;
       return 1;
     };
     
-    const aPriority = getPriority(aIsExpired, aIsSoldOut);
-    const bPriority = getPriority(bIsExpired, bIsSoldOut);
+    const aPriority = getPriority(aIsExpired, aIsSoldOut, aIsHot);
+    const bPriority = getPriority(bIsExpired, bIsSoldOut, bIsHot);
     
     // Sort by priority
     if (aPriority !== bPriority) {
       return aPriority - bPriority;
     }
     
-    // If same priority, maintain creation order (already sorted by created_at desc)
-    return 0;
+    // Within same priority, sort by creation date (most recent first)
+    return new Date(b.created_at) - new Date(a.created_at);
   });
 
   return (

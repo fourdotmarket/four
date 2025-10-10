@@ -17,16 +17,19 @@
   position: absolute;
   top: 50px;
   right: -80px;
-  width: 250px;
+  width: 280px;
   background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
   color: #000000;
   text-align: center;
-  padding: 8px 0;
+  padding: 10px 0;
   transform: rotate(45deg);
   z-index: 10;
   box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5);
   border-top: 2px solid #ff4757;
   border-bottom: 2px solid #ff4757;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Diagonal AWAITING RESOLUTION Banner */
@@ -39,11 +42,12 @@
 
 .market-card-sold-out-banner span {
   font-family: 'Courier New', monospace;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
-  letter-spacing: 3px;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
 }
 
 .market-card-sold-out-banner::before {
@@ -233,8 +237,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   min-height: 34px;
+  max-height: 34px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Data Grid - Compact */
@@ -459,6 +466,7 @@
   .market-card-question {
     font-size: 12px;
     min-height: 31px;
+    max-height: 31px;
   }
   
   .market-card-creator-name {
@@ -468,12 +476,12 @@
   .market-card-sold-out-banner {
     top: 45px;
     right: -75px;
-    width: 220px;
-    padding: 6px 0;
+    width: 240px;
+    padding: 8px 0;
   }
 
   .market-card-sold-out-banner span {
-    font-size: 12px;
+    font-size: 11px;
     letter-spacing: 2px;
   }
 }
