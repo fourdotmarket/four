@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './MarketCard.css';
 import { useAuth } from '../hooks/useAuth';
 
 export default function MarketCard({ market }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
@@ -38,11 +40,31 @@ export default function MarketCard({ market }) {
     return () => clearInterval(interval);
   }, [market.deadline]);
 
+  // Generate 8-character random string from market_id
+  const generateBetId = (marketId) => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const seed = parseInt(marketId);
+    let result = '';
+    let num = seed;
+    
+    for (let i = 0; i < 8; i++) {
+      result += chars[num % chars.length];
+      num = Math.floor(num / chars.length) + seed * (i + 1);
+    }
+    
+    return result;
+  };
+
+  const handleCardClick = () => {
+    const betId = generateBetId(market.market_id);
+    navigate(`/bet/${betId}`);
+  };
+
   const ticketsRemaining = market.total_tickets - market.tickets_sold;
   const progressPercentage = (market.tickets_sold / market.total_tickets) * 100;
 
   return (
-    <div className="market-card">
+    <div className="market-card" onClick={handleCardClick}>
       {/* Banner with tech status badge */}
       <div className="market-card-banner">
         <img 
