@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
 import './SubHeader.css';
 
 const supabase = createClient(
@@ -10,6 +11,7 @@ const supabase = createClient(
 export default function SubHeader() {
   const [activities, setActivities] = useState([]);
   const processedIds = useRef(new Set());
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch initial recent activities from the past hour
@@ -37,6 +39,7 @@ export default function SubHeader() {
             type: 'market',
             username: payload.new.creator_username,
             question: payload.new.question,
+            marketId: payload.new.market_id,
             timestamp: new Date(payload.new.created_at)
           };
           
@@ -74,6 +77,7 @@ export default function SubHeader() {
             type: 'purchase',
             username: payload.new.buyer_username,
             ticketCount: payload.new.ticket_count,
+            marketId: payload.new.market_id,
             marketQuestion: market?.question || `Market #${payload.new.market_id}`,
             timestamp: new Date(payload.new.created_at)
           };
@@ -133,6 +137,7 @@ export default function SubHeader() {
           type: 'market',
           username: m.creator_username,
           question: m.question,
+          marketId: m.market_id,
           timestamp: new Date(m.created_at)
         };
       });
@@ -145,6 +150,7 @@ export default function SubHeader() {
           type: 'purchase',
           username: t.buyer_username,
           ticketCount: t.ticket_count,
+          marketId: t.market_id,
           marketQuestion: marketMap.get(t.market_id) || `Market #${t.market_id}`,
           timestamp: new Date(t.created_at)
         };
@@ -186,6 +192,27 @@ export default function SubHeader() {
     return text.substring(0, maxLength) + '...';
   };
 
+  // Generate 8-character random string from market_id (same as MarketCard)
+  const generateBetId = (marketId) => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const seed = parseInt(marketId);
+    let result = '';
+    let num = seed;
+    
+    for (let i = 0; i < 8; i++) {
+      result += chars[num % chars.length];
+      num = Math.floor(num / chars.length) + seed * (i + 1);
+    }
+    
+    return result;
+  };
+
+  const handleMarketClick = (marketId, e) => {
+    e.stopPropagation();
+    const betId = generateBetId(marketId);
+    navigate(`/bet/${betId}`);
+  };
+
   if (activities.length === 0) {
     return (
       <div className="subheader">
@@ -211,14 +238,26 @@ export default function SubHeader() {
                   <span className="activity-icon market-icon">+</span>
                   <span className="activity-username">{activity.username}</span>
                   <span className="activity-action">created</span>
-                  <span className="activity-detail">"{truncateText(activity.question, 25)}"</span>
+                  <span 
+                    className="activity-detail clickable"
+                    onClick={(e) => handleMarketClick(activity.marketId, e)}
+                  >
+                    "{truncateText(activity.question, 25)}"
+                  </span>
                 </>
               ) : (
                 <>
                   <span className="activity-icon purchase-icon">↑</span>
                   <span className="activity-username">{activity.username}</span>
-                  <span className="activity-action">bought {activity.ticketCount} ticket</span>
-                  <span className="activity-detail">in "{truncateText(activity.marketQuestion, 20)}"</span>
+                  <span className="activity-action">
+                    bought {activity.ticketCount} {activity.ticketCount === 1 ? 'ticket' : 'tickets'}
+                  </span>
+                  <span 
+                    className="activity-detail clickable"
+                    onClick={(e) => handleMarketClick(activity.marketId, e)}
+                  >
+                    in "{truncateText(activity.marketQuestion, 20)}"
+                  </span>
                 </>
               )}
             </div>

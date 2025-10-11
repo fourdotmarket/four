@@ -111,6 +111,23 @@
   text-overflow: ellipsis;
 }
 
+/* Clickable market text */
+.activity-detail.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.activity-detail.clickable:hover {
+  color: var(--color-yellow-primary);
+  text-shadow: 0 0 8px rgba(255, 212, 59, 0.4);
+}
+
+.activity-detail.clickable:active {
+  transform: scale(0.98);
+  color: var(--color-gold);
+}
+
 /* Empty state */
 .activity-empty {
   display: flex;
