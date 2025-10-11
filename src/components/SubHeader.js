@@ -9,8 +9,7 @@ const supabase = createClient(
 
 export default function SubHeader() {
   const [activities, setActivities] = useState([]);
-  const scrollRef = useRef(null);
-  const [isPaused, setIsPaused] = useState(false);
+  const processedIds = useRef(new Set());
 
   useEffect(() => {
     // Fetch initial recent activities from the past hour
@@ -27,12 +26,17 @@ export default function SubHeader() {
           table: 'markets'
         },
         (payload) => {
+          const uniqueId = `market-${payload.new.market_id}`;
+          
+          // Prevent duplicates
+          if (processedIds.current.has(uniqueId)) return;
+          processedIds.current.add(uniqueId);
+          
           const newActivity = {
-            id: `market-${payload.new.market_id}-${Date.now()}`,
+            id: uniqueId,
             type: 'market',
             username: payload.new.creator_username,
             question: payload.new.question,
-            stake: payload.new.stake,
             timestamp: new Date(payload.new.created_at)
           };
           
@@ -51,14 +55,26 @@ export default function SubHeader() {
           schema: 'public',
           table: 'transactions'
         },
-        (payload) => {
+        async (payload) => {
+          const uniqueId = `transaction-${payload.new.transaction_id}`;
+          
+          // Prevent duplicates
+          if (processedIds.current.has(uniqueId)) return;
+          processedIds.current.add(uniqueId);
+          
+          // Fetch market details to get question
+          const { data: market } = await supabase
+            .from('markets')
+            .select('question')
+            .eq('market_id', payload.new.market_id)
+            .single();
+          
           const newActivity = {
-            id: `transaction-${payload.new.transaction_id}-${Date.now()}`,
+            id: uniqueId,
             type: 'purchase',
             username: payload.new.buyer_username,
             ticketCount: payload.new.ticket_count,
-            marketId: payload.new.market_id,
-            totalCost: payload.new.total_cost,
+            marketQuestion: market?.question || `Market #${payload.new.market_id}`,
             timestamp: new Date(payload.new.created_at)
           };
           
@@ -86,43 +102,58 @@ export default function SubHeader() {
       // Fetch recent markets (past hour)
       const { data: markets } = await supabase
         .from('markets')
-        .select('market_id, creator_username, question, stake, created_at')
+        .select('market_id, creator_username, question, created_at')
         .gte('created_at', oneHourAgo)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(8);
 
-      // Fetch recent transactions (past hour)
+      // Fetch recent transactions (past hour) with market details
       const { data: transactions } = await supabase
         .from('transactions')
-        .select('transaction_id, buyer_username, ticket_count, market_id, total_cost, created_at')
+        .select('transaction_id, buyer_username, ticket_count, market_id, created_at')
         .gte('created_at', oneHourAgo)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(8);
+
+      // Get market questions for transactions
+      const marketIds = [...new Set(transactions?.map(t => t.market_id) || [])];
+      const { data: marketsData } = await supabase
+        .from('markets')
+        .select('market_id, question')
+        .in('market_id', marketIds);
+
+      const marketMap = new Map(marketsData?.map(m => [m.market_id, m.question]) || []);
 
       // Combine and format activities
-      const marketActivities = (markets || []).map(m => ({
-        id: `market-${m.market_id}`,
-        type: 'market',
-        username: m.creator_username,
-        question: m.question,
-        stake: m.stake,
-        timestamp: new Date(m.created_at)
-      }));
+      const marketActivities = (markets || []).map(m => {
+        const uniqueId = `market-${m.market_id}`;
+        processedIds.current.add(uniqueId);
+        return {
+          id: uniqueId,
+          type: 'market',
+          username: m.creator_username,
+          question: m.question,
+          timestamp: new Date(m.created_at)
+        };
+      });
 
-      const purchaseActivities = (transactions || []).map(t => ({
-        id: `transaction-${t.transaction_id}`,
-        type: 'purchase',
-        username: t.buyer_username,
-        ticketCount: t.ticket_count,
-        marketId: t.market_id,
-        totalCost: t.total_cost,
-        timestamp: new Date(t.created_at)
-      }));
+      const purchaseActivities = (transactions || []).map(t => {
+        const uniqueId = `transaction-${t.transaction_id}`;
+        processedIds.current.add(uniqueId);
+        return {
+          id: uniqueId,
+          type: 'purchase',
+          username: t.buyer_username,
+          ticketCount: t.ticket_count,
+          marketQuestion: marketMap.get(t.market_id) || `Market #${t.market_id}`,
+          timestamp: new Date(t.created_at)
+        };
+      });
 
       // Merge and sort by timestamp
       const allActivities = [...marketActivities, ...purchaseActivities]
         .sort((a, b) => b.timestamp - a.timestamp)
-        .slice(0, 15); // Keep only 15 most recent
+        .slice(0, 12); // Keep only 12 most recent
 
       setActivities(allActivities);
     } catch (error) {
@@ -132,14 +163,14 @@ export default function SubHeader() {
 
   const addActivity = (newActivity) => {
     setActivities(prev => {
-      // Add new activity at the beginning
-      const updated = [newActivity, ...prev];
+      // Add new activity at the end (will appear on right side as it scrolls)
+      const updated = [...prev, newActivity];
       
-      // Keep only activities from the past hour, max 20 items
+      // Keep only activities from the past hour, max 15 items
       const oneHourAgo = Date.now() - 60 * 60 * 1000;
       const filtered = updated.filter(a => a.timestamp.getTime() > oneHourAgo);
       
-      return filtered.slice(0, 20);
+      return filtered.slice(-15); // Keep last 15
     });
   };
 
@@ -150,17 +181,9 @@ export default function SubHeader() {
     });
   };
 
-  const truncateText = (text, maxLength = 40) => {
+  const truncateText = (text, maxLength = 25) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
-  };
-
-  const formatTimeAgo = (timestamp) => {
-    const seconds = Math.floor((Date.now() - timestamp.getTime()) / 1000);
-    
-    if (seconds < 60) return `${seconds}s ago`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    return `${Math.floor(seconds / 3600)}h ago`;
   };
 
   if (activities.length === 0) {
@@ -178,35 +201,26 @@ export default function SubHeader() {
 
   return (
     <div className="subheader">
-      <div 
-        className="subheader-content"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
-        <div className={`activity-scroll ${isPaused ? 'paused' : ''}`} ref={scrollRef}>
-          {/* Render activities twice for seamless loop */}
-          {[...activities, ...activities].map((activity, index) => (
+      <div className="subheader-content">
+        <div className="activity-scroll">
+          {/* Render activities 3 times for seamless loop */}
+          {[...activities, ...activities, ...activities].map((activity, index) => (
             <div key={`${activity.id}-${index}`} className="activity-item">
               {activity.type === 'market' ? (
                 <>
                   <span className="activity-icon market-icon">+</span>
                   <span className="activity-username">{activity.username}</span>
-                  <span className="activity-action">created market</span>
-                  <span className="activity-detail">"{truncateText(activity.question, 35)}"</span>
-                  <span className="activity-amount">{activity.stake} BNB</span>
-                  <span className="activity-time">{formatTimeAgo(activity.timestamp)}</span>
+                  <span className="activity-action">created</span>
+                  <span className="activity-detail">"{truncateText(activity.question, 25)}"</span>
                 </>
               ) : (
                 <>
                   <span className="activity-icon purchase-icon">↑</span>
                   <span className="activity-username">{activity.username}</span>
-                  <span className="activity-action">bought</span>
-                  <span className="activity-detail">{activity.ticketCount} {activity.ticketCount === 1 ? 'ticket' : 'tickets'}</span>
-                  <span className="activity-amount">{activity.totalCost.toFixed(4)} BNB</span>
-                  <span className="activity-time">{formatTimeAgo(activity.timestamp)}</span>
+                  <span className="activity-action">bought {activity.ticketCount}</span>
+                  <span className="activity-detail">in "{truncateText(activity.marketQuestion, 20)}"</span>
                 </>
               )}
-              <span className="activity-separator">•</span>
             </div>
           ))}
         </div>

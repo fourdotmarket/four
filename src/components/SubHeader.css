@@ -1,7 +1,7 @@
 .subheader {
   background: linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(0, 0, 0, 0.95) 100%);
   backdrop-filter: blur(10px);
-  padding: 8px 0;
+  padding: 4px 0;
   border-bottom: 1px solid rgba(255, 212, 59, 0.1);
   position: relative;
   z-index: 99;
@@ -28,23 +28,19 @@
   display: flex;
   align-items: center;
   width: 100%;
-  height: 32px;
+  height: 24px;
   position: relative;
   overflow: hidden;
 }
 
-/* Scrolling container */
+/* Scrolling container - FASTER */
 .activity-scroll {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 24px;
   white-space: nowrap;
-  animation: scroll 60s linear infinite;
+  animation: scroll 40s linear infinite;
   will-change: transform;
-}
-
-.activity-scroll.paused {
-  animation-play-state: paused;
 }
 
 @keyframes scroll {
@@ -52,7 +48,7 @@
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(-33.333%);
   }
 }
 
@@ -60,42 +56,37 @@
 .activity-item {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-family: var(--font-primary);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--color-gray-light);
-  padding: 0 16px;
-  transition: all 0.3s ease;
+  padding: 0 12px;
 }
 
-.activity-item:hover {
-  color: var(--color-yellow-primary);
-}
-
-/* Icons */
+/* Icons - SMALLER */
 .activity-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   font-weight: 900;
-  font-size: 14px;
+  font-size: 10px;
   flex-shrink: 0;
 }
 
 .market-icon {
   background: linear-gradient(135deg, var(--color-yellow-primary) 0%, var(--color-gold) 100%);
   color: var(--color-black-pure);
-  box-shadow: 0 0 8px rgba(255, 212, 59, 0.4);
+  box-shadow: 0 0 6px rgba(255, 212, 59, 0.4);
 }
 
 .purchase-icon {
   background: linear-gradient(135deg, #00ff88 0%, #00cc70 100%);
   color: var(--color-black-pure);
-  box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
-  font-size: 16px;
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.4);
+  font-size: 11px;
   line-height: 1;
 }
 
@@ -103,7 +94,7 @@
 .activity-username {
   color: var(--color-yellow-primary);
   font-weight: 600;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 .activity-action {
@@ -115,33 +106,9 @@
   color: var(--color-white);
   font-weight: 500;
   font-style: italic;
-  max-width: 300px;
+  max-width: 250px;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.activity-amount {
-  color: var(--color-yellow-primary);
-  font-family: 'Courier New', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  background: rgba(255, 212, 59, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 212, 59, 0.2);
-}
-
-.activity-time {
-  color: var(--color-gray-medium);
-  font-family: 'Courier New', monospace;
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.activity-separator {
-  color: rgba(255, 212, 59, 0.3);
-  font-size: 8px;
-  margin: 0 8px;
 }
 
 /* Empty state */
@@ -155,8 +122,8 @@
 }
 
 .activity-pulse {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--color-yellow-primary);
   animation: pulse 2s ease-in-out infinite;
@@ -176,7 +143,7 @@
 
 .activity-empty-text {
   font-family: 'Courier New', monospace;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--color-gray-medium);
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -190,7 +157,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 80px;
+  width: 60px;
   pointer-events: none;
   z-index: 2;
 }
@@ -214,45 +181,40 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .subheader {
-    padding: 6px 0;
+    padding: 3px 0;
   }
   
   .subheader-content {
-    height: 28px;
+    height: 22px;
   }
   
   .activity-item {
-    font-size: 11px;
-    gap: 6px;
-    padding: 0 12px;
+    font-size: 10px;
+    gap: 5px;
+    padding: 0 10px;
   }
   
   .activity-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 12px;
+    width: 12px;
+    height: 12px;
+    font-size: 9px;
   }
   
   .purchase-icon {
-    font-size: 14px;
+    font-size: 10px;
   }
   
   .activity-detail {
-    max-width: 200px;
-  }
-  
-  .activity-amount {
-    font-size: 10px;
-    padding: 2px 5px;
+    max-width: 150px;
   }
   
   .activity-scroll {
-    gap: 24px;
+    gap: 20px;
   }
   
   .subheader-content::before,
   .subheader-content::after {
-    width: 40px;
+    width: 30px;
   }
 }
 
@@ -261,14 +223,4 @@
   transform: translateZ(0);
   backface-visibility: hidden;
   perspective: 1000px;
-}
-
-/* Hover effect on individual items */
-.activity-item:hover .activity-icon {
-  transform: scale(1.1);
-  transition: transform 0.2s ease;
-}
-
-.activity-item:hover .activity-username {
-  text-shadow: 0 0 8px rgba(255, 212, 59, 0.5);
 }
