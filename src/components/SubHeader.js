@@ -217,7 +217,7 @@ export default function SubHeader() {
                 <>
                   <span className="activity-icon purchase-icon">↑</span>
                   <span className="activity-username">{activity.username}</span>
-                  <span className="activity-action">bought {activity.ticketCount}</span>
+                  <span className="activity-action">bought {activity.ticketCount} ticket</span>
                   <span className="activity-detail">in "{truncateText(activity.marketQuestion, 20)}"</span>
                 </>
               )}
