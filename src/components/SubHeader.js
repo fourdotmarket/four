@@ -12,6 +12,16 @@ export default function SubHeader() {
   const [activities, setActivities] = useState([]);
   const processedIds = useRef(new Set());
   const navigate = useNavigate();
+  const [, forceUpdate] = useState(0);
+
+  useEffect(() => {
+    // Update time display every minute
+    const timeInterval = setInterval(() => {
+      forceUpdate(prev => prev + 1);
+    }, 60000);
+
+    return () => clearInterval(timeInterval);
+  }, []);
 
   useEffect(() => {
     // Fetch initial recent activities from the past hour
@@ -196,6 +206,14 @@ export default function SubHeader() {
     return text.substring(0, maxLength) + '...';
   };
 
+  const formatTimeAgo = (timestamp) => {
+    const seconds = Math.floor((Date.now() - timestamp.getTime()) / 1000);
+    
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+    return `${Math.floor(seconds / 3600)}h`;
+  };
+
   // Generate 8-character random string from market_id (same as MarketCard)
   const generateBetId = (marketId) => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -234,8 +252,8 @@ export default function SubHeader() {
     <div className="subheader">
       <div className="subheader-content">
         <div className="activity-scroll">
-          {/* Render activities 3 times for seamless loop */}
-          {[...activities, ...activities, ...activities].map((activity, index) => (
+          {/* Render activities twice for continuous scroll */}
+          {[...activities, ...activities].map((activity, index) => (
             <div key={`${activity.id}-${index}`} className="activity-item">
               {activity.type === 'market' ? (
                 <>
@@ -248,6 +266,7 @@ export default function SubHeader() {
                   >
                     "{truncateText(activity.question, 25)}"
                   </span>
+                  <span className="activity-time">{formatTimeAgo(activity.timestamp)}</span>
                 </>
               ) : (
                 <>
@@ -262,6 +281,7 @@ export default function SubHeader() {
                   >
                     in "{truncateText(activity.marketQuestion, 20)}"
                   </span>
+                  <span className="activity-time">{formatTimeAgo(activity.timestamp)}</span>
                 </>
               )}
             </div>

@@ -33,22 +33,22 @@
   overflow: hidden;
 }
 
-/* Scrolling container - FASTER */
+/* Scrolling container - RIGHT TO LEFT */
 .activity-scroll {
   display: flex;
   align-items: center;
   gap: 24px;
   white-space: nowrap;
-  animation: scroll 40s linear infinite;
+  animation: scrollRightToLeft 50s linear infinite;
   will-change: transform;
 }
 
-@keyframes scroll {
+@keyframes scrollRightToLeft {
   0% {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-33.333%);
+    transform: translateX(-50%);
   }
 }
 
@@ -126,6 +126,14 @@
 .activity-detail.clickable:active {
   transform: scale(0.98);
   color: var(--color-gold);
+}
+
+.activity-time {
+  color: var(--color-gray-medium);
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  margin-left: 4px;
 }
 
 /* Empty state */
@@ -223,6 +231,10 @@
   
   .activity-detail {
     max-width: 150px;
+  }
+  
+  .activity-time {
+    font-size: 8px;
   }
   
   .activity-scroll {
