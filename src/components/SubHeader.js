@@ -12,22 +12,10 @@ export default function SubHeader() {
   const [activities, setActivities] = useState([]);
   const processedIds = useRef(new Set());
   const navigate = useNavigate();
-  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
-    // Update time display every minute
-    const timeInterval = setInterval(() => {
-      forceUpdate(prev => prev + 1);
-    }, 60000);
-
-    return () => clearInterval(timeInterval);
-  }, []);
-
-  useEffect(() => {
-    // Fetch initial recent activities from the past hour
     fetchRecentActivities();
 
-    // Subscribe to real-time market creations
     const marketsChannel = supabase
       .channel('markets-activity')
       .on(
@@ -39,8 +27,6 @@ export default function SubHeader() {
         },
         (payload) => {
           const uniqueId = `market-${payload.new.market_id}`;
-          
-          // Prevent duplicates
           if (processedIds.current.has(uniqueId)) return;
           processedIds.current.add(uniqueId);
           
@@ -58,7 +44,6 @@ export default function SubHeader() {
       )
       .subscribe();
 
-    // Subscribe to real-time ticket purchases
     const transactionsChannel = supabase
       .channel('transactions-activity')
       .on(
@@ -70,12 +55,9 @@ export default function SubHeader() {
         },
         async (payload) => {
           const uniqueId = `transaction-${payload.new.transaction_id}`;
-          
-          // Prevent duplicates
           if (processedIds.current.has(uniqueId)) return;
           processedIds.current.add(uniqueId);
           
-          // Fetch market details to get question
           const { data: market } = await supabase
             .from('markets')
             .select('question')
@@ -97,7 +79,6 @@ export default function SubHeader() {
       )
       .subscribe();
 
-    // Cleanup old activities every minute (remove activities older than 1 hour)
     const cleanupInterval = setInterval(() => {
       cleanupOldActivities();
     }, 60000);
@@ -113,23 +94,20 @@ export default function SubHeader() {
     try {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-      // Fetch recent markets (past hour)
       const { data: markets } = await supabase
         .from('markets')
         .select('market_id, creator_username, question, created_at')
         .gte('created_at', oneHourAgo)
         .order('created_at', { ascending: false })
-        .limit(8);
+        .limit(4);
 
-      // Fetch recent transactions (past hour) with market details
       const { data: transactions } = await supabase
         .from('transactions')
         .select('transaction_id, buyer_username, ticket_count, market_id, created_at')
         .gte('created_at', oneHourAgo)
         .order('created_at', { ascending: false })
-        .limit(8);
+        .limit(4);
 
-      // Get market questions for transactions
       const marketIds = [...new Set(transactions?.map(t => t.market_id) || [])];
       const { data: marketsData } = await supabase
         .from('markets')
@@ -138,7 +116,6 @@ export default function SubHeader() {
 
       const marketMap = new Map(marketsData?.map(m => [m.market_id, m.question]) || []);
 
-      // Combine and format activities
       const marketActivities = (markets || []).map(m => {
         const uniqueId = `market-${m.market_id}`;
         processedIds.current.add(uniqueId);
@@ -166,10 +143,9 @@ export default function SubHeader() {
         };
       });
 
-      // Merge and sort by timestamp
       const allActivities = [...marketActivities, ...purchaseActivities]
         .sort((a, b) => b.timestamp - a.timestamp)
-        .slice(0, 12); // Keep only 12 most recent
+        .slice(0, 6);
 
       setActivities(allActivities);
     } catch (error) {
@@ -179,18 +155,14 @@ export default function SubHeader() {
 
   const addActivity = (newActivity) => {
     setActivities(prev => {
-      // Check if activity already exists
       const exists = prev.some(a => a.id === newActivity.id);
       if (exists) return prev;
       
-      // Add new activity at the beginning
-      const updated = [newActivity, ...prev];
-      
-      // Keep only activities from the past hour, max 15 items
+      const updated = [...prev, newActivity];
       const oneHourAgo = Date.now() - 60 * 60 * 1000;
       const filtered = updated.filter(a => a.timestamp.getTime() > oneHourAgo);
       
-      return filtered.slice(0, 15); // Keep first 15
+      return filtered.slice(-6);
     });
   };
 
@@ -208,13 +180,11 @@ export default function SubHeader() {
 
   const formatTimeAgo = (timestamp) => {
     const seconds = Math.floor((Date.now() - timestamp.getTime()) / 1000);
-    
     if (seconds < 60) return `${seconds}s`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
     return `${Math.floor(seconds / 3600)}h`;
   };
 
-  // Generate 8-character random string from market_id (same as MarketCard)
   const generateBetId = (marketId) => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     const seed = parseInt(marketId);
@@ -248,44 +218,49 @@ export default function SubHeader() {
     );
   }
 
+  // Repeat 4 times for seamless loop
+  const repeatedActivities = [...activities, ...activities, ...activities, ...activities];
+
   return (
     <div className="subheader">
       <div className="subheader-content">
-        <div className="activity-scroll">
-          {/* Render activities twice for continuous scroll */}
-          {[...activities, ...activities].map((activity, index) => (
-            <div key={`${activity.id}-${index}`} className="activity-item">
-              {activity.type === 'market' ? (
-                <>
-                  <span className="activity-icon market-icon">+</span>
-                  <span className="activity-username">{activity.username}</span>
-                  <span className="activity-action">created</span>
-                  <span 
-                    className="activity-detail clickable"
-                    onClick={(e) => handleMarketClick(activity.marketId, e)}
-                  >
-                    "{truncateText(activity.question, 25)}"
-                  </span>
-                  <span className="activity-time">{formatTimeAgo(activity.timestamp)}</span>
-                </>
-              ) : (
-                <>
-                  <span className="activity-icon purchase-icon">↑</span>
-                  <span className="activity-username">{activity.username}</span>
-                  <span className="activity-action">
-                    bought {activity.ticketCount} {activity.ticketCount === 1 ? 'ticket' : 'tickets'}
-                  </span>
-                  <span 
-                    className="activity-detail clickable"
-                    onClick={(e) => handleMarketClick(activity.marketId, e)}
-                  >
-                    in "{truncateText(activity.marketQuestion, 20)}"
-                  </span>
-                  <span className="activity-time">{formatTimeAgo(activity.timestamp)}</span>
-                </>
-              )}
-            </div>
-          ))}
+        {/* Stable animation container - doesn't reset */}
+        <div className="activity-scroll-wrapper">
+          <div className="activity-scroll">
+            {repeatedActivities.map((activity, index) => (
+              <div key={`${activity.id}-${index}`} className="activity-item">
+                {activity.type === 'market' ? (
+                  <>
+                    <span className="activity-icon market-icon">+</span>
+                    <span className="activity-username">{activity.username}</span>
+                    <span className="activity-action">created</span>
+                    <span 
+                      className="activity-detail clickable"
+                      onClick={(e) => handleMarketClick(activity.marketId, e)}
+                    >
+                      "{truncateText(activity.question, 25)}"
+                    </span>
+                    <span className="activity-time">{formatTimeAgo(activity.timestamp)}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="activity-icon purchase-icon">↑</span>
+                    <span className="activity-username">{activity.username}</span>
+                    <span className="activity-action">
+                      bought {activity.ticketCount} {activity.ticketCount === 1 ? 'ticket' : 'tickets'}
+                    </span>
+                    <span 
+                      className="activity-detail clickable"
+                      onClick={(e) => handleMarketClick(activity.marketId, e)}
+                    >
+                      in "{truncateText(activity.marketQuestion, 20)}"
+                    </span>
+                    <span className="activity-time">{formatTimeAgo(activity.timestamp)}</span>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
