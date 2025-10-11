@@ -218,14 +218,19 @@ export default function SubHeader() {
     );
   }
 
-  // Repeat 4 times for seamless loop
-  const repeatedActivities = [...activities, ...activities, ...activities, ...activities];
+  // Only repeat if we have enough activities (4+), otherwise show without repetition
+  const repeatedActivities = activities.length >= 4 
+    ? [...activities, ...activities, ...activities, ...activities]
+    : activities;
+
+  // Disable animation if too few activities
+  const shouldAnimate = activities.length >= 4;
 
   return (
     <div className="subheader">
       <div className="subheader-content">
-        {/* Stable animation container - doesn't reset */}
-        <div className="activity-scroll-wrapper">
+        {/* Stable animation container - only animates if 4+ activities */}
+        <div className={`activity-scroll-wrapper ${shouldAnimate ? 'animate' : 'static'}`}>
           <div className="activity-scroll">
             {repeatedActivities.map((activity, index) => (
               <div key={`${activity.id}-${index}`} className="activity-item">

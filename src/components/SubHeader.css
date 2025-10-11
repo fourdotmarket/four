@@ -34,12 +34,23 @@
 
 /* Wrapper that never re-renders */
 .activity-scroll-wrapper {
-  position: absolute;
   display: flex;
   align-items: center;
   white-space: nowrap;
-  animation: scrollRightToLeft 60s linear infinite;
   will-change: transform;
+}
+
+/* Only animate if enough activities (4+) */
+.activity-scroll-wrapper.animate {
+  position: absolute;
+  animation: scrollRightToLeft 60s linear infinite;
+}
+
+/* Static display for few activities */
+.activity-scroll-wrapper.static {
+  position: relative;
+  width: 100%;
+  justify-content: center;
 }
 
 /* Content container */
