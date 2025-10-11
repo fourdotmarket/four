@@ -107,10 +107,10 @@ export default function MarketCard({ market }) {
 
   return (
     <div className="market-card" onClick={handleCardClick}>
-      {/* Diagonal banner for SOLD OUT or AWAITING RESOLUTION */}
-      {(isSoldOut || isExpired) && (
-        <div className={`market-card-sold-out-banner ${isExpired ? 'awaiting' : ''}`}>
-          <span>{status}</span>
+      {/* Diagonal banner ONLY for SOLD OUT */}
+      {isSoldOut && (
+        <div className="market-card-sold-out-banner">
+          <span>SOLD OUT</span>
         </div>
       )}
 
