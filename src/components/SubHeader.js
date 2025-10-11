@@ -169,14 +169,18 @@ export default function SubHeader() {
 
   const addActivity = (newActivity) => {
     setActivities(prev => {
-      // Add new activity at the end (will appear on right side as it scrolls)
-      const updated = [...prev, newActivity];
+      // Check if activity already exists
+      const exists = prev.some(a => a.id === newActivity.id);
+      if (exists) return prev;
+      
+      // Add new activity at the beginning
+      const updated = [newActivity, ...prev];
       
       // Keep only activities from the past hour, max 15 items
       const oneHourAgo = Date.now() - 60 * 60 * 1000;
       const filtered = updated.filter(a => a.timestamp.getTime() > oneHourAgo);
       
-      return filtered.slice(-15); // Keep last 15
+      return filtered.slice(0, 15); // Keep first 15
     });
   };
 
