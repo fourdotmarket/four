@@ -1,10 +1,741 @@
+/* Trending Page - Cyberpunk Theme */
 .trending-page {
   padding: 40px 48px;
-  color: var(--color-white);
+  min-height: 80vh;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
-.trending-page h1 {
-  font-family: var(--font-display);
+/* Header Section */
+.trending-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #2a2a2a;
+  position: relative;
+}
+
+.trending-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #FFD43B 50%, 
+    transparent 100%
+  );
+  opacity: 0.3;
+}
+
+.trending-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trending-title {
+  font-family: 'Courier New', monospace;
   font-size: 32px;
-  color: var(--color-yellow-primary);
+  font-weight: 700;
+  color: #FFD43B;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.trending-subtitle {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #808080;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Split Container - EQUAL HEIGHT */
+.trending-split-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 64px;
+}
+
+/* Left Section - Market Info */
+.trending-left-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.trending-info-card {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  border: 1px solid #2a2a2a;
+  padding: 32px;
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.trending-info-card::before,
+.trending-info-card::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #FFD43B;
+}
+
+.trending-info-card::before {
+  top: -1px;
+  left: -1px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.trending-info-card::after {
+  bottom: -1px;
+  right: -1px;
+  border-left: none;
+  border-top: none;
+}
+
+/* Status Badge */
+.trending-status-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 212, 59, 0.15);
+  border: 1px solid rgba(255, 212, 59, 0.4);
+  color: #FFD43B;
+  padding: 4px 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+/* Question Section - Clickable */
+.trending-question-section {
+  margin-bottom: 24px;
+  padding-right: 100px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.trending-question-section:hover {
+  opacity: 0.8;
+}
+
+.trending-question {
+  font-family: 'Inter', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Creator Section */
+.trending-creator-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.trending-label {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #808080;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.trending-creator-name {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFD43B;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Stats Grid */
+.trending-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.trending-stat-item {
+  background: rgba(255, 212, 59, 0.03);
+  border: 1px solid #2a2a2a;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+.trending-stat-label {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #808080;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.trending-stat-value {
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: #FFD43B;
+  letter-spacing: 0.5px;
+}
+
+/* Chart Section */
+.trending-chart-section {
+  margin-top: auto;
+  padding-top: 32px;
+  border-top: 1px solid #2a2a2a;
+}
+
+.trending-chart-title {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #808080;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 20px 0;
+}
+
+.trending-chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.trending-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+
+.trending-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #b8b8b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.trending-legend-color {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  clip-path: polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px));
+}
+
+/* Right Section - Buy Card */
+.trending-right-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.trending-buy-card {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  border: 1px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.trending-buy-title {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFD43B;
+  margin: 0;
+  padding: 24px;
+  border-bottom: 1px solid #2a2a2a;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.trending-buy-banner {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.trending-buy-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: grayscale(20%) contrast(120%);
+}
+
+.trending-progress-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trending-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  overflow: hidden;
+  position: relative;
+}
+
+.trending-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFD43B 0%, #F4C430 100%);
+  transition: width 0.3s ease;
+}
+
+.trending-progress-text {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: #808080;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  letter-spacing: 0.5px;
+}
+
+/* Buy Content Container */
+.trending-buy-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Ticket Selector */
+.trending-ticket-selector {
+  padding: 24px 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trending-input-label {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #808080;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.trending-amount-controls {
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  gap: 8px;
+}
+
+.trending-amount-btn {
+  background: rgba(255, 212, 59, 0.08);
+  border: 1px solid rgba(255, 212, 59, 0.2);
+  color: #FFD43B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+.trending-amount-btn:hover:not(:disabled) {
+  background: rgba(255, 212, 59, 0.15);
+  border-color: rgba(255, 212, 59, 0.4);
+}
+
+.trending-amount-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.trending-amount-input {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #2a2a2a;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  padding: 12px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.trending-amount-input:focus {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 212, 59, 0.3);
+}
+
+.trending-amount-input::-webkit-outer-spin-button,
+.trending-amount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.trending-amount-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Quick Select */
+.trending-quick-select {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 0 24px 16px;
+}
+
+.trending-quick-btn {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #2a2a2a;
+  color: #808080;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+}
+
+.trending-quick-btn:hover:not(:disabled) {
+  background: rgba(255, 212, 59, 0.08);
+  border-color: rgba(255, 212, 59, 0.2);
+}
+
+.trending-quick-btn.active {
+  background: rgba(255, 212, 59, 0.15);
+  border-color: rgba(255, 212, 59, 0.4);
+  color: #FFD43B;
+}
+
+.trending-quick-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Total Section */
+.trending-total-section {
+  padding: 16px 24px;
+  border-top: 1px solid #2a2a2a;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.trending-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trending-total-label {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #808080;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.trending-total-value {
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: #FFD43B;
+  letter-spacing: 0.5px;
+}
+
+/* Buy Button */
+.trending-buy-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: calc(100% - 48px);
+  padding: 16px;
+  background: #FFD43B;
+  border: none;
+  color: #000000;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  margin: 24px;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.trending-buy-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 212, 59, 0.3);
+}
+
+.trending-buy-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.trending-buy-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trending-buy-button svg {
+  flex-shrink: 0;
+}
+
+/* Markets Section */
+.trending-markets-section {
+  margin-top: 64px;
+}
+
+.trending-markets-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #2a2a2a;
+  position: relative;
+}
+
+.trending-markets-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #FFD43B 50%, 
+    transparent 100%
+  );
+  opacity: 0.3;
+}
+
+.trending-markets-title {
+  font-family: 'Courier New', monospace;
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFD43B;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.trending-markets-subtitle {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #808080;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.trending-markets-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.trending-markets-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 40px;
+}
+
+.trending-markets-empty p {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #808080;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+/* Loading State */
+.trending-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #2a2a2a;
+  border-top-color: #FFD43B;
+  border-right-color: #FFD43B;
+  animation: spin 1s linear infinite;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.trending-loading p {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #808080;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Error State */
+.trending-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.trending-error p {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #ff6b6b;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 24px 40px;
+  background: rgba(255, 107, 107, 0.05);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+  .trending-markets-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .trending-split-container {
+    gap: 24px;
+  }
+}
+
+@media (max-width: 968px) {
+  .trending-split-container {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .trending-markets-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .trending-page {
+    padding: 24px;
+  }
+
+  .trending-title {
+    font-size: 24px;
+  }
+
+  .trending-question {
+    font-size: 20px;
+  }
+
+  .trending-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .trending-markets-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .trending-buy-banner {
+    height: 160px;
+  }
+
+  .trending-quick-select {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .trending-page {
+    padding: 16px;
+  }
+
+  .trending-title {
+    font-size: 20px;
+  }
+
+  .trending-question {
+    font-size: 18px;
+  }
+
+  .trending-info-card {
+    padding: 24px;
+  }
+
+  .trending-markets-section {
+    margin-top: 48px;
+  }
 }
