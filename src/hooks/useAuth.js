@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import axios from 'axios';
 
@@ -9,18 +9,37 @@ export function useAuth() {
   const [accessToken, setAccessToken] = useState(null);
   const [showPrivateKeyUI, setShowPrivateKeyUI] = useState(false);
   const [privateKeyData, setPrivateKeyData] = useState(null);
+  
+  // CRITICAL FIX: Prevent infinite loops with ref
+  const hasAttemptedAuth = useRef(false);
+  const isAuthenticating = useRef(false);
 
   useEffect(() => {
-    if (!ready) return;
-    
+    // Reset when authentication state changes
     if (!authenticated) {
+      hasAttemptedAuth.current = false;
+      isAuthenticating.current = false;
       setUser(null);
       setAccessToken(null);
       setLoading(false);
+      setShowPrivateKeyUI(false);
+      setPrivateKeyData(null);
+      return;
+    }
+
+    if (!ready) return;
+    
+    // CRITICAL: Prevent multiple simultaneous auth attempts
+    if (hasAttemptedAuth.current || isAuthenticating.current) {
+      console.log('⏭️ Skipping auth - already attempted or in progress');
       return;
     }
 
     async function registerOrLogin() {
+      // Mark as authenticating
+      isAuthenticating.current = true;
+      hasAttemptedAuth.current = true;
+
       try {
         let provider = 'unknown';
         let email = null;
@@ -40,7 +59,7 @@ export function useAuth() {
 
         // Get Privy access token
         const token = await getAccessToken();
-        setAccessToken(token);  // Store token for API calls
+        setAccessToken(token);
         console.log('✅ Got Privy access token');
 
         const response = await axios.post('/api/auth', 
@@ -54,16 +73,25 @@ export function useAuth() {
         );
 
         console.log('✅ Backend response:', response.data);
+        console.log('📊 User data:', response.data.user);
+        console.log('🆕 Is new user:', response.data.isNewUser);
+        console.log('🔑 Has private key:', !!response.data.privateKey);
+
         setUser(response.data.user);
 
         // CRITICAL: If new user, show private key UI ONCE
         if (response.data.isNewUser && response.data.privateKey) {
-          console.log('🆕 New user detected - showing private key UI');
+          console.log('🆕 NEW USER DETECTED - showing private key UI');
+          console.log('🔑 Private key:', response.data.privateKey);
+          console.log('💼 Wallet address:', response.data.user.wallet_address);
+          
           setPrivateKeyData({
             privateKey: response.data.privateKey,
             walletAddress: response.data.user.wallet_address
           });
           setShowPrivateKeyUI(true);
+        } else {
+          console.log('👤 Existing user - no private key UI needed');
         }
 
       } catch (error) {
@@ -77,7 +105,6 @@ export function useAuth() {
         // FALLBACK: Create user from Privy data
         console.log('📝 Using fallback user data from Privy');
         
-        // Get username from different sources
         let username = null;
         if (privyUser.email?.address) {
           username = privyUser.email.address.split('@')[0];
@@ -105,13 +132,15 @@ export function useAuth() {
         setUser(fallbackUser);
       } finally {
         setLoading(false);
+        isAuthenticating.current = false;
       }
     }
 
     registerOrLogin();
-  }, [ready, authenticated, privyUser, getAccessToken]);
+  }, [ready, authenticated]); // CRITICAL: Only depend on ready and authenticated, NOT privyUser
 
   const closePrivateKeyUI = () => {
+    console.log('🚪 Closing private key UI');
     setShowPrivateKeyUI(false);
     setPrivateKeyData(null);
   };
