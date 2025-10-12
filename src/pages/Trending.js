@@ -25,7 +25,6 @@ export default function Trending() {
   const [topMarket, setTopMarket] = useState(null);
   const [topMarkets, setTopMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState(null);
   const [ticketAmount, setTicketAmount] = useState(1);
   const [ticketInputValue, setTicketInputValue] = useState('1');
@@ -36,39 +35,6 @@ export default function Trending() {
 
   useEffect(() => {
     fetchTrendingMarkets();
-
-    // Subscribe to all market updates
-    const marketsChannel = supabase
-      .channel('trending-markets-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'markets'
-        },
-        () => {
-          // Silent background update
-          fetchTrendingMarkets();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'transactions'
-        },
-        () => {
-          // Silent background update
-          fetchTrendingMarkets();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(marketsChannel);
-    };
   }, []);
 
   useEffect(() => {
@@ -97,10 +63,7 @@ export default function Trending() {
 
   const fetchTrendingMarkets = async () => {
     try {
-      // Only show loading spinner on initial load
-      if (initialLoad) {
-        setLoading(true);
-      }
+      setLoading(true);
 
       // Get current time minus 3 hours
       const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
@@ -172,19 +135,11 @@ export default function Trending() {
       setTopMarkets(sortedByActivity.slice(0, 4));
 
       setError(null);
-      
-      // Mark initial load as complete
-      if (initialLoad) {
-        setInitialLoad(false);
-      }
     } catch (err) {
       console.error('Error fetching trending markets:', err);
       setError(err.message);
     } finally {
-      // Only hide loading on initial load
-      if (initialLoad) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
