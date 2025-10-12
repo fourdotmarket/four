@@ -233,7 +233,7 @@
   clip-path: polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px));
 }
 
-/* Right Section - Buy Card - FULLY FIXED */
+/* Right Section - Buy Card - FIXED HEIGHT */
 .bet-right-section {
   display: flex;
   flex-direction: column;
@@ -247,6 +247,9 @@
   position: sticky;
   top: 20px;
   align-self: flex-start;
+  height: fit-content;
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
 }
 
 .bet-buy-title {
@@ -255,22 +258,25 @@
   font-weight: 700;
   color: #FFD43B;
   margin: 0;
-  padding: 24px;
+  padding: 20px 24px;
   border-bottom: 1px solid #2a2a2a;
   text-transform: uppercase;
   letter-spacing: 2px;
+  flex-shrink: 0;
 }
 
 .bet-buy-banner {
   width: 100%;
-  height: 200px;
-  min-height: 200px;
+  height: 180px;
+  min-height: 180px;
+  max-height: 180px;
   overflow: hidden;
   border-bottom: 1px solid #2a2a2a;
   background: #0a0a0a;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .bet-buy-banner img {
@@ -283,11 +289,12 @@
 }
 
 .bet-progress-section {
-  padding: 20px 24px;
+  padding: 16px 24px;
   border-bottom: 1px solid #2a2a2a;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .bet-progress-bar {
@@ -320,14 +327,15 @@
 .bet-buy-content {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 /* Ticket Selector */
 .bet-ticket-selector {
-  padding: 20px 24px 16px;
+  padding: 16px 24px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .bet-input-label {
@@ -400,7 +408,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  padding: 0 24px 16px;
+  padding: 0 24px 12px;
 }
 
 .bet-quick-btn {
@@ -434,7 +442,7 @@
 
 /* Total Section */
 .bet-total-section {
-  padding: 16px 24px;
+  padding: 14px 24px;
   border-top: 1px solid #2a2a2a;
   border-bottom: 1px solid #2a2a2a;
 }
@@ -462,7 +470,7 @@
   letter-spacing: 0.5px;
 }
 
-/* Buy Button - NO EXTRA MARGIN */
+/* Buy Button - TIGHTER SPACING */
 .bet-buy-button {
   display: flex;
   align-items: center;
@@ -480,7 +488,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
-  margin: 20px 24px 24px;
+  margin: 16px 24px 20px;
   clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
 }
 
@@ -853,6 +861,8 @@
 
   .bet-buy-banner {
     height: 160px;
+    min-height: 160px;
+    max-height: 160px;
   }
 
   .bet-quick-select {
