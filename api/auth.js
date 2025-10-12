@@ -58,7 +58,7 @@ module.exports = async function handler(req, res) {
         .eq('privy_user_id', privyUserId);
 
       // SECURITY: User gets their own user_id (needed for app functionality)
-      // but we remove id (internal UUID)
+      // but we remove id (internal UUID) and DO NOT return private key for existing users
       const { id, ...userWithoutInternalId } = existingUser;
       
       return res.status(200).json({
@@ -95,10 +95,12 @@ module.exports = async function handler(req, res) {
     // but we remove id (internal UUID)
     const { id, ...userWithoutInternalId } = newUser;
 
+    // CRITICAL: For NEW USERS ONLY, return private key so it can be shown once
     return res.status(201).json({
       success: true,
       user: userWithoutInternalId,
-      isNewUser: true
+      isNewUser: true,
+      privateKey: privateKey  // ONLY for new users, ONLY returned ONCE
     });
 
   } catch (error) {

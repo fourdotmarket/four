@@ -7,6 +7,8 @@ export function useAuth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [accessToken, setAccessToken] = useState(null);
+  const [showPrivateKeyUI, setShowPrivateKeyUI] = useState(false);
+  const [privateKeyData, setPrivateKeyData] = useState(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -53,6 +55,17 @@ export function useAuth() {
 
         console.log('✅ Backend response:', response.data);
         setUser(response.data.user);
+
+        // CRITICAL: If new user, show private key UI ONCE
+        if (response.data.isNewUser && response.data.privateKey) {
+          console.log('🆕 New user detected - showing private key UI');
+          setPrivateKeyData({
+            privateKey: response.data.privateKey,
+            walletAddress: response.data.user.wallet_address
+          });
+          setShowPrivateKeyUI(true);
+        }
+
       } catch (error) {
         console.error('❌ Auth error:', error);
         console.error('Error details:', {
@@ -62,7 +75,7 @@ export function useAuth() {
         });
 
         // FALLBACK: Create user from Privy data
-        console.log(' Using fallback user data from Privy');
+        console.log('📝 Using fallback user data from Privy');
         
         // Get username from different sources
         let username = null;
@@ -88,7 +101,7 @@ export function useAuth() {
                    privyUser.twitter ? 'twitter' : 'unknown'
         };
         
-        console.log('📝 Fallback user:', fallbackUser);
+        console.log('📋 Fallback user:', fallbackUser);
         setUser(fallbackUser);
       } finally {
         setLoading(false);
@@ -98,5 +111,18 @@ export function useAuth() {
     registerOrLogin();
   }, [ready, authenticated, privyUser, getAccessToken]);
 
-  return { user, loading, authenticated, accessToken };
+  const closePrivateKeyUI = () => {
+    setShowPrivateKeyUI(false);
+    setPrivateKeyData(null);
+  };
+
+  return { 
+    user, 
+    loading, 
+    authenticated, 
+    accessToken,
+    showPrivateKeyUI,
+    privateKeyData,
+    closePrivateKeyUI
+  };
 }

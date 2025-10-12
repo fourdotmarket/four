@@ -1,0 +1,568 @@
+/* Private Key UI - Critical Security Modal */
+
+.pkui-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: pkuiFadeIn 0.3s ease;
+}
+
+@keyframes pkuiFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.pkui-modal {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  border: 2px solid #ff6b6b;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: pkuiSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 
+    0 0 50px rgba(255, 107, 107, 0.4),
+    0 20px 80px rgba(0, 0, 0, 0.9);
+}
+
+@keyframes pkuiSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Corner accents */
+.pkui-modal::before,
+.pkui-modal::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 3px solid #ff6b6b;
+  z-index: 1;
+}
+
+.pkui-modal::before {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.pkui-modal::after {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+}
+
+/* Scrollbar styling */
+.pkui-modal::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pkui-modal::-webkit-scrollbar-track {
+  background: rgba(255, 107, 107, 0.05);
+}
+
+.pkui-modal::-webkit-scrollbar-thumb {
+  background: rgba(255, 107, 107, 0.3);
+  border-radius: 4px;
+}
+
+.pkui-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 107, 107, 0.5);
+}
+
+/* Warning Icon */
+.pkui-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0 20px;
+}
+
+.pkui-warning-icon {
+  color: #ff6b6b;
+  filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.6));
+  animation: pkuiPulse 2s ease-in-out infinite;
+}
+
+@keyframes pkuiPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Header */
+.pkui-header {
+  text-align: center;
+  padding: 0 40px 32px;
+}
+
+.pkui-title {
+  font-family: 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #ff6b6b;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+}
+
+.pkui-subtitle {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Warning Box */
+.pkui-warning-box {
+  margin: 0 40px 32px;
+  padding: 24px;
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+}
+
+.pkui-warning-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  color: #ff6b6b;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.pkui-warning-header svg {
+  flex-shrink: 0;
+}
+
+.pkui-warning-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pkui-warning-list li {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #ffffff;
+  padding-left: 24px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.pkui-warning-list li::before {
+  content: '⚠';
+  position: absolute;
+  left: 0;
+  color: #ff6b6b;
+  font-size: 14px;
+}
+
+.pkui-warning-list li strong {
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
+/* Wallet Section */
+.pkui-wallet-section {
+  padding: 0 40px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pkui-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pkui-label {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #808080;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pkui-value-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #2a2a2a;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.pkui-value-box.private-key {
+  border-color: rgba(255, 107, 107, 0.4);
+  background: rgba(255, 107, 107, 0.05);
+}
+
+.pkui-value-box code {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #ffffff;
+  word-break: break-all;
+  line-height: 1.6;
+  font-weight: 600;
+}
+
+.pkui-value-box.private-key code {
+  color: #ff6b6b;
+}
+
+/* Scrollbar for value boxes */
+.pkui-value-box::-webkit-scrollbar {
+  height: 6px;
+}
+
+.pkui-value-box::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pkui-value-box::-webkit-scrollbar-thumb {
+  background: rgba(255, 212, 59, 0.3);
+  border-radius: 3px;
+}
+
+/* Action Buttons */
+.pkui-actions {
+  padding: 0 40px 32px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.pkui-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 24px;
+  background: rgba(255, 212, 59, 0.1);
+  border: 1px solid rgba(255, 212, 59, 0.3);
+  color: #FFD43B;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pkui-action-btn:hover {
+  background: rgba(255, 212, 59, 0.15);
+  border-color: rgba(255, 212, 59, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 212, 59, 0.2);
+}
+
+.pkui-action-btn:active {
+  transform: translateY(0);
+}
+
+.pkui-action-btn svg {
+  flex-shrink: 0;
+}
+
+.pkui-action-btn.copied,
+.pkui-action-btn.downloaded {
+  background: rgba(0, 255, 136, 0.15);
+  border-color: rgba(0, 255, 136, 0.4);
+  color: #00ff88;
+}
+
+.pkui-action-btn.copied:hover,
+.pkui-action-btn.downloaded:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.6);
+}
+
+/* Confirmation Checkbox */
+.pkui-confirmation {
+  padding: 0 40px 32px;
+}
+
+.pkui-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  padding: 20px;
+  background: rgba(255, 107, 107, 0.05);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  transition: all 0.3s ease;
+}
+
+.pkui-checkbox-label:hover {
+  background: rgba(255, 107, 107, 0.08);
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.pkui-checkbox {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 107, 107, 0.4);
+  background: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.3s ease;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+.pkui-checkbox:checked {
+  background: #ff6b6b;
+  border-color: #ff6b6b;
+}
+
+.pkui-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #000000;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.pkui-checkbox-text {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #ffffff;
+  line-height: 1.6;
+}
+
+.pkui-checkbox-text strong {
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
+/* Continue Button */
+.pkui-continue-btn {
+  width: calc(100% - 80px);
+  margin: 0 40px 32px;
+  padding: 20px;
+  background: #FFD43B;
+  border: none;
+  color: #000000;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  position: relative;
+}
+
+.pkui-continue-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0);
+  transition: background 0.3s ease;
+  pointer-events: none;
+}
+
+.pkui-continue-btn:hover:not(:disabled)::before {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.pkui-continue-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.pkui-continue-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: #808080;
+}
+
+/* Status Indicators */
+.pkui-status {
+  padding: 0 40px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pkui-status-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #808080;
+  transition: color 0.3s ease;
+}
+
+.pkui-status-item.completed {
+  color: #00ff88;
+}
+
+.pkui-status-icon {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #2a2a2a;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+.pkui-status-item.completed .pkui-status-icon {
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.15);
+  color: #00ff88;
+}
+
+/* Footer Note */
+.pkui-footer {
+  padding: 0 40px 40px;
+}
+
+.pkui-footer p {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #808080;
+  line-height: 1.6;
+  margin: 0;
+  padding: 16px;
+  background: rgba(255, 212, 59, 0.05);
+  border: 1px solid rgba(255, 212, 59, 0.15);
+}
+
+.pkui-footer svg {
+  color: #FFD43B;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pkui-overlay {
+    padding: 10px;
+  }
+
+  .pkui-modal {
+    max-height: 95vh;
+  }
+
+  .pkui-icon-wrapper {
+    padding: 32px 0 16px;
+  }
+
+  .pkui-warning-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .pkui-header {
+    padding: 0 24px 24px;
+  }
+
+  .pkui-title {
+    font-size: 22px;
+  }
+
+  .pkui-subtitle {
+    font-size: 12px;
+  }
+
+  .pkui-warning-box,
+  .pkui-wallet-section,
+  .pkui-actions,
+  .pkui-confirmation,
+  .pkui-status,
+  .pkui-footer {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .pkui-continue-btn {
+    width: calc(100% - 48px);
+    margin: 0 24px 24px;
+  }
+
+  .pkui-actions {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .pkui-action-btn {
+    font-size: 11px;
+    padding: 14px 20px;
+  }
+
+  .pkui-value-box code {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pkui-title {
+    font-size: 18px;
+  }
+
+  .pkui-warning-list li {
+    font-size: 12px;
+  }
+
+  .pkui-checkbox-text {
+    font-size: 12px;
+  }
+}
