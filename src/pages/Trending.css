@@ -56,10 +56,10 @@
   letter-spacing: 0.5px;
 }
 
-/* Split Container - EQUAL HEIGHT */
+/* Split Container - Equal HEIGHT, Different Widths (like Bet.js) */
 .trending-split-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 400px;
   gap: 32px;
   margin-bottom: 64px;
 }
@@ -671,6 +671,7 @@
 
 @media (max-width: 1200px) {
   .trending-split-container {
+    grid-template-columns: 1fr 360px;
     gap: 24px;
   }
 }
@@ -679,6 +680,10 @@
   .trending-split-container {
     grid-template-columns: 1fr;
     gap: 32px;
+  }
+
+  .trending-buy-card {
+    position: static;
   }
 
   .trending-markets-grid {

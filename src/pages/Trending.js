@@ -35,6 +35,39 @@ export default function Trending() {
 
   useEffect(() => {
     fetchTrendingMarkets();
+
+    // Subscribe to all market updates
+    const marketsChannel = supabase
+      .channel('trending-markets-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'markets'
+        },
+        () => {
+          console.log('📊 Market updated, refreshing...');
+          fetchTrendingMarkets();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'transactions'
+        },
+        () => {
+          console.log('🎟️ New transaction, refreshing...');
+          fetchTrendingMarkets();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(marketsChannel);
+    };
   }, []);
 
   useEffect(() => {
@@ -65,13 +98,17 @@ export default function Trending() {
     try {
       setLoading(true);
 
-      // Get all active markets with their transactions
+      // Get current time minus 3 hours
+      const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+
+      // Get all active markets with their recent transactions
       const { data: markets, error: marketsError } = await supabase
         .from('markets')
         .select(`
           *,
           transactions (
-            buyer_wallet
+            buyer_wallet,
+            created_at
           )
         `)
         .eq('status', 'active')
@@ -79,8 +116,18 @@ export default function Trending() {
 
       if (marketsError) throw marketsError;
 
+      // Filter out expired markets
+      const now = Math.floor(Date.now() / 1000);
+      const activeMarkets = markets.filter(market => {
+        // Not expired
+        if (now > market.deadline) return false;
+        // Not sold out
+        if (market.tickets_sold >= market.total_tickets) return false;
+        return true;
+      });
+
       // Calculate unique holders for each market
-      const marketsWithHolders = markets.map(market => {
+      const marketsWithHolders = activeMarkets.map(market => {
         const uniqueHolders = new Set(
           market.transactions?.map(tx => tx.buyer_wallet) || []
         );
@@ -95,8 +142,20 @@ export default function Trending() {
         b.unique_holders - a.unique_holders
       );
 
+      // For bottom section: filter markets with activity in past 3 hours
+      const marketsWithRecentActivity = marketsWithHolders.filter(market => {
+        if (!market.transactions || market.transactions.length === 0) return false;
+        
+        // Check if any transaction is within the past 3 hours
+        const hasRecentActivity = market.transactions.some(tx => {
+          return new Date(tx.created_at) > new Date(threeHoursAgo);
+        });
+        
+        return hasRecentActivity;
+      });
+
       // Sort by tickets sold (most tickets sold first)
-      const sortedByTickets = [...marketsWithHolders].sort((a, b) => 
+      const sortedByActivity = [...marketsWithRecentActivity].sort((a, b) => 
         b.tickets_sold - a.tickets_sold
       );
 
@@ -105,8 +164,8 @@ export default function Trending() {
         setTopMarket(sortedByHolders[0]);
       }
 
-      // Set top 4 markets by tickets sold
-      setTopMarkets(sortedByTickets.slice(0, 4));
+      // Set top 4 markets by tickets sold with recent activity
+      setTopMarkets(sortedByActivity.slice(0, 4));
 
       setError(null);
     } catch (err) {
@@ -619,11 +678,11 @@ export default function Trending() {
         </div>
       </div>
 
-      {/* Top 4 Markets by Tickets Sold */}
+      {/* Top 4 Markets by Recent Activity */}
       <div className="trending-markets-section">
         <div className="trending-markets-header">
           <h2 className="trending-markets-title">TOP MARKETS BY ACTIVITY</h2>
-          <p className="trending-markets-subtitle">Most tickets sold</p>
+          <p className="trending-markets-subtitle">Most active in the past 3 hours</p>
         </div>
         
         {topMarkets.length === 0 ? (

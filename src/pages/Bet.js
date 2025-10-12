@@ -371,8 +371,8 @@ export default function Bet() {
   };
 
   const getBuyDisabledReason = () => {
-    if (!user) return 'Sign in to buy tickets';
-    if (isMarketMaker()) return 'Cannot buy tickets in your own market';
+    if (!user) return 'Sign in to buy challenge tickets';
+    if (isMarketMaker()) return 'Cannot buy challenge tickets in your own market';
     if (market?.status === 'awaiting_resolution') return 'Market awaiting resolution';
     if (market?.status === 'resolved') return 'Market has been resolved';
     if (isMarketExpired()) return 'Market has expired';
@@ -389,12 +389,12 @@ export default function Bet() {
     }
 
     if (ticketAmount < 1) {
-      alert('Please select at least 1 ticket');
+      alert('Please select at least 1 challenge ticket');
       return;
     }
 
     if (ticketAmount > ticketsRemaining) {
-      alert(`Only ${ticketsRemaining} tickets remaining`);
+      alert(`Only ${ticketsRemaining} challenge tickets remaining`);
       return;
     }
 
@@ -407,7 +407,7 @@ export default function Bet() {
         throw new Error('Failed to get authentication token');
       }
 
-      console.log('🎟️ Buying tickets with JWT authentication');
+      console.log('🎟️ Buying challenge tickets with JWT authentication');
 
       setBuyStatus('Submitting to blockchain...');
 
@@ -435,7 +435,7 @@ export default function Bet() {
       }
 
       if (!response.ok) {
-        throw new Error(result.error || result.details || 'Failed to buy tickets');
+        throw new Error(result.error || result.details || 'Failed to buy challenge tickets');
       }
       
       console.log('✅ Tickets purchased!');
@@ -451,19 +451,19 @@ export default function Bet() {
       }, 2000);
 
     } catch (error) {
-      console.error('❌ Error buying tickets:', error);
+      console.error('❌ Error buying challenge tickets:', error);
       setBuyStatus('');
       setIsBuying(false);
       setTicketInputValue(ticketAmount.toString());
       
       if (error.message.includes('Authentication required')) {
-        alert('Please sign in again to buy tickets');
+        alert('Please sign in again to buy challenge tickets');
       } else if (error.message.includes('Too many requests')) {
         alert('You are making too many purchases. Please wait a moment and try again.');
       } else if (error.message.includes('Cannot buy your own tickets')) {
-        alert('Market creators cannot purchase tickets in their own markets');
+        alert('Market creators cannot purchase challenge tickets in their own markets');
       } else {
-        alert(`Failed to buy tickets: ${error.message}`);
+        alert(`Failed to buy challenge tickets: ${error.message}`);
       }
     }
   };
@@ -672,7 +672,7 @@ export default function Bet() {
 
         <div className="bet-right-section">
           <div className="bet-buy-card">
-            <h2 className="bet-buy-title">BUY TICKETS</h2>
+            <h2 className="bet-buy-title">BUY CHALLENGE TICKETS</h2>
             <div className="bet-buy-banner">
               <img 
                 src={market.banner_url || '/default.png'} 
@@ -694,7 +694,7 @@ export default function Bet() {
             
             <div className="bet-buy-content">
               <div className="bet-ticket-selector">
-                <label className="bet-input-label">NUMBER OF TICKETS</label>
+                <label className="bet-input-label">NUMBER OF CHALLENGE TICKETS</label>
                 <div className="bet-amount-controls">
                   <button 
                     className="bet-amount-btn"
@@ -835,7 +835,7 @@ export default function Bet() {
                 disabled={isBuyDisabled}
               >
                 <span>
-                  {buyDisabledReason || `BUY ${ticketAmount} TICKET${ticketAmount > 1 ? 'S' : ''}`}
+                  {buyDisabledReason || `BUY ${ticketAmount} CHALLENGE TICKET${ticketAmount > 1 ? 'S' : ''}`}
                 </span>
                 {!isBuyDisabled && (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
