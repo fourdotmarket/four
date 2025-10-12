@@ -73,8 +73,13 @@ module.exports = async function handler(req, res) {
     const walletAddress = wallet.address;
     const privateKey = wallet.privateKey;
     
+<<<<<<< HEAD
     // Generate username from wallet address (skip 0x, take 4 chars)
     const username = `${walletAddress.slice(2, 6)}...${walletAddress.slice(-4)}`;
+=======
+    // Generate username from wallet address
+    const username = `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
+>>>>>>> 29af69c (WOW)
 
     const { data: newUser, error: insertError } = await supabase
       .from('users')

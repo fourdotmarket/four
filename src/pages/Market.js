@@ -25,7 +25,11 @@ export default function Market() {
   const [bannerPreview, setBannerPreview] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
+<<<<<<< HEAD
   const allowedChars = 'abcdefghijklmnopqrstuvwxyz0123456789 .,?!-';
+=======
+  const allowedChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,?!-';
+>>>>>>> 29af69c (WOW)
 
   // Map expiry to duration index
   const expiryToDuration = {
@@ -53,7 +57,11 @@ export default function Market() {
   };
   
   const handlePredictionChange = (e) => {
+<<<<<<< HEAD
     const value = e.target.value.toLowerCase();
+=======
+    const value = e.target.value;
+>>>>>>> 29af69c (WOW)
     const filtered = value.split('').filter(char => allowedChars.includes(char)).join('');
     if (filtered.length <= MAX_PREDICTION_LENGTH) {
       setPrediction(filtered);
@@ -303,7 +311,11 @@ export default function Market() {
                 </label>
                 <textarea
                   className={`create-textarea ${prediction.length > 0 && prediction.length < MIN_PREDICTION_LENGTH ? 'invalid' : ''}`}
+<<<<<<< HEAD
                   placeholder="what will happen? be specific and clear..."
+=======
+                  placeholder="What will happen? Be specific and clear..."
+>>>>>>> 29af69c (WOW)
                   value={prediction}
                   onChange={handlePredictionChange}
                   rows="3"

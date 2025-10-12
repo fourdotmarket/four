@@ -15,6 +15,15 @@ const CONTRACT_ABI = [
   "event MarketCreated(uint256 indexed marketId, string question, address indexed marketMaker, uint256 marketMakerStake, uint256 ticketPrice, uint256 totalTickets, uint256 deadline, uint256 createdAt)"
 ];
 
+<<<<<<< HEAD
+=======
+// SECURITY: Enforced limits - cannot be bypassed by API requests
+const MIN_STAKE = 0.05;
+const MAX_STAKE = 100;
+const MIN_PREDICTION_LENGTH = 50;
+const MAX_PREDICTION_LENGTH = 256;
+
+>>>>>>> 29af69c (WOW)
 // Allowed origins
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
@@ -75,30 +84,52 @@ export default async function handler(req, res) {
     // 3. VALIDATE INPUT - NO user_id in body!
     const { question, stakeAmount, duration, ticketAmount } = req.body;
     
+<<<<<<< HEAD
+=======
+    // SECURITY: Enforced server-side validation - cannot be bypassed
+>>>>>>> 29af69c (WOW)
     const validationErrors = validateInput(req.body, {
       question: { 
         required: true, 
         type: 'string',
+<<<<<<< HEAD
         minLength: 10,
         maxLength: 256
+=======
+        minLength: MIN_PREDICTION_LENGTH,  // ENFORCED: Minimum 50 characters
+        maxLength: MAX_PREDICTION_LENGTH   // ENFORCED: Maximum 256 characters
+>>>>>>> 29af69c (WOW)
       },
       stakeAmount: {
         required: true,
         type: 'number',
+<<<<<<< HEAD
         min: 0.05,  // Minimum stake
         max: 100    // Maximum stake to prevent errors
+=======
+        min: MIN_STAKE,  // ENFORCED: Minimum 0.05 BNB
+        max: MAX_STAKE   // ENFORCED: Maximum 100 BNB to prevent errors
+>>>>>>> 29af69c (WOW)
       },
       duration: {
         required: true,
         type: 'number',
         min: 0,
+<<<<<<< HEAD
         max: 4  // Valid duration indices
+=======
+        max: 4  // Valid duration indices: 0=6h, 1=12h, 2=24h, 3=3d, 4=7d
+>>>>>>> 29af69c (WOW)
       },
       ticketAmount: {
         required: true,
         type: 'number',
         min: 0,
+<<<<<<< HEAD
         max: 3  // Valid ticket amount indices
+=======
+        max: 3  // Valid ticket amount indices: 0=1, 1=10, 2=50, 3=100
+>>>>>>> 29af69c (WOW)
       }
     });
 
@@ -112,6 +143,38 @@ export default async function handler(req, res) {
       });
     }
 
+<<<<<<< HEAD
+=======
+    // ADDITIONAL SECURITY: Double-check stake amount (can't be bypassed)
+    if (parseFloat(stakeAmount) < MIN_STAKE) {
+      auditLog.error = 'Stake below minimum';
+      await logAudit(auditLog);
+      return res.status(400).json({ 
+        error: 'Invalid stake amount',
+        details: `Minimum stake is ${MIN_STAKE} BNB`
+      });
+    }
+
+    // ADDITIONAL SECURITY: Double-check question length (can't be bypassed)
+    if (question.length < MIN_PREDICTION_LENGTH) {
+      auditLog.error = 'Prediction too short';
+      await logAudit(auditLog);
+      return res.status(400).json({ 
+        error: 'Prediction too short',
+        details: `Prediction must be at least ${MIN_PREDICTION_LENGTH} characters (currently ${question.length})`
+      });
+    }
+
+    if (question.length > MAX_PREDICTION_LENGTH) {
+      auditLog.error = 'Prediction too long';
+      await logAudit(auditLog);
+      return res.status(400).json({ 
+        error: 'Prediction too long',
+        details: `Prediction must be at most ${MAX_PREDICTION_LENGTH} characters (currently ${question.length})`
+      });
+    }
+
+>>>>>>> 29af69c (WOW)
     auditLog.question = question;
     auditLog.stake_amount = stakeAmount;
 
