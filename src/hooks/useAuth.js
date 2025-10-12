@@ -4,7 +4,7 @@ import axios from 'axios';
 
 // Module-level tracking - survives React Strict Mode unmount/remount
 const authRequestsInFlight = new Map();
-const completedAuthUsers = new Set();
+const completedAuthUsers = new Map(); // Now stores user data, not just a Set
 
 export function useAuth() {
   const { ready, authenticated, user: privyUser, getAccessToken } = usePrivy();
@@ -34,11 +34,16 @@ export function useAuth() {
     const currentPrivyUserId = privyUser?.id || privyUser?.sub;
     
     if (!currentPrivyUserId) {
+      setLoading(true);
       return;
     }
 
-    // Check if already completed for this user
+    // Check if already completed for this user - load from cache
     if (completedAuthUsers.has(currentPrivyUserId)) {
+      const cachedData = completedAuthUsers.get(currentPrivyUserId);
+      setUser(cachedData.user);
+      setAccessToken(cachedData.token);
+      setLoading(false);
       return;
     }
 
@@ -49,6 +54,7 @@ export function useAuth() {
 
     // Mark request as in flight BEFORE any async work
     authRequestsInFlight.set(currentPrivyUserId, true);
+    setLoading(true);
     
     abortControllerRef.current = new AbortController();
 
@@ -85,8 +91,11 @@ export function useAuth() {
         const isNewUser = response.data.isNewUser;
         const privateKey = response.data.privateKey;
 
-        // Mark as completed and remove from in-flight
-        completedAuthUsers.add(currentPrivyUserId);
+        // Cache the user data and token
+        completedAuthUsers.set(currentPrivyUserId, {
+          user: userData,
+          token: token
+        });
         authRequestsInFlight.delete(currentPrivyUserId);
 
         setUser(userData);
@@ -107,7 +116,6 @@ export function useAuth() {
           return;
         }
 
-        completedAuthUsers.add(currentPrivyUserId);
         authRequestsInFlight.delete(currentPrivyUserId);
 
         let username = 'User';
@@ -119,12 +127,20 @@ export function useAuth() {
           username = privyUser.twitter.username;
         }
 
-        setUser({
+        const fallbackUser = {
           username,
           email: privyUser?.email?.address || privyUser?.google?.email || null,
           wallet_address: null,
           provider: privyUser?.email ? 'email' : privyUser?.google ? 'google' : 'twitter'
+        };
+
+        // Cache the fallback user too
+        completedAuthUsers.set(currentPrivyUserId, {
+          user: fallbackUser,
+          token: null
         });
+
+        setUser(fallbackUser);
         setLoading(false);
       }
     }
