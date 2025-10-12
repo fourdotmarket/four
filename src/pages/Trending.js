@@ -233,7 +233,10 @@ export default function Trending() {
     return null;
   };
 
-  const handleBuyTickets = async () => {
+  const handleBuyTickets = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     const disabledReason = getBuyDisabledReason();
     if (disabledReason) {
       alert(disabledReason);
@@ -295,7 +298,7 @@ export default function Trending() {
         setIsBuying(false);
         setTicketAmount(1);
         setTicketInputValue('1');
-        fetchTrendingMarkets();
+        // Real-time subscriptions will update automatically - no manual refresh needed
       }, 2000);
 
     } catch (error) {
@@ -538,8 +541,10 @@ export default function Trending() {
                 <label className="trending-input-label">NUMBER OF CHALLENGE TICKETS</label>
                 <div className="trending-amount-controls">
                   <button 
+                    type="button"
                     className="trending-amount-btn"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       const newValue = Math.max(1, ticketAmount - 1);
                       setTicketAmount(newValue);
                       setTicketInputValue(newValue.toString());
@@ -589,8 +594,10 @@ export default function Trending() {
                     disabled={isBuyDisabled}
                   />
                   <button 
+                    type="button"
                     className="trending-amount-btn"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       const newValue = Math.min(ticketsRemaining, ticketAmount + 1);
                       setTicketAmount(newValue);
                       setTicketInputValue(newValue.toString());
@@ -607,8 +614,10 @@ export default function Trending() {
 
               <div className="trending-quick-select">
                 <button 
+                  type="button"
                   className={`trending-quick-btn ${ticketAmount === 1 ? 'active' : ''}`}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
                     setTicketAmount(1);
                     setTicketInputValue('1');
                   }}
@@ -617,8 +626,10 @@ export default function Trending() {
                   1
                 </button>
                 <button 
+                  type="button"
                   className={`trending-quick-btn ${ticketAmount === 5 ? 'active' : ''}`}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
                     const value = Math.min(5, ticketsRemaining);
                     setTicketAmount(value);
                     setTicketInputValue(value.toString());
@@ -628,8 +639,10 @@ export default function Trending() {
                   5
                 </button>
                 <button 
+                  type="button"
                   className={`trending-quick-btn ${ticketAmount === 10 ? 'active' : ''}`}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
                     const value = Math.min(10, ticketsRemaining);
                     setTicketAmount(value);
                     setTicketInputValue(value.toString());
@@ -639,8 +652,10 @@ export default function Trending() {
                   10
                 </button>
                 <button 
+                  type="button"
                   className="trending-quick-btn"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
                     setTicketAmount(ticketsRemaining);
                     setTicketInputValue(ticketsRemaining.toString());
                   }}
@@ -671,6 +686,7 @@ export default function Trending() {
               )}
 
               <button 
+                type="button"
                 className="trending-buy-button" 
                 onClick={handleBuyTickets}
                 disabled={isBuyDisabled}
