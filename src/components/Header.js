@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -17,19 +17,9 @@ export default function Header() {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const profileRef = useRef(null);
 
-  useEffect(() => {
-    console.log('🔍 Header Debug:', {
-      ready,
-      authenticated,
-      loading,
-      user,
-      hasWallet: !!user?.wallet_address,
-      balance
-    });
-  }, [ready, authenticated, loading, user, balance]);
+  // REMOVED: Debug console.log that was causing spam
 
   const handleDepositClick = () => {
-    console.log('💰 Deposit clicked', { user, wallet: user?.wallet_address });
     if (user && user.wallet_address) {
       setShowDepositModal(true);
     } else {
