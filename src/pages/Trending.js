@@ -25,6 +25,7 @@ export default function Trending() {
   const [topMarket, setTopMarket] = useState(null);
   const [topMarkets, setTopMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState(null);
   const [ticketAmount, setTicketAmount] = useState(1);
   const [ticketInputValue, setTicketInputValue] = useState('1');
@@ -47,7 +48,7 @@ export default function Trending() {
           table: 'markets'
         },
         () => {
-          console.log('📊 Market updated, refreshing...');
+          // Silent background update
           fetchTrendingMarkets();
         }
       )
@@ -59,7 +60,7 @@ export default function Trending() {
           table: 'transactions'
         },
         () => {
-          console.log('🎟️ New transaction, refreshing...');
+          // Silent background update
           fetchTrendingMarkets();
         }
       )
@@ -96,7 +97,10 @@ export default function Trending() {
 
   const fetchTrendingMarkets = async () => {
     try {
-      setLoading(true);
+      // Only show loading spinner on initial load
+      if (initialLoad) {
+        setLoading(true);
+      }
 
       // Get current time minus 3 hours
       const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
@@ -168,11 +172,19 @@ export default function Trending() {
       setTopMarkets(sortedByActivity.slice(0, 4));
 
       setError(null);
+      
+      // Mark initial load as complete
+      if (initialLoad) {
+        setInitialLoad(false);
+      }
     } catch (err) {
       console.error('Error fetching trending markets:', err);
       setError(err.message);
     } finally {
-      setLoading(false);
+      // Only hide loading on initial load
+      if (initialLoad) {
+        setLoading(false);
+      }
     }
   };
 
