@@ -223,7 +223,7 @@ export default function Market() {
       <div className="market-header">
         <div className="market-title-section">
           <h1 className="market-title">PREDICTION MARKETS</h1>
-          <p className="market-subtitle">Create or challenge predictions on the blockchain</p>
+          <p className="market-subtitle">Create or challenge predictions.</p>
         </div>
         <button className="market-create-btn" onClick={() => setShowCreateModal(true)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

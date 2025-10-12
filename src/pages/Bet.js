@@ -69,7 +69,6 @@ function AllUserPositions({ userId }) {
     try {
       setLoading(true);
 
-      // SECURITY FIX: Select specific columns instead of *
       const { data: transactions, error: txError } = await supabase
         .from('transactions')
         .select(`
@@ -360,9 +359,32 @@ export default function Bet() {
     navigate('/market');
   };
 
+  const isMarketExpired = () => {
+    if (!market) return false;
+    const now = Math.floor(Date.now() / 1000);
+    return now > market.deadline;
+  };
+
+  const isMarketMaker = () => {
+    if (!user || !market) return false;
+    return user.wallet_address?.toLowerCase() === market.creator_wallet?.toLowerCase();
+  };
+
+  const getBuyDisabledReason = () => {
+    if (!user) return 'Sign in to buy tickets';
+    if (isMarketMaker()) return 'Cannot buy tickets in your own market';
+    if (market?.status === 'awaiting_resolution') return 'Market awaiting resolution';
+    if (market?.status === 'resolved') return 'Market has been resolved';
+    if (isMarketExpired()) return 'Market has expired';
+    if (ticketsRemaining === 0) return 'Sold out';
+    if (isBuying) return 'Processing...';
+    return null;
+  };
+
   const handleBuyTickets = async () => {
-    if (!user || !user.user_id) {
-      alert('Please sign in to buy tickets');
+    const disabledReason = getBuyDisabledReason();
+    if (disabledReason) {
+      alert(disabledReason);
       return;
     }
 
@@ -380,7 +402,6 @@ export default function Bet() {
       setIsBuying(true);
       setBuyStatus('Preparing transaction...');
 
-      // Get fresh JWT token
       const token = await getAccessToken();
       if (!token) {
         throw new Error('Failed to get authentication token');
@@ -390,15 +411,13 @@ export default function Bet() {
 
       setBuyStatus('Submitting to blockchain...');
 
-      // SECURITY FIX: No user_id in body, only JWT token in header
       const response = await fetch('/api/buy-ticket', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`  // JWT token for auth
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          // NO user_id here! It comes from JWT token
           market_id: market.market_id,
           ticket_count: ticketAmount
         })
@@ -437,7 +456,6 @@ export default function Bet() {
       setIsBuying(false);
       setTicketInputValue(ticketAmount.toString());
       
-      // Handle specific error messages
       if (error.message.includes('Authentication required')) {
         alert('Please sign in again to buy tickets');
       } else if (error.message.includes('Too many requests')) {
@@ -472,12 +490,10 @@ export default function Bet() {
     
     if (transactions && transactions.length > 0) {
       transactions.forEach(tx => {
-        // SECURITY FIX: Use buyer_wallet instead of buyer_id as unique key
         if (!userMap[tx.buyer_wallet]) {
           userMap[tx.buyer_wallet] = {
             name: tx.buyer_username,
             value: 0,
-            // SECURITY FIX: Compare wallet addresses instead of IDs
             isCurrentUser: user && tx.buyer_wallet === user.wallet_address
           };
         }
@@ -505,7 +521,6 @@ export default function Bet() {
 
   const getUniqueHoldersCount = () => {
     if (!transactions || transactions.length === 0) return 0;
-    // SECURITY FIX: Use buyer_wallet instead of buyer_id for unique count
     const uniqueBuyers = new Set(transactions.map(tx => tx.buyer_wallet));
     return uniqueBuyers.size;
   };
@@ -537,6 +552,9 @@ export default function Bet() {
   const holdersCount = getUniqueHoldersCount();
   const userDistribution = getUserDistribution();
   const totalCost = (ticketAmount * parseFloat(market.ticket_price)).toFixed(4);
+  
+  const buyDisabledReason = getBuyDisabledReason();
+  const isBuyDisabled = !!buyDisabledReason;
 
   return (
     <div className="bet-page">
@@ -551,13 +569,20 @@ export default function Bet() {
       <div className="bet-split-container">
         <div className="bet-left-section">
           <div className="bet-info-card">
-            <div className="bet-status-badge">ACTIVE</div>
+            <div className="bet-status-badge">
+              {market.status === 'resolved' ? 'RESOLVED' : 
+               market.status === 'awaiting_resolution' ? 'AWAITING' :
+               isMarketExpired() ? 'EXPIRED' : 'ACTIVE'}
+            </div>
             <div className="bet-question-section">
               <h1 className="bet-question">{market.question}</h1>
             </div>
             <div className="bet-creator-section">
               <span className="bet-label">CREATED BY</span>
-              <span className="bet-creator-name">{market.creator_username}</span>
+              <span className="bet-creator-name">
+                {market.creator_username}
+                {isMarketMaker() && <span style={{ marginLeft: '8px', fontSize: '10px', color: '#FFD43B' }}>(YOU)</span>}
+              </span>
             </div>
             <div className="bet-stats-grid">
               <div className="bet-stat-item">
@@ -666,159 +691,160 @@ export default function Bet() {
                 <span>{progressPercentage.toFixed(0)}%</span>
               </div>
             </div>
-            <div className="bet-ticket-selector">
-              <label className="bet-input-label">NUMBER OF TICKETS</label>
-              <div className="bet-amount-controls">
-                <button 
-                  className="bet-amount-btn"
-                  onClick={() => {
-                    const newValue = Math.max(1, ticketAmount - 1);
-                    setTicketAmount(newValue);
-                    setTicketInputValue(newValue.toString());
-                  }}
-                  disabled={ticketAmount <= 1 || isBuying}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                </button>
-                <input
-                  type="number"
-                  className="bet-amount-input"
-                  value={ticketInputValue}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    
-                    if (value === '') {
-                      setTicketInputValue('');
-                      return;
-                    }
-                    
-                    const numValue = parseInt(value);
-                    
-                    if (isNaN(numValue)) {
-                      return;
-                    }
-                    
-                    setTicketInputValue(value);
-                    
-                    const clampedValue = Math.max(1, Math.min(ticketsRemaining, numValue));
-                    setTicketAmount(clampedValue);
-                  }}
-                  onBlur={() => {
-                    if (ticketInputValue === '' || parseInt(ticketInputValue) < 1) {
-                      setTicketInputValue('1');
-                      setTicketAmount(1);
-                    } else {
-                      const numValue = parseInt(ticketInputValue);
+            
+            <div className="bet-buy-content">
+              <div className="bet-ticket-selector">
+                <label className="bet-input-label">NUMBER OF TICKETS</label>
+                <div className="bet-amount-controls">
+                  <button 
+                    className="bet-amount-btn"
+                    onClick={() => {
+                      const newValue = Math.max(1, ticketAmount - 1);
+                      setTicketAmount(newValue);
+                      setTicketInputValue(newValue.toString());
+                    }}
+                    disabled={ticketAmount <= 1 || isBuyDisabled}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                  </button>
+                  <input
+                    type="number"
+                    className="bet-amount-input"
+                    value={ticketInputValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      
+                      if (value === '') {
+                        setTicketInputValue('');
+                        return;
+                      }
+                      
+                      const numValue = parseInt(value);
+                      
+                      if (isNaN(numValue)) {
+                        return;
+                      }
+                      
+                      setTicketInputValue(value);
+                      
                       const clampedValue = Math.max(1, Math.min(ticketsRemaining, numValue));
-                      setTicketInputValue(clampedValue.toString());
                       setTicketAmount(clampedValue);
-                    }
-                  }}
-                  min="1"
-                  max={ticketsRemaining}
-                  disabled={isBuying}
-                />
+                    }}
+                    onBlur={() => {
+                      if (ticketInputValue === '' || parseInt(ticketInputValue) < 1) {
+                        setTicketInputValue('1');
+                        setTicketAmount(1);
+                      } else {
+                        const numValue = parseInt(ticketInputValue);
+                        const clampedValue = Math.max(1, Math.min(ticketsRemaining, numValue));
+                        setTicketInputValue(clampedValue.toString());
+                        setTicketAmount(clampedValue);
+                      }
+                    }}
+                    min="1"
+                    max={ticketsRemaining}
+                    disabled={isBuyDisabled}
+                  />
+                  <button 
+                    className="bet-amount-btn"
+                    onClick={() => {
+                      const newValue = Math.min(ticketsRemaining, ticketAmount + 1);
+                      setTicketAmount(newValue);
+                      setTicketInputValue(newValue.toString());
+                    }}
+                    disabled={ticketAmount >= ticketsRemaining || isBuyDisabled}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className="bet-quick-select">
                 <button 
-                  className="bet-amount-btn"
+                  className={`bet-quick-btn ${ticketAmount === 1 ? 'active' : ''}`}
                   onClick={() => {
-                    const newValue = Math.min(ticketsRemaining, ticketAmount + 1);
-                    setTicketAmount(newValue);
-                    setTicketInputValue(newValue.toString());
+                    setTicketAmount(1);
+                    setTicketInputValue('1');
                   }}
-                  disabled={ticketAmount >= ticketsRemaining || isBuying}
+                  disabled={isBuyDisabled}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
+                  1
+                </button>
+                <button 
+                  className={`bet-quick-btn ${ticketAmount === 5 ? 'active' : ''}`}
+                  onClick={() => {
+                    const value = Math.min(5, ticketsRemaining);
+                    setTicketAmount(value);
+                    setTicketInputValue(value.toString());
+                  }}
+                  disabled={isBuyDisabled}
+                >
+                  5
+                </button>
+                <button 
+                  className={`bet-quick-btn ${ticketAmount === 10 ? 'active' : ''}`}
+                  onClick={() => {
+                    const value = Math.min(10, ticketsRemaining);
+                    setTicketAmount(value);
+                    setTicketInputValue(value.toString());
+                  }}
+                  disabled={isBuyDisabled}
+                >
+                  10
+                </button>
+                <button 
+                  className="bet-quick-btn"
+                  onClick={() => {
+                    setTicketAmount(ticketsRemaining);
+                    setTicketInputValue(ticketsRemaining.toString());
+                  }}
+                  disabled={isBuyDisabled}
+                >
+                  MAX
                 </button>
               </div>
-            </div>
 
-            <div className="bet-quick-select">
-              <button 
-                className={`bet-quick-btn ${ticketAmount === 1 ? 'active' : ''}`}
-                onClick={() => {
-                  setTicketAmount(1);
-                  setTicketInputValue('1');
-                }}
-                disabled={isBuying}
-              >
-                1
-              </button>
-              <button 
-                className={`bet-quick-btn ${ticketAmount === 5 ? 'active' : ''}`}
-                onClick={() => {
-                  const value = Math.min(5, ticketsRemaining);
-                  setTicketAmount(value);
-                  setTicketInputValue(value.toString());
-                }}
-                disabled={isBuying}
-              >
-                5
-              </button>
-              <button 
-                className={`bet-quick-btn ${ticketAmount === 10 ? 'active' : ''}`}
-                onClick={() => {
-                  const value = Math.min(10, ticketsRemaining);
-                  setTicketAmount(value);
-                  setTicketInputValue(value.toString());
-                }}
-                disabled={isBuying}
-              >
-                10
-              </button>
-              <button 
-                className="bet-quick-btn"
-                onClick={() => {
-                  setTicketAmount(ticketsRemaining);
-                  setTicketInputValue(ticketsRemaining.toString());
-                }}
-                disabled={isBuying}
-              >
-                MAX
-              </button>
-            </div>
-
-            <div className="bet-total-section">
-              <div className="bet-total-row">
-                <span className="bet-total-label">TOTAL COST</span>
-                <span className="bet-total-value">{totalCost} BNB</span>
+              <div className="bet-total-section">
+                <div className="bet-total-row">
+                  <span className="bet-total-label">TOTAL COST</span>
+                  <span className="bet-total-value">{totalCost} BNB</span>
+                </div>
               </div>
+
+              {buyStatus && (
+                <div style={{ 
+                  textAlign: 'center', 
+                  color: '#FFD43B', 
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  fontFamily: "'Courier New', monospace",
+                  padding: '12px 24px 0'
+                }}>
+                  {buyStatus}
+                </div>
+              )}
+
+              <button 
+                className="bet-buy-button" 
+                onClick={handleBuyTickets}
+                disabled={isBuyDisabled}
+              >
+                <span>
+                  {buyDisabledReason || `BUY ${ticketAmount} TICKET${ticketAmount > 1 ? 'S' : ''}`}
+                </span>
+                {!isBuyDisabled && (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                )}
+              </button>
             </div>
-
-            {buyStatus && (
-              <div style={{ 
-                textAlign: 'center', 
-                color: 'var(--color-yellow-primary)', 
-                fontSize: '12px',
-                marginTop: '-8px',
-                fontWeight: '600',
-                fontFamily: "'Courier New', monospace"
-              }}>
-                {buyStatus}
-              </div>
-            )}
-
-            <button 
-              className="bet-buy-button" 
-              onClick={handleBuyTickets}
-              disabled={isBuying || ticketsRemaining === 0}
-              style={{ 
-                opacity: (isBuying || ticketsRemaining === 0) ? 0.6 : 1, 
-                cursor: (isBuying || ticketsRemaining === 0) ? 'not-allowed' : 'pointer' 
-              }}
-            >
-              <span>
-                {isBuying ? 'BUYING...' : ticketsRemaining === 0 ? 'SOLD OUT' : `BUY ${ticketAmount} TICKET${ticketAmount > 1 ? 'S' : ''}`}
-              </span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-              </svg>
-            </button>
           </div>
         </div>
       </div>
@@ -876,7 +902,6 @@ export default function Bet() {
                       <div key={tx.transaction_id} className="bet-table-row">
                         <div className="bet-table-cell bet-table-user">
                           {tx.buyer_username}
-                          {/* SECURITY FIX: Compare wallet addresses instead of IDs */}
                           {user && tx.buyer_wallet === user.wallet_address && (
                             <span className="bet-table-badge">YOU</span>
                           )}
