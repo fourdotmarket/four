@@ -27,7 +27,7 @@
 
 .pkui-modal {
   background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-  border: 2px solid #FFD43B;
+  border: 2px solid #ffffff;
   width: 100%;
   max-width: 700px;
   max-height: 90vh;
@@ -35,14 +35,12 @@
   position: relative;
   animation: pkuiSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 
-    0 0 50px rgba(255, 212, 59, 0.4),
+    0 0 50px rgba(255, 255, 255, 0.2),
     0 20px 80px rgba(0, 0, 0, 0.9);
-  /* HIDE SCROLLBAR */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* HIDE SCROLLBAR - Webkit */
 .pkui-modal::-webkit-scrollbar {
   display: none;
 }
@@ -58,13 +56,12 @@
   }
 }
 
-/* Corner accents - ONLY TOP LEFT */
 .pkui-modal::before {
   content: '';
   position: absolute;
   width: 40px;
   height: 40px;
-  border: 3px solid #FFD43B;
+  border: 3px solid #ffffff;
   z-index: 1;
   top: -2px;
   left: -2px;
@@ -72,9 +69,6 @@
   border-bottom: none;
 }
 
-/* REMOVED ::after - was causing accessibility tooltip */
-
-/* Warning Icon */
 .pkui-icon-wrapper {
   display: flex;
   justify-content: center;
@@ -98,7 +92,6 @@
   }
 }
 
-/* Header */
 .pkui-header {
   text-align: center;
   padding: 0 40px 32px;
@@ -108,22 +101,21 @@
   font-family: 'Courier New', monospace;
   font-size: 28px;
   font-weight: 700;
-  color: #FFD43B;
+  color: #ffffff;
   margin: 0 0 12px 0;
   text-transform: uppercase;
   letter-spacing: 2px;
-  text-shadow: 0 0 20px rgba(255, 212, 59, 0.4);
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
 }
 
 .pkui-subtitle {
   font-family: 'Courier New', monospace;
   font-size: 14px;
-  color: #ffffff;
+  color: #cccccc;
   margin: 0;
   letter-spacing: 0.5px;
 }
 
-/* Warning Box */
 .pkui-warning-box {
   margin: 0 40px 32px;
   padding: 24px;
@@ -168,10 +160,9 @@
 }
 
 .pkui-warning-list li::before {
-  content: ⚠️';
+  content: '\26A0\FE0F';
   position: absolute;
   left: 0;
-  color: #ff6b6b;
   font-size: 14px;
 }
 
@@ -180,7 +171,6 @@
   font-weight: 700;
 }
 
-/* Wallet Section */
 .pkui-wallet-section {
   padding: 0 40px 32px;
   display: flex;
@@ -211,8 +201,8 @@
 }
 
 .pkui-value-box.private-key {
-  border-color: rgba(255, 212, 59, 0.4);
-  background: rgba(255, 212, 59, 0.05);
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .pkui-value-box code {
@@ -225,10 +215,9 @@
 }
 
 .pkui-value-box.private-key code {
-  color: #FFD43B;
+  color: #ffffff;
 }
 
-/* Scrollbar for value boxes */
 .pkui-value-box::-webkit-scrollbar {
   height: 6px;
 }
@@ -238,11 +227,10 @@
 }
 
 .pkui-value-box::-webkit-scrollbar-thumb {
-  background: rgba(255, 212, 59, 0.3);
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 3px;
 }
 
-/* Action Buttons */
 .pkui-actions {
   padding: 0 40px 32px;
   display: grid;
@@ -256,9 +244,9 @@
   justify-content: center;
   gap: 10px;
   padding: 16px 24px;
-  background: rgba(255, 212, 59, 0.1);
-  border: 1px solid rgba(255, 212, 59, 0.3);
-  color: #FFD43B;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
   font-family: 'Courier New', monospace;
   font-size: 12px;
   font-weight: 700;
@@ -271,10 +259,10 @@
 }
 
 .pkui-action-btn:hover:not(:disabled) {
-  background: rgba(255, 212, 59, 0.15);
-  border-color: rgba(255, 212, 59, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.5);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 212, 59, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
 }
 
 .pkui-action-btn:active:not(:disabled) {
@@ -305,7 +293,6 @@
   box-shadow: none;
 }
 
-/* Confirmation Checkbox */
 .pkui-confirmation {
   padding: 0 40px 32px;
 }
@@ -346,7 +333,7 @@
 }
 
 .pkui-checkbox:checked::after {
-  content: '✔';
+  content: '\2714';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -368,12 +355,11 @@
   font-weight: 700;
 }
 
-/* Continue Button */
 .pkui-continue-btn {
   width: calc(100% - 80px);
   margin: 0 40px 40px;
   padding: 20px;
-  background: #FFD43B;
+  background: #ffffff;
   border: none;
   color: #000000;
   font-family: 'Courier New', monospace;
@@ -394,13 +380,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0);
+  background: rgba(0, 0, 0, 0);
   transition: background 0.3s ease;
   pointer-events: none;
 }
 
 .pkui-continue-btn:hover:not(:disabled)::before {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .pkui-continue-btn:active:not(:disabled) {
@@ -413,7 +399,6 @@
   background: #808080;
 }
 
-/* Status Indicators */
 .pkui-status {
   padding: 0 40px 40px;
   display: flex;
@@ -455,7 +440,6 @@
   color: #00ff88;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .pkui-overlay {
     padding: 10px;
