@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import SubHeader from './components/SubHeader';
 import LoadingScreen from './components/LoadingScreen';
+import PrivateKeyUI from './components/PrivateKeyUI';
 import { useAuth } from './hooks/useAuth';
 import Home from './pages/Home';
 import Trending from './pages/Trending';
@@ -14,25 +15,56 @@ import Resolved from './pages/Resolved';
 import Bet from './pages/Bet';
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  // CRITICAL: Get ALL the values from useAuth
+  const { 
+    user, 
+    loading, 
+    showPrivateKeyUI, 
+    privateKeyData, 
+    closePrivateKeyUI 
+  } = useAuth();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🎯 App State:', {
+      hasUser: !!user,
+      showPrivateKeyUI,
+      hasPrivateKeyData: !!privateKeyData,
+      privateKeyData: privateKeyData ? {
+        hasPrivateKey: !!privateKeyData.privateKey,
+        hasWalletAddress: !!privateKeyData.walletAddress
+      } : null
+    });
+  }, [user, showPrivateKeyUI, privateKeyData]);
 
   if (loading) {
     return <LoadingScreen />;
   }
 
   return (
-    <div style={{ minHeight: '100vh', position: 'relative' }}>
-      <Header />
-      <SubHeader />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/trending" element={<Trending />} />
-        <Route path="/fmarket" element={<FMarket />} />
-        <Route path="/market" element={<Market />} />
-        <Route path="/resolved" element={<Resolved />} />
-        <Route path="/bet/:betId" element={<Bet />} />
-      </Routes>
-    </div>
+    <>
+      {/* CRITICAL: Private Key UI - Must be at root level, outside all other content */}
+      {showPrivateKeyUI && privateKeyData && (
+        <PrivateKeyUI
+          privateKey={privateKeyData.privateKey}
+          walletAddress={privateKeyData.walletAddress}
+          onClose={closePrivateKeyUI}
+        />
+      )}
+
+      <div style={{ minHeight: '100vh', position: 'relative' }}>
+        <Header />
+        <SubHeader />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/trending" element={<Trending />} />
+          <Route path="/fmarket" element={<FMarket />} />
+          <Route path="/market" element={<Market />} />
+          <Route path="/resolved" element={<Resolved />} />
+          <Route path="/bet/:betId" element={<Bet />} />
+        </Routes>
+      </div>
+    </>
   );
 }
 

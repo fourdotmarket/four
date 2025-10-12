@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import axios from 'axios';
 
@@ -10,15 +10,27 @@ export function useAuth() {
   const [showPrivateKeyUI, setShowPrivateKeyUI] = useState(false);
   const [privateKeyData, setPrivateKeyData] = useState(null);
   
-  // CRITICAL FIX: Prevent infinite loops with ref
-  const hasAttemptedAuth = useRef(false);
-  const isAuthenticating = useRef(false);
+  // CRITICAL: Use refs to prevent re-renders from triggering new auth calls
+  const hasAuthenticatedRef = useRef(false);
+  const isAuthenticatingRef = useRef(false);
+  const authenticationSessionId = useRef(null);
+
+  // Memoize close function
+  const closePrivateKeyUI = useCallback(() => {
+    console.log('🚪 Closing private key UI');
+    setShowPrivateKeyUI(false);
+    setPrivateKeyData(null);
+  }, []);
 
   useEffect(() => {
-    // Reset when authentication state changes
-    if (!authenticated) {
-      hasAttemptedAuth.current = false;
-      isAuthenticating.current = false;
+    // Create unique session ID when authentication state changes
+    const currentSessionId = `${ready}-${authenticated}-${privyUser?.id || 'none'}`;
+    
+    // Not ready or not authenticated - reset everything
+    if (!ready || !authenticated) {
+      hasAuthenticatedRef.current = false;
+      isAuthenticatingRef.current = false;
+      authenticationSessionId.current = null;
       setUser(null);
       setAccessToken(null);
       setLoading(false);
@@ -27,41 +39,51 @@ export function useAuth() {
       return;
     }
 
-    if (!ready) return;
-    
-    // CRITICAL: Prevent multiple simultaneous auth attempts
-    if (hasAttemptedAuth.current || isAuthenticating.current) {
-      console.log('⏭️ Skipping auth - already attempted or in progress');
+    // CRITICAL GUARD: Check if we've already authenticated this exact session
+    if (authenticationSessionId.current === currentSessionId) {
+      console.log('✅ Already authenticated this session - skipping');
       return;
     }
 
-    async function registerOrLogin() {
-      // Mark as authenticating
-      isAuthenticating.current = true;
-      hasAttemptedAuth.current = true;
+    // CRITICAL GUARD: Check if authentication is in progress
+    if (isAuthenticatingRef.current) {
+      console.log('⏳ Authentication in progress - skipping duplicate call');
+      return;
+    }
 
+    // CRITICAL GUARD: Check if we've already successfully authenticated
+    if (hasAuthenticatedRef.current && user) {
+      console.log('✅ Already authenticated and have user - skipping');
+      return;
+    }
+
+    // Set all guards BEFORE starting async operation
+    isAuthenticatingRef.current = true;
+    authenticationSessionId.current = currentSessionId;
+
+    async function registerOrLogin() {
       try {
+        // Extract provider and email
         let provider = 'unknown';
         let email = null;
         
-        if (privyUser.email) {
+        if (privyUser?.email) {
           provider = 'email';
           email = privyUser.email.address;
-        } else if (privyUser.google) {
+        } else if (privyUser?.google) {
           provider = 'google';
           email = privyUser.google.email;
-        } else if (privyUser.twitter) {
+        } else if (privyUser?.twitter) {
           provider = 'twitter';
           email = privyUser.twitter.username;
         }
 
-        console.log('🔐 Attempting to authenticate with backend...', { provider, email });
+        console.log('🔐 [SINGLE AUTH CALL] Authenticating...', { provider, email });
 
-        // Get Privy access token
+        // Get access token
         const token = await getAccessToken();
-        setAccessToken(token);
-        console.log('✅ Got Privy access token');
-
+        
+        // Make auth request
         const response = await axios.post('/api/auth', 
           { provider, email },
           {
@@ -72,78 +94,81 @@ export function useAuth() {
           }
         );
 
-        console.log('✅ Backend response:', response.data);
-        console.log('📊 User data:', response.data.user);
-        console.log('🆕 Is new user:', response.data.isNewUser);
-        console.log('🔑 Has private key:', !!response.data.privateKey);
+        console.log('✅ Authentication successful!');
+        console.log('📊 Response:', {
+          isNewUser: response.data.isNewUser,
+          hasPrivateKey: !!response.data.privateKey,
+          hasWallet: !!response.data.user?.wallet_address
+        });
 
-        setUser(response.data.user);
+        // CRITICAL: Set states in one batch to minimize re-renders
+        const userData = response.data.user;
+        const isNewUser = response.data.isNewUser;
+        const privateKey = response.data.privateKey;
 
-        // CRITICAL: If new user, show private key UI ONCE
-        if (response.data.isNewUser && response.data.privateKey) {
-          console.log('🆕 NEW USER DETECTED - showing private key UI');
-          console.log('🔑 Private key:', response.data.privateKey);
-          console.log('💼 Wallet address:', response.data.user.wallet_address);
+        // Mark as successfully authenticated BEFORE setting state
+        hasAuthenticatedRef.current = true;
+
+        // Set user and token
+        setUser(userData);
+        setAccessToken(token);
+        setLoading(false);
+
+        // If new user with private key, prepare UI data
+        if (isNewUser && privateKey && userData.wallet_address) {
+          console.log('🔑 NEW USER - Setting up private key UI');
+          console.log('   Private Key:', privateKey);
+          console.log('   Wallet:', userData.wallet_address);
           
-          setPrivateKeyData({
-            privateKey: response.data.privateKey,
-            walletAddress: response.data.user.wallet_address
-          });
+          // Set private key data and show UI flag together
+          const pkData = {
+            privateKey: privateKey,
+            walletAddress: userData.wallet_address
+          };
+          
+          setPrivateKeyData(pkData);
           setShowPrivateKeyUI(true);
+          
+          console.log('✅ Private key UI should now be visible');
         } else {
-          console.log('👤 Existing user - no private key UI needed');
+          console.log('ℹ️ Existing user - no private key UI');
         }
 
       } catch (error) {
-        console.error('❌ Auth error:', error);
-        console.error('Error details:', {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status
-        });
+        console.error('❌ Authentication error:', error);
+        console.error('Error details:', error.response?.data || error.message);
 
-        // FALLBACK: Create user from Privy data
-        console.log('📝 Using fallback user data from Privy');
-        
-        let username = null;
-        if (privyUser.email?.address) {
+        // Mark as complete even on error to prevent retry loops
+        hasAuthenticatedRef.current = true;
+
+        // Fallback user from Privy data
+        let username = 'User';
+        if (privyUser?.email?.address) {
           username = privyUser.email.address.split('@')[0];
-        } else if (privyUser.google?.email) {
+        } else if (privyUser?.google?.email) {
           username = privyUser.google.email.split('@')[0];
-        } else if (privyUser.twitter?.username) {
+        } else if (privyUser?.twitter?.username) {
           username = privyUser.twitter.username;
-        } else if (privyUser.wallet?.address) {
-          const addr = privyUser.wallet.address;
-          username = `${addr.slice(2, 6)}...${addr.slice(-4)}`;
         }
 
         const fallbackUser = {
-          username: username,
-          email: privyUser.email?.address || 
-                privyUser.google?.email || 
-                privyUser.twitter?.username || null,
-          wallet_address: privyUser.wallet?.address || null,
-          provider: privyUser.email ? 'email' : 
-                   privyUser.google ? 'google' : 
-                   privyUser.twitter ? 'twitter' : 'unknown'
+          username,
+          email: privyUser?.email?.address || privyUser?.google?.email || null,
+          wallet_address: null,
+          provider: privyUser?.email ? 'email' : privyUser?.google ? 'google' : 'twitter'
         };
         
-        console.log('📋 Fallback user:', fallbackUser);
         setUser(fallbackUser);
-      } finally {
         setLoading(false);
-        isAuthenticating.current = false;
+      } finally {
+        // Clear in-progress flag
+        isAuthenticatingRef.current = false;
       }
     }
 
     registerOrLogin();
-  }, [ready, authenticated]); // CRITICAL: Only depend on ready and authenticated, NOT privyUser
 
-  const closePrivateKeyUI = () => {
-    console.log('🚪 Closing private key UI');
-    setShowPrivateKeyUI(false);
-    setPrivateKeyData(null);
-  };
+  }, [ready, authenticated, privyUser?.id, getAccessToken]); // Only depend on essential values
 
   return { 
     user, 
