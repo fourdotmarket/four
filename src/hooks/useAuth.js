@@ -10,10 +10,11 @@ export function useAuth() {
   const [showPrivateKeyUI, setShowPrivateKeyUI] = useState(false);
   const [privateKeyData, setPrivateKeyData] = useState(null);
   
-  // BULLETPROOF: Multiple layers of protection against duplicate calls
+  // BULLETPROOF PROTECTION: Multiple layers to prevent duplicate calls
   const hasCompletedAuthRef = useRef(false);
-  const isCurrentlyAuthenticatingRef = useRef(false);
+  const authRequestInFlightRef = useRef(false);
   const lastPrivyUserIdRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   const closePrivateKeyUI = useCallback(() => {
     setShowPrivateKeyUI(false);
@@ -24,8 +25,12 @@ export function useAuth() {
     // If not authenticated, reset everything
     if (!ready || !authenticated) {
       hasCompletedAuthRef.current = false;
-      isCurrentlyAuthenticatingRef.current = false;
+      authRequestInFlightRef.current = false;
       lastPrivyUserIdRef.current = null;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
       setUser(null);
       setAccessToken(null);
       setLoading(false);
@@ -36,23 +41,29 @@ export function useAuth() {
 
     // GUARD 1: Already completed auth successfully
     if (hasCompletedAuthRef.current) {
+      console.log('🛡️ [AUTH] Already authenticated - skipping');
       return;
     }
 
-    // GUARD 2: Currently authenticating (prevents race conditions)
-    if (isCurrentlyAuthenticatingRef.current) {
+    // GUARD 2: Request already in flight (prevents race conditions)
+    if (authRequestInFlightRef.current) {
+      console.log('🛡️ [AUTH] Request in flight - skipping');
       return;
     }
 
-    // GUARD 3: Check if this is the same Privy user we already authenticated
+    // GUARD 3: Same Privy user already authenticated
     const currentPrivyUserId = privyUser?.id || privyUser?.sub;
     if (lastPrivyUserIdRef.current === currentPrivyUserId && user !== null) {
+      console.log('🛡️ [AUTH] Same user already loaded - skipping');
       return;
     }
 
-    // Set ALL guards before starting async operation
-    isCurrentlyAuthenticatingRef.current = true;
+    // Set request in flight flag FIRST
+    authRequestInFlightRef.current = true;
     lastPrivyUserIdRef.current = currentPrivyUserId;
+
+    // Create AbortController for this request
+    abortControllerRef.current = new AbortController();
 
     async function registerOrLogin() {
       try {
@@ -76,14 +87,15 @@ export function useAuth() {
         // Get access token
         const token = await getAccessToken();
         
-        // Make auth request
+        // Make auth request with abort signal
         const response = await axios.post('/api/auth', 
           { provider, email },
           {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
-            }
+            },
+            signal: abortControllerRef.current?.signal
           }
         );
 
@@ -99,6 +111,7 @@ export function useAuth() {
 
         // Mark as completed BEFORE setting any state
         hasCompletedAuthRef.current = true;
+        authRequestInFlightRef.current = false;
 
         // Set all state at once
         setUser(userData);
@@ -116,10 +129,17 @@ export function useAuth() {
         }
 
       } catch (error) {
+        // Check if request was aborted
+        if (axios.isCancel(error) || error.name === 'CanceledError' || error.name === 'AbortError') {
+          console.log('🚫 [AUTH] Request aborted');
+          return;
+        }
+
         console.error('❌ [AUTH] Error:', error.message);
         
         // Mark as completed even on error
         hasCompletedAuthRef.current = true;
+        authRequestInFlightRef.current = false;
 
         // Fallback user
         let username = 'User';
@@ -138,14 +158,20 @@ export function useAuth() {
           provider: privyUser?.email ? 'email' : privyUser?.google ? 'google' : 'twitter'
         });
         setLoading(false);
-      } finally {
-        isCurrentlyAuthenticatingRef.current = false;
       }
     }
 
     registerOrLogin();
 
-  }, [ready, authenticated]); // ONLY depend on ready and authenticated
+    // Cleanup function to abort request on unmount
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      authRequestInFlightRef.current = false;
+    };
+
+  }, [ready, authenticated, privyUser, getAccessToken, user]);
 
   return { 
     user, 
