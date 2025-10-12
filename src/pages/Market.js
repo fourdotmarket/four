@@ -25,11 +25,7 @@ export default function Market() {
   const [bannerPreview, setBannerPreview] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
-<<<<<<< HEAD
-  const allowedChars = 'abcdefghijklmnopqrstuvwxyz0123456789 .,?!-';
-=======
   const allowedChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,?!-';
->>>>>>> 29af69c (WOW)
 
   // Map expiry to duration index
   const expiryToDuration = {
@@ -57,11 +53,7 @@ export default function Market() {
   };
   
   const handlePredictionChange = (e) => {
-<<<<<<< HEAD
-    const value = e.target.value.toLowerCase();
-=======
     const value = e.target.value;
->>>>>>> 29af69c (WOW)
     const filtered = value.split('').filter(char => allowedChars.includes(char)).join('');
     if (filtered.length <= MAX_PREDICTION_LENGTH) {
       setPrediction(filtered);
@@ -152,7 +144,7 @@ export default function Market() {
         throw new Error('Failed to get authentication token');
       }
 
-      console.log('📝 Creating market with JWT authentication');
+      console.log('ðŸ“ Creating market with JWT authentication');
 
       // SECURITY FIX: No user_id in body, only JWT token in header
       const response = await fetch('/api/create-bet', {
@@ -177,7 +169,7 @@ export default function Market() {
         result = await response.json();
       } else {
         const text = await response.text();
-        console.error('❌ Server error:', text.substring(0, 200));
+        console.error('âŒ Server error:', text.substring(0, 200));
         throw new Error('Server error occurred. Check server logs.');
       }
 
@@ -185,13 +177,13 @@ export default function Market() {
         throw new Error(result.error || result.details || 'Failed to create bet');
       }
       
-      console.log('✅ Market created!');
+      console.log('âœ… Market created!');
       console.log('TX Hash:', result.txHash);
       console.log('Market ID:', result.marketId);
 
       // Banner upload would go here if needed
       if (banner) {
-        console.log('📸 Banner upload for market:', result.marketId);
+        console.log('ðŸ“¸ Banner upload for market:', result.marketId);
       }
 
       setTimeout(() => {
@@ -199,7 +191,7 @@ export default function Market() {
       }, 1500);
 
     } catch (error) {
-      console.error('❌ Error creating bet:', error);
+      console.error('âŒ Error creating bet:', error);
       setIsCreating(false);
       
       // Handle specific error messages
@@ -311,11 +303,7 @@ export default function Market() {
                 </label>
                 <textarea
                   className={`create-textarea ${prediction.length > 0 && prediction.length < MIN_PREDICTION_LENGTH ? 'invalid' : ''}`}
-<<<<<<< HEAD
-                  placeholder="what will happen? be specific and clear..."
-=======
                   placeholder="What will happen? Be specific and clear..."
->>>>>>> 29af69c (WOW)
                   value={prediction}
                   onChange={handlePredictionChange}
                   rows="3"
@@ -341,7 +329,7 @@ export default function Market() {
                     <span className="create-input-suffix">BNB</span>
                   </div>
                   <div className="create-hint">
-                    min {MIN_STAKE} • ticket price: {calculateTicketPrice()} BNB
+                    min {MIN_STAKE} â€¢ ticket price: {calculateTicketPrice()} BNB
                   </div>
                 </div>
 
