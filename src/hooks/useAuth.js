@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import axios from 'axios';
 
+// Module-level tracking - survives React Strict Mode unmount/remount
+const authRequestsInFlight = new Map();
+const completedAuthUsers = new Set();
+
 export function useAuth() {
   const { ready, authenticated, user: privyUser, getAccessToken } = usePrivy();
   const [user, setUser] = useState(null);
@@ -10,10 +14,6 @@ export function useAuth() {
   const [showPrivateKeyUI, setShowPrivateKeyUI] = useState(false);
   const [privateKeyData, setPrivateKeyData] = useState(null);
   
-  // BULLETPROOF PROTECTION: Multiple layers to prevent duplicate calls
-  const hasCompletedAuthRef = useRef(false);
-  const authRequestInFlightRef = useRef(false);
-  const lastPrivyUserIdRef = useRef(null);
   const abortControllerRef = useRef(null);
 
   const closePrivateKeyUI = useCallback(() => {
@@ -22,15 +22,7 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
-    // If not authenticated, reset everything
     if (!ready || !authenticated) {
-      hasCompletedAuthRef.current = false;
-      authRequestInFlightRef.current = false;
-      lastPrivyUserIdRef.current = null;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
       setUser(null);
       setAccessToken(null);
       setLoading(false);
@@ -39,35 +31,29 @@ export function useAuth() {
       return;
     }
 
-    // GUARD 1: Already completed auth successfully
-    if (hasCompletedAuthRef.current) {
-      console.log('🛡️ [AUTH] Already authenticated - skipping');
-      return;
-    }
-
-    // GUARD 2: Request already in flight (prevents race conditions)
-    if (authRequestInFlightRef.current) {
-      console.log('🛡️ [AUTH] Request in flight - skipping');
-      return;
-    }
-
-    // GUARD 3: Same Privy user already authenticated
     const currentPrivyUserId = privyUser?.id || privyUser?.sub;
-    if (lastPrivyUserIdRef.current === currentPrivyUserId && user !== null) {
-      console.log('🛡️ [AUTH] Same user already loaded - skipping');
+    
+    if (!currentPrivyUserId) {
       return;
     }
 
-    // Set request in flight flag FIRST
-    authRequestInFlightRef.current = true;
-    lastPrivyUserIdRef.current = currentPrivyUserId;
+    // Check if already completed for this user
+    if (completedAuthUsers.has(currentPrivyUserId)) {
+      return;
+    }
 
-    // Create AbortController for this request
+    // Check if request is already in flight for this user
+    if (authRequestsInFlight.has(currentPrivyUserId)) {
+      return;
+    }
+
+    // Mark request as in flight BEFORE any async work
+    authRequestsInFlight.set(currentPrivyUserId, true);
+    
     abortControllerRef.current = new AbortController();
 
     async function registerOrLogin() {
       try {
-        // Extract provider and email
         let provider = 'unknown';
         let email = null;
         
@@ -82,12 +68,8 @@ export function useAuth() {
           email = privyUser.twitter.username;
         }
 
-        console.log('🔐 [AUTH] Starting authentication...');
-
-        // Get access token
         const token = await getAccessToken();
         
-        // Make auth request with abort signal
         const response = await axios.post('/api/auth', 
           { provider, email },
           {
@@ -99,28 +81,19 @@ export function useAuth() {
           }
         );
 
-        console.log('✅ [AUTH] Success!', {
-          isNewUser: response.data.isNewUser,
-          hasPrivateKey: !!response.data.privateKey
-        });
-
-        // Extract data
         const userData = response.data.user;
         const isNewUser = response.data.isNewUser;
         const privateKey = response.data.privateKey;
 
-        // Mark as completed BEFORE setting any state
-        hasCompletedAuthRef.current = true;
-        authRequestInFlightRef.current = false;
+        // Mark as completed and remove from in-flight
+        completedAuthUsers.add(currentPrivyUserId);
+        authRequestsInFlight.delete(currentPrivyUserId);
 
-        // Set all state at once
         setUser(userData);
         setAccessToken(token);
         setLoading(false);
 
-        // Handle private key UI for new users
         if (isNewUser && privateKey && userData.wallet_address) {
-          console.log('🔑 [AUTH] New user - setting up private key UI');
           setPrivateKeyData({
             privateKey: privateKey,
             walletAddress: userData.wallet_address
@@ -129,19 +102,14 @@ export function useAuth() {
         }
 
       } catch (error) {
-        // Check if request was aborted
         if (axios.isCancel(error) || error.name === 'CanceledError' || error.name === 'AbortError') {
-          console.log('🚫 [AUTH] Request aborted');
+          authRequestsInFlight.delete(currentPrivyUserId);
           return;
         }
 
-        console.error('❌ [AUTH] Error:', error.message);
-        
-        // Mark as completed even on error
-        hasCompletedAuthRef.current = true;
-        authRequestInFlightRef.current = false;
+        completedAuthUsers.add(currentPrivyUserId);
+        authRequestsInFlight.delete(currentPrivyUserId);
 
-        // Fallback user
         let username = 'User';
         if (privyUser?.email?.address) {
           username = privyUser.email.address.split('@')[0];
@@ -163,15 +131,13 @@ export function useAuth() {
 
     registerOrLogin();
 
-    // Cleanup function to abort request on unmount
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-      authRequestInFlightRef.current = false;
     };
 
-  }, [ready, authenticated, privyUser, getAccessToken, user]);
+  }, [ready, authenticated]);
 
   return { 
     user, 
