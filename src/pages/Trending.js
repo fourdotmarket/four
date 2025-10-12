@@ -395,7 +395,7 @@ export default function Trending() {
       <div className="trending-header">
         <div className="trending-title-section">
           <h1 className="trending-title">TRENDING NOW</h1>
-          <p className="trending-subtitle">Most popular prediction market</p>
+          <p className="trending-subtitle">Most popular prediction.</p>
         </div>
       </div>
 
@@ -694,7 +694,7 @@ export default function Trending() {
       <div className="trending-markets-section">
         <div className="trending-markets-header">
           <h2 className="trending-markets-title">TOP MARKETS BY ACTIVITY</h2>
-          <p className="trending-markets-subtitle">Most active in the past 3 hours</p>
+          <p className="trending-markets-subtitle">Most active in the past 3 hours.</p>
         </div>
         
         {topMarkets.length === 0 ? (
