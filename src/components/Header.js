@@ -58,12 +58,6 @@ export default function Header() {
               <span>Trending</span>
             </div>
             
-            <div 
-              className={`header-nav-item ${location.pathname === '/fmarket' ? 'active' : ''}`}
-              onClick={() => navigate('/fmarket')}
-            >
-              <span>Four.Market</span>
-            </div>
             
             <div 
               className={`header-nav-item ${location.pathname === '/market' ? 'active' : ''}`}
