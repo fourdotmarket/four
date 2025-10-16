@@ -269,9 +269,10 @@ export default function Bet() {
   const { positions, totalTickets, totalSpent, loading: posLoading } = usePositions(user?.user_id, market?.market_id);
 
   const getMarketIdFromBetId = async (betId) => {
+    // SECURITY FIX: Select only market_id, not all columns
     const { data: markets, error: fetchError } = await supabase
       .from('markets')
-      .select('*')
+      .select('market_id')
       .eq('status', 'active');
 
     if (fetchError) throw fetchError;
@@ -335,9 +336,28 @@ export default function Bet() {
         throw new Error('Market not found');
       }
 
+      // SECURITY FIX: Select only non-sensitive columns (no id, no creator_id)
       const { data, error: fetchError } = await supabase
         .from('markets')
-        .select('*')
+        .select(`
+          market_id,
+          question,
+          creator_username,
+          creator_wallet,
+          stake,
+          ticket_price,
+          total_tickets,
+          tickets_sold,
+          deadline,
+          created_at_timestamp,
+          tx_hash,
+          block_number,
+          status,
+          outcome,
+          banner_url,
+          created_at,
+          updated_at
+        `)
         .eq('market_id', marketId)
         .single();
 

@@ -32,8 +32,12 @@ export default function Resolved() {
           table: 'markets'
         },
         (payload) => {
-          if (payload.new.status === 'resolved' || payload.new.status === 'awaiting_resolution') {
-            console.log('🔄 Market status updated:', payload.new);
+          const currentTimestamp = Math.floor(Date.now() / 1000);
+          const isExpired = payload.new.deadline < currentTimestamp;
+          const isResolved = payload.new.status === 'resolved' || payload.new.status === 'awaiting_resolution';
+          
+          if (isResolved || isExpired) {
+            console.log('🔄 Market updated (resolved/expired):', payload.new);
             fetchResolvedMarkets();
           }
         }
@@ -51,6 +55,7 @@ export default function Resolved() {
       
       const from = (page - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
+      const currentTimestamp = Math.floor(Date.now() / 1000);
 
       const { data, error: fetchError, count } = await supabase
         .from('markets')
@@ -73,7 +78,7 @@ export default function Resolved() {
           created_at,
           updated_at
         `, { count: 'exact' })
-        .in('status', ['resolved', 'awaiting_resolution'])
+        .or(`status.in.(resolved,awaiting_resolution),deadline.lt.${currentTimestamp}`)
         .order('updated_at', { ascending: false })
         .range(from, to);
 
@@ -101,7 +106,7 @@ export default function Resolved() {
       <div className="resolved-header">
         <div className="resolved-title-section">
           <h1 className="resolved-title">RESOLVED MARKETS</h1>
-          <p className="resolved-subtitle">Completed and awaiting resolution markets</p>
+          <p className="resolved-subtitle">Completed, expired, and awaiting resolution markets</p>
         </div>
       </div>
 

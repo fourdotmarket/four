@@ -27,7 +27,11 @@ export function useMarkets(page = 1) {
           table: 'markets'
         },
         (payload) => {
-          if (payload.new.status === 'active') {
+          const currentTimestamp = Math.floor(Date.now() / 1000);
+          const isExpired = payload.new.deadline < currentTimestamp;
+          
+          // Only add if active and not expired
+          if (payload.new.status === 'active' && !isExpired) {
             console.log('🆕 New market created:', payload.new);
             setMarkets((current) => [payload.new, ...current]);
           }
@@ -42,8 +46,11 @@ export function useMarkets(page = 1) {
         },
         (payload) => {
           console.log('🔄 Market updated:', payload.new);
-          // Remove from active list if status changed to resolved/awaiting_resolution
-          if (payload.new.status !== 'active') {
+          const currentTimestamp = Math.floor(Date.now() / 1000);
+          const isExpired = payload.new.deadline < currentTimestamp;
+          
+          // Remove from active list if status changed or market expired
+          if (payload.new.status !== 'active' || isExpired) {
             setMarkets((current) =>
               current.filter((m) => m.market_id !== payload.new.market_id)
             );
@@ -69,8 +76,10 @@ export function useMarkets(page = 1) {
       
       const from = (page - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
+      const currentTimestamp = Math.floor(Date.now() / 1000);
 
       // SECURITY FIX: Select only non-sensitive columns (no id, no creator_id)
+      // Only show active markets that haven't expired
       const { data, error: fetchError, count } = await supabase
         .from('markets')
         .select(`
@@ -93,6 +102,7 @@ export function useMarkets(page = 1) {
           updated_at
         `, { count: 'exact' })
         .eq('status', 'active')
+        .gte('deadline', currentTimestamp)
         .order('created_at', { ascending: false })
         .range(from, to);
 
