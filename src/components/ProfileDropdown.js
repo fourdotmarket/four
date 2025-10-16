@@ -9,13 +9,20 @@ const generateAdminRoute = () => {
   for (let i = 0; i < 32; i++) {
     route += chars[Math.floor(Math.random() * chars.length)];
   }
-  return `/a_${route}`;
+  return route;
 };
 
 export default function ProfileDropdown({ user, onLogout, onClose }) {
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
-  const [adminRoute] = useState(() => generateAdminRoute());
+  const [adminToken] = useState(() => generateAdminRoute());
+
+  const handleAdminClick = () => {
+    // Store the valid token in sessionStorage
+    sessionStorage.setItem('admin_token', adminToken);
+    navigate(`/admin/${adminToken}`);
+    onClose();
+  };
 
   const copyWalletAddress = () => {
     if (user.wallet_address) {
@@ -117,7 +124,7 @@ export default function ProfileDropdown({ user, onLogout, onClose }) {
           {user.username === 'Admin' && (
             <button 
               className="profile-dropdown-item profile-dropdown-admin"
-              onClick={() => handleNavigate(adminRoute)}
+              onClick={handleAdminClick}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>

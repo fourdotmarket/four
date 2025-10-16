@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '../hooks/useAuth';
 import './Admin.css';
@@ -11,6 +11,7 @@ const supabase = createClient(
 
 export default function Admin() {
   const navigate = useNavigate();
+  const { token } = useParams();
   const { user, getFreshToken } = useAuth();
   const [markets, setMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,14 +22,41 @@ export default function Admin() {
   const [resolutionReason, setResolutionReason] = useState('');
   const [outcome, setOutcome] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isValidAccess, setIsValidAccess] = useState(false);
+  const hasValidatedRef = useRef(false);
 
-  // Security Check: Only allow admin
+  // Token Validation: Check if token matches stored token
+  useEffect(() => {
+    if (hasValidatedRef.current) return;
+    
+    const storedToken = sessionStorage.getItem('admin_token');
+    
+    if (!token || !storedToken || token !== storedToken) {
+      console.log('⛔ Invalid or expired admin token');
+      navigate('/');
+      return;
+    }
+    
+    hasValidatedRef.current = true;
+    setIsValidAccess(true);
+  }, [token, navigate]);
+
+  // Security Check: Only allow admin user
   useEffect(() => {
     if (user && user.username !== 'Admin') {
       console.log('⛔ Unauthorized access attempt to admin panel');
       navigate('/');
     }
   }, [user, navigate]);
+
+  // Self-Destruct: Clear token when leaving the page
+  useEffect(() => {
+    return () => {
+      // Clear token when component unmounts (leaving the page)
+      sessionStorage.removeItem('admin_token');
+      console.log('🔒 Admin token destroyed - route no longer valid');
+    };
+  }, []);
 
   useEffect(() => {
     if (user && user.username === 'Admin') {
@@ -202,7 +230,8 @@ export default function Admin() {
 
   const filteredMarkets = getFilteredMarkets();
 
-  if (!user || user.username !== 'Admin') {
+  // Don't render anything until token is validated
+  if (!isValidAccess || !user || user.username !== 'Admin') {
     return null;
   }
 
@@ -295,7 +324,13 @@ export default function Admin() {
           </button>
         </nav>
 
-        <button className="admin-sidebar-exit" onClick={() => navigate('/')}>
+        <button 
+          className="admin-sidebar-exit" 
+          onClick={() => {
+            sessionStorage.removeItem('admin_token');
+            navigate('/');
+          }}
+        >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>

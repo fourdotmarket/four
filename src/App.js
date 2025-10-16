@@ -76,8 +76,8 @@ function AppContent() {
           <Route path="/position" element={<Position />} />
           <Route path="/winnings" element={<Winnings />} />
           <Route path="/settings" element={<Settings />} />
-          {/* Admin route - random path for security */}
-          <Route path="/a_*" element={<Admin />} />
+          {/* Admin route - random token-based access */}
+          <Route path="/admin/:token" element={<Admin />} />
         </Routes>
       </div>
     </>
