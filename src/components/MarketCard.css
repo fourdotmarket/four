@@ -450,6 +450,55 @@
   letter-spacing: 0.5px;
 }
 
+/* Resolution Display */
+.market-card-resolution {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(255, 212, 59, 0.05);
+  border: 1px solid #2a2a2a;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.market-card-resolution-label {
+  font-family: var(--font-primary);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--color-gray-light);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.market-card-resolution-winner {
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-align: center;
+  padding: 8px 12px;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+
+.market-card-resolution-winner.maker {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.market-card-resolution-winner.challengers {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+  border: 1px solid #ff9800;
+}
+
+.market-card-status-badge.resolved {
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.9) 0%, rgba(21, 101, 192, 0.9) 100%);
+  color: #ffffff;
+  border-color: #2196f3;
+}
+
 /* Responsive - Maintain Compact */
 @media (max-width: 768px) {
   .market-card {

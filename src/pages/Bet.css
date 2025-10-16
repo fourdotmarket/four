@@ -827,6 +827,96 @@
   }
 }
 
+/* Resolution Display */
+.bet-resolution-display {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.bet-resolution-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(90deg, rgba(255, 212, 59, 0.1) 0%, transparent 100%);
+  border-left: 3px solid #FFD43B;
+}
+
+.bet-resolution-header svg {
+  color: #FFD43B;
+}
+
+.bet-resolution-header h3 {
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: #FFD43B;
+  margin: 0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.bet-resolution-outcome {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: rgba(255, 212, 59, 0.03);
+  border: 1px solid #2a2a2a;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.bet-resolution-label {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #808080;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.bet-resolution-winner {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 12px 20px;
+  text-align: center;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.bet-resolution-winner.maker {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.bet-resolution-winner.challengers {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+  border: 1px solid #ff9800;
+}
+
+.bet-resolution-reason {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: #0a0a0a;
+  border: 1px solid #2a2a2a;
+}
+
+.bet-resolution-reason p {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #ffffff;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (max-width: 480px) {
   .bet-page {
     padding: 16px;

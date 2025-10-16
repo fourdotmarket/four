@@ -16,6 +16,7 @@ import Bet from './pages/Bet';
 import Position from './pages/Position';
 import Winnings from './pages/Winnings';
 import Settings from './pages/Settings';
+import Admin from './pages/Admin';
 
 function AppContent() {
   // CRITICAL: Get ALL the values from useAuth
@@ -75,6 +76,8 @@ function AppContent() {
           <Route path="/position" element={<Position />} />
           <Route path="/winnings" element={<Winnings />} />
           <Route path="/settings" element={<Settings />} />
+          {/* Admin route - random path for security */}
+          <Route path="/a_*" element={<Admin />} />
         </Routes>
       </div>
     </>

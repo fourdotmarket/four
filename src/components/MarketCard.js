@@ -96,14 +96,16 @@ export default function MarketCard({ market }) {
 
   const hot = isHot();
 
-  // Determine status: Active, Awaiting Resolution, or Sold Out
+  // Determine status: Resolved, Active, Awaiting Resolution, or Sold Out
   const getStatus = () => {
-    if (isExpired) return 'AWAITING RESOLUTION';
+    if (market.status === 'resolved') return 'RESOLVED';
+    if (market.status === 'awaiting_resolution' || isExpired) return 'AWAITING RESOLUTION';
     if (isSoldOut) return 'SOLD OUT';
     return 'ACTIVE';
   };
 
   const status = getStatus();
+  const isResolved = market.status === 'resolved';
 
   return (
     <div className="market-card" onClick={handleCardClick}>
@@ -157,6 +159,16 @@ export default function MarketCard({ market }) {
             <span className="market-card-data-value">{market.stake} BNB</span>
           </div>
         </div>
+
+        {/* Resolution Display - Show when resolved */}
+        {isResolved && market.outcome !== null && (
+          <div className="market-card-resolution">
+            <div className="market-card-resolution-label">WINNING SIDE:</div>
+            <div className={`market-card-resolution-winner ${market.outcome ? 'maker' : 'challengers'}`}>
+              {market.outcome ? 'YES (MAKER)' : 'NO (CHALLENGERS)'}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer */}

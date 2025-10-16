@@ -2,9 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ProfileDropdown.css';
 
+// Generate random admin route
+const generateAdminRoute = () => {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let route = '';
+  for (let i = 0; i < 32; i++) {
+    route += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return `/a_${route}`;
+};
+
 export default function ProfileDropdown({ user, onLogout, onClose }) {
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
+  const [adminRoute] = useState(() => generateAdminRoute());
 
   const copyWalletAddress = () => {
     if (user.wallet_address) {
@@ -101,6 +112,20 @@ export default function ProfileDropdown({ user, onLogout, onClose }) {
             </svg>
             <span>Settings</span>
           </button>
+
+          {/* ADMIN ONLY - Random route generated on each render */}
+          {user.username === 'Admin' && (
+            <button 
+              className="profile-dropdown-item profile-dropdown-admin"
+              onClick={() => handleNavigate(adminRoute)}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>Administrator</span>
+            </button>
+          )}
 
           <div className="profile-dropdown-divider" />
 

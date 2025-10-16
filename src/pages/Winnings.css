@@ -1,56 +1,55 @@
 /* Winnings Page - Cyberpunk Theme */
 .winnings-page {
-  max-width: 1600px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 48px;
-  min-height: 80vh;
+  padding: 48px;
+  min-height: 100vh;
 }
 
 .winnings-back-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
   background: transparent;
   border: 1px solid #2a2a2a;
-  color: #808080;
+  color: #ffffff;
   padding: 10px 20px;
   font-family: 'Courier New', monospace;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   cursor: pointer;
   transition: all 0.2s;
   margin-bottom: 32px;
   clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-  text-transform: uppercase;
 }
 
 .winnings-back-btn:hover {
   border-color: #FFD43B;
+  background: rgba(255, 212, 59, 0.05);
+}
+
+.winnings-back-btn svg {
   color: #FFD43B;
-  transform: translateX(-4px);
 }
 
 .winnings-header {
-  margin-bottom: 48px;
+  margin-bottom: 40px;
+  text-align: center;
   padding-bottom: 24px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 2px solid #2a2a2a;
   position: relative;
 }
 
 .winnings-header::after {
   content: '';
   position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    #FFD43B 50%, 
-    transparent 100%
-  );
-  opacity: 0.3;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #FFD43B 50%, transparent 100%);
 }
 
 .winnings-title {
@@ -60,28 +59,289 @@
   color: #FFD43B;
   margin: 0 0 8px 0;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 4px;
 }
 
 .winnings-subtitle {
   font-family: 'Courier New', monospace;
   font-size: 12px;
   color: #808080;
-  font-weight: 500;
   margin: 0;
   text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+/* Loading State */
+.winnings-loading,
+.winnings-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #2a2a2a;
+  border-top-color: #FFD43B;
+  border-right-color: #FFD43B;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.winnings-loading p,
+.winnings-error p {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #808080;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.winnings-error p {
+  color: #ff6b6b;
+}
+
+/* Empty State */
+.winnings-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  gap: 20px;
+}
+
+.winnings-empty svg {
+  color: #2a2a2a;
+  margin-bottom: 12px;
+}
+
+.winnings-empty h3 {
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: #FFD43B;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.winnings-empty p {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #808080;
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+/* Total Card */
+.winnings-total-card {
+  background: linear-gradient(135deg, rgba(255, 212, 59, 0.1) 0%, rgba(255, 212, 59, 0.02) 100%);
+  border: 2px solid #FFD43B;
+  padding: 32px;
+  margin-bottom: 40px;
+  text-align: center;
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  position: relative;
+}
+
+.winnings-total-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 212, 59, 0.05) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.winnings-total-label {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #808080;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.winnings-total-amount {
+  font-family: 'Courier New', monospace;
+  font-size: 48px;
+  font-weight: 700;
+  color: #FFD43B;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+
+.winnings-total-count {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #cccccc;
   letter-spacing: 1px;
 }
 
+/* Winnings List */
+.winnings-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+.winnings-card {
+  background: #0a0a0a;
+  border: 1px solid #2a2a2a;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+}
+
+.winnings-card:hover {
+  border-color: #FFD43B;
+  transform: translateY(-2px);
+}
+
+.winnings-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.winnings-type-badge {
+  padding: 6px 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+
+.winnings-type-badge.maker {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.winnings-type-badge.challenger {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+  border: 1px solid #ff9800;
+}
+
+.winnings-market-id {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #FFD43B;
+  letter-spacing: 1px;
+}
+
+.winnings-card-question {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #ffffff;
+  margin-bottom: 20px;
+  min-height: 44px;
+}
+
+.winnings-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 212, 59, 0.03);
+  border-left: 2px solid #FFD43B;
+  margin-bottom: 16px;
+}
+
+.winnings-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.winnings-detail-label {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #808080;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.winnings-detail-value {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.winnings-detail-value.winnings-amount {
+  color: #FFD43B;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.winnings-resolution {
+  padding: 16px;
+  background: #000000;
+  border: 1px solid #2a2a2a;
+}
+
+.winnings-resolution-label {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #808080;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.winnings-resolution p {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #cccccc;
+  margin: 0;
+}
 
 /* Responsive */
-@media (max-width: 768px) {
-  .winnings-page {
-    padding: 24px 16px;
-  }
-
-  .winnings-title {
-    font-size: 32px;
+@media (max-width: 1024px) {
+  .winnings-list {
+    grid-template-columns: 1fr;
   }
 }
 
+@media (max-width: 768px) {
+  .winnings-page {
+    padding: 24px;
+  }
+
+  .winnings-title {
+    font-size: 24px;
+  }
+
+  .winnings-total-amount {
+    font-size: 36px;
+  }
+
+  .winnings-list {
+    gap: 16px;
+  }
+}

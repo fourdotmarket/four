@@ -354,6 +354,7 @@ export default function Bet() {
           block_number,
           status,
           outcome,
+          resolution_reason,
           banner_url,
           created_at,
           updated_at
@@ -888,10 +889,10 @@ export default function Bet() {
             POSITION
           </button>
           <button 
-            className={`bet-tab ${activeTab === 'chat' ? 'active' : ''}`}
-            onClick={() => setActiveTab('chat')}
+            className={`bet-tab ${activeTab === 'resolution' ? 'active' : ''}`}
+            onClick={() => setActiveTab('resolution')}
           >
-            CHAT
+            RESOLUTION
           </button>
         </div>
 
@@ -967,14 +968,49 @@ export default function Bet() {
             </div>
           )}
 
-          {activeTab === 'chat' && (
+          {activeTab === 'resolution' && (
             <div className="bet-tab-panel">
-              <div className="bet-empty-state">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <p>Chat coming soon</p>
-              </div>
+              {market?.status === 'resolved' && market?.resolution_reason ? (
+                <div className="bet-resolution-display">
+                  <div className="bet-resolution-header">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <h3>MARKET RESOLVED</h3>
+                  </div>
+
+                  <div className="bet-resolution-outcome">
+                    <span className="bet-resolution-label">WINNING SIDE:</span>
+                    <span className={`bet-resolution-winner ${market.outcome ? 'maker' : 'challengers'}`}>
+                      {market.outcome ? 'YES (MAKER WINS)' : 'NO (CHALLENGERS WIN)'}
+                    </span>
+                  </div>
+
+                  <div className="bet-resolution-reason">
+                    <span className="bet-resolution-label">RESOLUTION REASON:</span>
+                    <p>{market.resolution_reason}</p>
+                  </div>
+                </div>
+              ) : market?.status === 'awaiting_resolution' ? (
+                <div className="bet-empty-state">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <p>Awaiting Admin Resolution</p>
+                  <span className="bet-empty-subtext">This market is pending resolution by administrators</span>
+                </div>
+              ) : (
+                <div className="bet-empty-state">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <p>No Resolution Yet</p>
+                  <span className="bet-empty-subtext">Resolution details will appear here once the market is resolved</span>
+                </div>
+              )}
             </div>
           )}
         </div>
