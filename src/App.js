@@ -26,17 +26,24 @@ function AppContent() {
     closePrivateKeyUI 
   } = useAuth();
 
-  // Debug logging
+  // Enhanced debug logging for Private Key UI
   useEffect(() => {
     console.log('🎯 App State:', {
       hasUser: !!user,
+      username: user?.username,
       showPrivateKeyUI,
       hasPrivateKeyData: !!privateKeyData,
       privateKeyData: privateKeyData ? {
         hasPrivateKey: !!privateKeyData.privateKey,
-        hasWalletAddress: !!privateKeyData.walletAddress
+        privateKeyLength: privateKeyData.privateKey?.length,
+        hasWalletAddress: !!privateKeyData.walletAddress,
+        walletAddress: privateKeyData.walletAddress
       } : null
     });
+    
+    if (showPrivateKeyUI && privateKeyData) {
+      console.log('✅ PRIVATE KEY UI IS SHOWING');
+    }
   }, [user, showPrivateKeyUI, privateKeyData]);
 
   if (loading) {

@@ -17,11 +17,34 @@ export function useAuth() {
   
   const abortControllerRef = useRef(null);
   const tokenRefreshTimeoutRef = useRef(null);
+  const privateKeyCheckRef = useRef(false); // Prevent duplicate checks
 
   const closePrivateKeyUI = useCallback(() => {
+    console.log('🔒 Closing Private Key UI');
     setShowPrivateKeyUI(false);
     setPrivateKeyData(null);
-  }, []);
+    privateKeyCheckRef.current = false;
+    
+    // Mark that user has seen their private key and cache the auth data
+    const currentPrivyUserId = privyUser?.id || privyUser?.sub;
+    if (currentPrivyUserId) {
+      try {
+        localStorage.setItem(`pkui_shown_${currentPrivyUserId}`, 'true');
+        console.log('✅ Marked private key as shown in localStorage');
+        
+        // Now safe to cache the user data since they've seen the private key
+        if (user && accessToken) {
+          completedAuthUsers.set(currentPrivyUserId, {
+            user: user,
+            token: accessToken
+          });
+          console.log('✅ Auth data cached for future sessions');
+        }
+      } catch (e) {
+        console.error('Failed to save private key UI state:', e);
+      }
+    }
+  }, [privyUser, user, accessToken]);
 
   // Helper function to get fresh token with retry logic
   const getFreshToken = useCallback(async (retries = 3) => {
@@ -50,10 +73,25 @@ export function useAuth() {
       setAuthReady(false);
       setShowPrivateKeyUI(false);
       setPrivateKeyData(null);
+      privateKeyCheckRef.current = false;
+      
       // Clear cache on logout
       if (!authenticated) {
         completedAuthUsers.clear();
         authRequestsInFlight.clear();
+        
+        // Clear all private key UI flags from localStorage
+        try {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.startsWith('pkui_shown_')) {
+              localStorage.removeItem(key);
+            }
+          });
+          console.log('🧹 Cleared all private key UI flags on logout');
+        } catch (e) {
+          console.error('Failed to clear private key UI flags:', e);
+        }
       }
       return;
     }
@@ -67,7 +105,10 @@ export function useAuth() {
     }
 
     // Check if already completed for this user - load from cache
-    if (completedAuthUsers.has(currentPrivyUserId)) {
+    // BUT: Always make API call if user hasn't seen private key yet (for new users)
+    const hasSeenPrivateKey = localStorage.getItem(`pkui_shown_${currentPrivyUserId}`) === 'true';
+    
+    if (completedAuthUsers.has(currentPrivyUserId) && hasSeenPrivateKey) {
       const cachedData = completedAuthUsers.get(currentPrivyUserId);
       setUser(cachedData.user);
       setAccessToken(cachedData.token);
@@ -126,24 +167,49 @@ export function useAuth() {
         const isNewUser = response.data.isNewUser;
         const privateKey = response.data.privateKey;
 
-        // Cache the user data and token
-        completedAuthUsers.set(currentPrivyUserId, {
-          user: userData,
-          token: token
+        console.log('🔑 Auth response:', { 
+          isNewUser, 
+          hasPrivateKey: !!privateKey, 
+          hasWallet: !!userData.wallet_address 
         });
-        authRequestsInFlight.delete(currentPrivyUserId);
 
+        // Set user data first
         setUser(userData);
         setAccessToken(token);
         setLoading(false);
-        setAuthReady(true); // CRITICAL: Only set ready when everything is complete
+        setAuthReady(true);
 
-        if (isNewUser && privateKey && userData.wallet_address) {
-          setPrivateKeyData({
-            privateKey: privateKey,
-            walletAddress: userData.wallet_address
+        // Check if this is a new user who hasn't seen their private key yet
+        const hasSeenPrivateKey = localStorage.getItem(`pkui_shown_${currentPrivyUserId}`) === 'true';
+        
+        if (isNewUser && privateKey && userData.wallet_address && !hasSeenPrivateKey) {
+          console.log('🔐 NEW USER! Showing Private Key UI');
+          console.log('Private Key:', privateKey);
+          console.log('Wallet Address:', userData.wallet_address);
+          
+          // Mark that we're showing the private key
+          privateKeyCheckRef.current = true;
+          
+          // Set the private key data with a slight delay to ensure state updates properly
+          setTimeout(() => {
+            setPrivateKeyData({
+              privateKey: privateKey,
+              walletAddress: userData.wallet_address
+            });
+            setShowPrivateKeyUI(true);
+            console.log('✅ Private Key UI state set');
+          }, 100);
+          
+          // Don't cache until user dismisses the private key UI
+          authRequestsInFlight.delete(currentPrivyUserId);
+        } else {
+          // Cache the user data and token only if not showing private key UI
+          completedAuthUsers.set(currentPrivyUserId, {
+            user: userData,
+            token: token
           });
-          setShowPrivateKeyUI(true);
+          authRequestsInFlight.delete(currentPrivyUserId);
+          privateKeyCheckRef.current = false;
         }
 
       } catch (error) {
