@@ -15,6 +15,7 @@ export default function Admin() {
   const [markets, setMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('all');
   const [activeAction, setActiveAction] = useState(null);
   const [selectedMarket, setSelectedMarket] = useState(null);
   const [resolutionReason, setResolutionReason] = useState('');
@@ -176,60 +177,175 @@ export default function Admin() {
     return <span className="admin-badge status-cancelled">CANCELLED</span>;
   };
 
+  // Filter markets based on active tab
+  const getFilteredMarkets = () => {
+    const now = Math.floor(Date.now() / 1000);
+    
+    switch (activeTab) {
+      case 'all':
+        return markets;
+      case 'resolve':
+        return markets.filter(m => 
+          (m.status === 'active' && m.deadline < now) || 
+          m.status === 'awaiting_resolution'
+        );
+      case 'cancel':
+        return markets.filter(m => m.status !== 'resolved' && m.status !== 'cancelled');
+      case 'emergency':
+        return markets.filter(m => m.status === 'active' || m.status === 'awaiting_resolution');
+      case 'resolved':
+        return markets.filter(m => m.status === 'resolved');
+      default:
+        return markets;
+    }
+  };
+
+  const filteredMarkets = getFilteredMarkets();
+
   if (!user || user.username !== 'Admin') {
     return null;
   }
 
   return (
     <div className="admin-page">
-      <div className="admin-header">
-        <div className="admin-header-left">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      {/* Sidebar */}
+      <div className="admin-sidebar">
+        <div className="admin-sidebar-header">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
           <div>
-            <h1 className="admin-title">ADMINISTRATOR PANEL</h1>
-            <p className="admin-subtitle">Market Management & Resolution System</p>
+            <h2 className="admin-sidebar-title">ADMIN</h2>
+            <p className="admin-sidebar-subtitle">Control Panel</p>
           </div>
         </div>
-        <button className="admin-logout-btn" onClick={() => navigate('/')}>
-          EXIT
+
+        <nav className="admin-sidebar-nav">
+          <button
+            className={`admin-nav-item ${activeTab === 'all' ? 'active' : ''}`}
+            onClick={() => setActiveTab('all')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>ALL MARKETS</span>
+            <span className="admin-nav-count">{markets.length}</span>
+          </button>
+
+          <button
+            className={`admin-nav-item ${activeTab === 'resolve' ? 'active' : ''}`}
+            onClick={() => setActiveTab('resolve')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>RESOLVE</span>
+            <span className="admin-nav-count">
+              {markets.filter(m => 
+                (m.status === 'active' && m.deadline < Math.floor(Date.now() / 1000)) || 
+                m.status === 'awaiting_resolution'
+              ).length}
+            </span>
+          </button>
+
+          <button
+            className={`admin-nav-item ${activeTab === 'cancel' ? 'active' : ''}`}
+            onClick={() => setActiveTab('cancel')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span>CANCEL</span>
+            <span className="admin-nav-count">
+              {markets.filter(m => m.status !== 'resolved' && m.status !== 'cancelled').length}
+            </span>
+          </button>
+
+          <button
+            className={`admin-nav-item ${activeTab === 'emergency' ? 'active' : ''}`}
+            onClick={() => setActiveTab('emergency')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span>EMERGENCY</span>
+            <span className="admin-nav-count">
+              {markets.filter(m => m.status === 'active' || m.status === 'awaiting_resolution').length}
+            </span>
+          </button>
+
+          <button
+            className={`admin-nav-item ${activeTab === 'resolved' ? 'active' : ''}`}
+            onClick={() => setActiveTab('resolved')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span>RESOLVED</span>
+            <span className="admin-nav-count">{markets.filter(m => m.status === 'resolved').length}</span>
+          </button>
+        </nav>
+
+        <button className="admin-sidebar-exit" onClick={() => navigate('/')}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          EXIT PANEL
         </button>
       </div>
 
-      {loading ? (
-        <div className="admin-loading">
-          <div className="loading-spinner"></div>
-          <p>LOADING MARKETS...</p>
+      {/* Main Content */}
+      <div className="admin-content">
+        <div className="admin-content-header">
+          <h1 className="admin-content-title">
+            {activeTab === 'all' && 'ALL MARKETS'}
+            {activeTab === 'resolve' && 'RESOLVE MARKETS'}
+            {activeTab === 'cancel' && 'CANCEL MARKETS'}
+            {activeTab === 'emergency' && 'EMERGENCY CANCEL'}
+            {activeTab === 'resolved' && 'RESOLVED MARKETS'}
+          </h1>
+          <p className="admin-content-subtitle">
+            {activeTab === 'all' && 'Complete overview of all prediction markets'}
+            {activeTab === 'resolve' && 'Markets awaiting resolution decision'}
+            {activeTab === 'cancel' && 'Cancel active or pending markets'}
+            {activeTab === 'emergency' && 'Force cancel markets in emergency situations'}
+            {activeTab === 'resolved' && 'History of resolved markets'}
+          </p>
         </div>
-      ) : error ? (
-        <div className="admin-error">
-          <p>ERROR: {error}</p>
-        </div>
-      ) : (
-        <>
-          <div className="admin-stats">
-            <div className="admin-stat-card">
-              <div className="admin-stat-value">{markets.filter(m => m.status === 'active').length}</div>
-              <div className="admin-stat-label">ACTIVE MARKETS</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="admin-stat-value">{markets.filter(m => m.status === 'awaiting_resolution').length}</div>
-              <div className="admin-stat-label">PENDING RESOLUTION</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="admin-stat-value">{markets.filter(m => m.status === 'resolved').length}</div>
-              <div className="admin-stat-label">RESOLVED</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="admin-stat-value">{markets.length}</div>
-              <div className="admin-stat-label">TOTAL MARKETS</div>
-            </div>
-          </div>
 
-          <div className="admin-markets">
-            {markets.map((market) => {
+        {loading ? (
+          <div className="admin-loading">
+            <div className="loading-spinner"></div>
+            <p>LOADING MARKETS...</p>
+          </div>
+        ) : error ? (
+          <div className="admin-error">
+            <p>ERROR: {error}</p>
+          </div>
+        ) : filteredMarkets.length === 0 ? (
+          <div className="admin-empty">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <h3>NO MARKETS FOUND</h3>
+            <p>No markets match the current filter</p>
+          </div>
+        ) : (
+          <div className="admin-markets-grid">
+            {filteredMarkets.map((market) => {
               const isExpired = Math.floor(Date.now() / 1000) > market.deadline;
               const canResolve = (market.status === 'active' && isExpired) || market.status === 'awaiting_resolution';
 
@@ -309,8 +425,8 @@ export default function Admin() {
               );
             })}
           </div>
-        </>
-      )}
+        )}
+      </div>
 
       {/* Resolve Modal */}
       {activeAction === 'resolve' && selectedMarket && (
