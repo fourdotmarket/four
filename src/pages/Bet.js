@@ -5,7 +5,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useAuth } from '../hooks/useAuth';
 import { useTransactions } from '../hooks/useTransactions';
 import { usePositions } from '../hooks/usePositions';
-import { usePrivy } from '@privy-io/react-auth';
 import './Bet.css';
 
 const supabase = createClient(
@@ -256,8 +255,7 @@ function AllUserPositions({ userId }) {
 export default function Bet() {
   const { betId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { getAccessToken } = usePrivy();
+  const { user, authReady, getFreshToken } = useAuth();
   const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -398,17 +396,23 @@ export default function Bet() {
       return;
     }
 
+    if (!authReady) {
+      alert('Authentication is still loading. Please wait a moment and try again.');
+      return;
+    }
+
     try {
       setIsBuying(true);
       setBuyStatus('Preparing transaction...');
 
-      const token = await getAccessToken();
+      console.log('Getting fresh authentication token...');
+      const token = await getFreshToken();
+      
       if (!token) {
-        throw new Error('Failed to get authentication token');
+        throw new Error('Failed to get authentication token. Please sign in again.');
       }
 
-      console.log('🎟️ Buying challenge tickets with JWT authentication');
-
+      console.log('Token obtained, buying tickets...');
       setBuyStatus('Submitting to blockchain...');
 
       const response = await fetch('/api/buy-ticket', {

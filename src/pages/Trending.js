@@ -4,7 +4,6 @@ import { createClient } from '@supabase/supabase-js';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useAuth } from '../hooks/useAuth';
 import { useTransactions } from '../hooks/useTransactions';
-import { usePrivy } from '@privy-io/react-auth';
 import MarketCard from '../components/MarketCard';
 import './Trending.css';
 
@@ -20,8 +19,7 @@ const COLORS = [
 
 export default function Trending() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { getAccessToken } = usePrivy();
+  const { user, authReady, getFreshToken } = useAuth();
   const [topMarket, setTopMarket] = useState(null);
   const [topMarkets, setTopMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -210,15 +208,23 @@ export default function Trending() {
       return;
     }
 
+    if (!authReady) {
+      alert('Authentication is still loading. Please wait a moment and try again.');
+      return;
+    }
+
     try {
       setIsBuying(true);
       setBuyStatus('Preparing transaction...');
 
-      const token = await getAccessToken();
+      console.log('Getting fresh authentication token...');
+      const token = await getFreshToken();
+      
       if (!token) {
-        throw new Error('Failed to get authentication token');
+        throw new Error('Failed to get authentication token. Please sign in again.');
       }
 
+      console.log('Token obtained, buying tickets...');
       setBuyStatus('Submitting to blockchain...');
 
       const response = await fetch('/api/buy-ticket', {

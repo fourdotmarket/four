@@ -13,6 +13,8 @@ import FMarket from './pages/FMarket';
 import Market from './pages/Market';
 import Resolved from './pages/Resolved';
 import Bet from './pages/Bet';
+import Position from './pages/Position';
+import Winnings from './pages/Winnings';
 
 function AppContent() {
   // CRITICAL: Get ALL the values from useAuth
@@ -62,6 +64,8 @@ function AppContent() {
           <Route path="/market" element={<Market />} />
           <Route path="/resolved" element={<Resolved />} />
           <Route path="/bet/:betId" element={<Bet />} />
+          <Route path="/position" element={<Position />} />
+          <Route path="/winnings" element={<Winnings />} />
         </Routes>
       </div>
     </>

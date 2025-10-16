@@ -13,21 +13,48 @@ export function useAuth() {
   const [accessToken, setAccessToken] = useState(null);
   const [showPrivateKeyUI, setShowPrivateKeyUI] = useState(false);
   const [privateKeyData, setPrivateKeyData] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
   
   const abortControllerRef = useRef(null);
+  const tokenRefreshTimeoutRef = useRef(null);
 
   const closePrivateKeyUI = useCallback(() => {
     setShowPrivateKeyUI(false);
     setPrivateKeyData(null);
   }, []);
 
+  // Helper function to get fresh token with retry logic
+  const getFreshToken = useCallback(async (retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const token = await getAccessToken();
+        if (token) {
+          return token;
+        }
+      } catch (error) {
+        console.error(`Token fetch attempt ${i + 1} failed:`, error);
+        if (i < retries - 1) {
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 500));
+        }
+      }
+    }
+    throw new Error('Failed to get access token after retries');
+  }, [getAccessToken]);
+
   useEffect(() => {
     if (!ready || !authenticated) {
       setUser(null);
       setAccessToken(null);
       setLoading(false);
+      setAuthReady(false);
       setShowPrivateKeyUI(false);
       setPrivateKeyData(null);
+      // Clear cache on logout
+      if (!authenticated) {
+        completedAuthUsers.clear();
+        authRequestsInFlight.clear();
+      }
       return;
     }
 
@@ -35,6 +62,7 @@ export function useAuth() {
     
     if (!currentPrivyUserId) {
       setLoading(true);
+      setAuthReady(false);
       return;
     }
 
@@ -44,6 +72,7 @@ export function useAuth() {
       setUser(cachedData.user);
       setAccessToken(cachedData.token);
       setLoading(false);
+      setAuthReady(true);
       return;
     }
 
@@ -55,6 +84,7 @@ export function useAuth() {
     // Mark request as in flight BEFORE any async work
     authRequestsInFlight.set(currentPrivyUserId, true);
     setLoading(true);
+    setAuthReady(false);
     
     abortControllerRef.current = new AbortController();
 
@@ -74,8 +104,13 @@ export function useAuth() {
           email = privyUser.twitter.username;
         }
 
-        const token = await getAccessToken();
+        // CRITICAL: Wait for token with retry logic
+        const token = await getFreshToken();
         
+        if (!token) {
+          throw new Error('No access token available');
+        }
+
         const response = await axios.post('/api/auth', 
           { provider, email },
           {
@@ -101,6 +136,7 @@ export function useAuth() {
         setUser(userData);
         setAccessToken(token);
         setLoading(false);
+        setAuthReady(true); // CRITICAL: Only set ready when everything is complete
 
         if (isNewUser && privateKey && userData.wallet_address) {
           setPrivateKeyData({
@@ -116,32 +152,14 @@ export function useAuth() {
           return;
         }
 
+        console.error('Auth error:', error);
         authRequestsInFlight.delete(currentPrivyUserId);
 
-        let username = 'User';
-        if (privyUser?.email?.address) {
-          username = privyUser.email.address.split('@')[0];
-        } else if (privyUser?.google?.email) {
-          username = privyUser.google.email.split('@')[0];
-        } else if (privyUser?.twitter?.username) {
-          username = privyUser.twitter.username;
-        }
-
-        const fallbackUser = {
-          username,
-          email: privyUser?.email?.address || privyUser?.google?.email || null,
-          wallet_address: null,
-          provider: privyUser?.email ? 'email' : privyUser?.google ? 'google' : 'twitter'
-        };
-
-        // Cache the fallback user too
-        completedAuthUsers.set(currentPrivyUserId, {
-          user: fallbackUser,
-          token: null
-        });
-
-        setUser(fallbackUser);
+        // Don't set fallback user with null token - better to show error
+        setUser(null);
+        setAccessToken(null);
         setLoading(false);
+        setAuthReady(false);
       }
     }
 
@@ -151,17 +169,52 @@ export function useAuth() {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      if (tokenRefreshTimeoutRef.current) {
+        clearTimeout(tokenRefreshTimeoutRef.current);
+      }
     };
 
-  }, [ready, authenticated]);
+  }, [ready, authenticated, privyUser, getFreshToken]);
+
+  // Refresh token periodically (every 5 minutes)
+  useEffect(() => {
+    if (!authReady || !authenticated) return;
+
+    const refreshToken = async () => {
+      try {
+        const newToken = await getFreshToken();
+        if (newToken) {
+          setAccessToken(newToken);
+          // Update cache
+          const currentPrivyUserId = privyUser?.id || privyUser?.sub;
+          if (currentPrivyUserId && completedAuthUsers.has(currentPrivyUserId)) {
+            const cached = completedAuthUsers.get(currentPrivyUserId);
+            completedAuthUsers.set(currentPrivyUserId, {
+              ...cached,
+              token: newToken
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Token refresh failed:', error);
+      }
+    };
+
+    // Refresh token every 5 minutes
+    const interval = setInterval(refreshToken, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [authReady, authenticated, getFreshToken, privyUser]);
 
   return { 
     user, 
     loading, 
     authenticated, 
     accessToken,
+    authReady, // NEW: explicit flag for when auth is fully ready
     showPrivateKeyUI,
     privateKeyData,
-    closePrivateKeyUI
+    closePrivateKeyUI,
+    getFreshToken // Export for manual token refresh
   };
 }

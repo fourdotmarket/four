@@ -9,7 +9,7 @@ import './Header.css';
 
 export default function Header() {
   const { ready, authenticated, login, logout } = usePrivy();
-  const { user, loading } = useAuth();
+  const { user, loading, authReady } = useAuth();
   const { balance, loading: balanceLoading } = useBalance(user?.wallet_address);
   const navigate = useNavigate();
   const location = useLocation();

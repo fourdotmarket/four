@@ -3,7 +3,6 @@ import './Market.css';
 import { useAuth } from '../hooks/useAuth';
 import MarketCard from '../components/MarketCard';
 import { useMarkets } from '../hooks/useMarkets';
-import { usePrivy } from '@privy-io/react-auth';
 
 const CONTRACT_ADDRESS = "0xB05bAeff61e6E2CfB85d383911912C3248e3214f";
 const MIN_STAKE = 0.05;
@@ -11,8 +10,7 @@ const MIN_PREDICTION_LENGTH = 50;
 const MAX_PREDICTION_LENGTH = 256;
 
 export default function Market() {
-  const { user, accessToken } = useAuth();
-  const { getAccessToken } = usePrivy();
+  const { user, authReady, getFreshToken } = useAuth();
   const { markets, loading: marketsLoading, error: marketsError } = useMarkets();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -132,17 +130,26 @@ export default function Market() {
       return;
     }
 
+    if (!authReady) {
+      alert('Authentication is still loading. Please wait a moment and try again.');
+      return;
+    }
+
     try {
       setIsCreating(true);
 
       const duration = expiryToDuration[expiry];
       const ticketAmount = ticketsToAmount[tickets];
 
-      // Get fresh JWT token
-      const token = await getAccessToken();
+      // Get fresh JWT token with retry logic
+      console.log('Getting fresh authentication token...');
+      const token = await getFreshToken();
+      
       if (!token) {
-        throw new Error('Failed to get authentication token');
+        throw new Error('Failed to get authentication token. Please sign in again.');
       }
+      
+      console.log('Token obtained, creating market...');
 
       console.log('ðŸ“ Creating market with JWT authentication');
 
@@ -207,7 +214,7 @@ export default function Market() {
 
   const isPredictionValid = prediction.length >= MIN_PREDICTION_LENGTH;
   const isStakeValid = parseFloat(stake) >= MIN_STAKE;
-  const canSubmit = isPredictionValid && isStakeValid && !isCreating;
+  const canSubmit = isPredictionValid && isStakeValid && !isCreating && authReady;
 
   return (
     <div className="market-page">
