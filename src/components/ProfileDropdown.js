@@ -91,7 +91,10 @@ export default function ProfileDropdown({ user, onLogout, onClose }) {
             <span>Winnings</span>
           </button>
 
-          <button className="profile-dropdown-item">
+          <button 
+            className="profile-dropdown-item"
+            onClick={() => handleNavigate('/settings')}
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M12 1v6M12 17v6M5.64 5.64l4.24 4.24M14.12 14.12l4.24 4.24M1 12h6M17 12h6M5.64 18.36l4.24-4.24M14.12 9.88l4.24-4.24"></path>

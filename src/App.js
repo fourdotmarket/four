@@ -15,6 +15,7 @@ import Resolved from './pages/Resolved';
 import Bet from './pages/Bet';
 import Position from './pages/Position';
 import Winnings from './pages/Winnings';
+import Settings from './pages/Settings';
 
 function AppContent() {
   // CRITICAL: Get ALL the values from useAuth
@@ -73,6 +74,7 @@ function AppContent() {
           <Route path="/bet/:betId" element={<Bet />} />
           <Route path="/position" element={<Position />} />
           <Route path="/winnings" element={<Winnings />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>
     </>
