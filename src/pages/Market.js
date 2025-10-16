@@ -11,7 +11,8 @@ const MAX_PREDICTION_LENGTH = 256;
 
 export default function Market() {
   const { user, authReady, getFreshToken } = useAuth();
-  const { markets, loading: marketsLoading, error: marketsError } = useMarkets();
+  const [page, setPage] = useState(1);
+  const { markets, loading: marketsLoading, error: marketsError, hasMore } = useMarkets(page);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [prediction, setPrediction] = useState('');
@@ -262,11 +263,32 @@ export default function Market() {
           <p>Be the first to create a prediction market</p>
         </div>
       ) : (
-        <div className="market-grid">
-          {markets.map((market) => (
-            <MarketCard key={market.market_id} market={market} />
-          ))}
-        </div>
+        <>
+          <div className="market-grid">
+            {markets.map((market) => (
+              <MarketCard key={market.market_id} market={market} />
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="market-load-more">
+              <button 
+                className="market-load-more-btn" 
+                onClick={() => setPage(prev => prev + 1)}
+                disabled={marketsLoading}
+              >
+                {marketsLoading ? (
+                  <>
+                    <div className="btn-spinner"></div>
+                    LOADING...
+                  </>
+                ) : (
+                  'LOAD MORE'
+                )}
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Create Modal */}

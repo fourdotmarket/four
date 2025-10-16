@@ -67,10 +67,27 @@ export default function Trending() {
       const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
 
       // Get all active markets with their recent transactions
+      // SECURITY FIX: Select only non-sensitive columns (no id, no creator_id)
       const { data: markets, error: marketsError } = await supabase
         .from('markets')
         .select(`
-          *,
+          market_id,
+          question,
+          creator_username,
+          creator_wallet,
+          stake,
+          ticket_price,
+          total_tickets,
+          tickets_sold,
+          deadline,
+          created_at_timestamp,
+          tx_hash,
+          block_number,
+          status,
+          outcome,
+          banner_url,
+          created_at,
+          updated_at,
           transactions (
             buyer_wallet,
             created_at

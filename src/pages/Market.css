@@ -748,6 +748,59 @@
   animation: spin 0.8s linear infinite;
 }
 
+/* Load More Section */
+.market-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  margin-top: 20px;
+}
+
+.market-load-more-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #FFD43B;
+  border: none;
+  color: #000000;
+  padding: 14px 32px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  position: relative;
+}
+
+.market-load-more-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0);
+  transition: background 0.3s ease;
+  pointer-events: none;
+}
+
+.market-load-more-btn:hover:not(:disabled)::before {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.market-load-more-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.market-load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .market-grid {
