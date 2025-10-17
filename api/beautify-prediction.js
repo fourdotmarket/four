@@ -136,9 +136,9 @@ export default async function handler(req, res) {
               content: `Format this prediction for the timeframe "${readableTimeframe}": ${prediction}`
             }
           ],
-          model: 'grok-beta',
+          model: 'grok-4-latest',
           stream: false,
-          temperature: 0.7
+          temperature: 0
         },
         {
           headers: {
