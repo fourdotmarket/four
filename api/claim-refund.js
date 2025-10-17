@@ -11,9 +11,10 @@ const supabase = createClient(
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || "0x8dDbbBEAc546B4AeF8DFe8edd0084eF19B9077b6";
 const BSC_RPC_URL = process.env.BSC_RPC_URL || "https://bsc-dataseed.binance.org/";
 
-// Contract ABI - only the functions we need
+// Contract ABI - Matches the actual struct order in the smart contract
 const CONTRACT_ABI = [
-  "function markets(uint256) view returns (string question, address marketMaker, uint256 marketMakerStake, uint256 ticketPrice, uint256 totalTickets, uint256 ticketsSold, uint256 totalPayout, uint256 deadline, bool outcome, uint8 status)",
+  // markets mapping returns: (id, question, marketMaker, marketMakerStake, ticketPrice, totalTickets, ticketsSold, deadline, status, outcome, createdAt, totalPayout, makerClaimed)
+  "function markets(uint256) view returns (uint256 id, string question, address marketMaker, uint256 marketMakerStake, uint256 ticketPrice, uint256 totalTickets, uint256 ticketsSold, uint256 deadline, uint8 status, bool outcome, uint256 createdAt, uint256 totalPayout, bool makerClaimed)",
   "function claimableRefunds(uint256 marketId, address user) view returns (uint256)",
   "function claimRefund(uint256 marketId)",
   "event RefundClaimed(uint256 indexed marketId, address indexed claimer, uint256 amount)"
