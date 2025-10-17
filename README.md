@@ -267,6 +267,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Version:** 2.0  
+**Version:** Demo 2.0
 **Last Updated:** October 17, 2025  
 **Status:** ✅ Production Ready
