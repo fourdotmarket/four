@@ -14,8 +14,8 @@ const ADMIN_CONTRACT_ADDRESS = process.env.ADMIN_CONTRACT_ADDRESS || "0x8dDbbBEA
 const ADMIN_PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY;
 
 const CONTRACT_ABI = [
-  "function pause()",
-  "function unpause()",
+  "function pause() external",
+  "function unpause() external",
   "function paused() view returns (bool)"
 ];
 

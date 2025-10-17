@@ -101,6 +101,45 @@
   flex-shrink: 0;
 }
 
+/* Refresh Button */
+.market-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1a;
+  border: 1px solid #FFD43B;
+  color: #FFD43B;
+  padding: 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  position: relative;
+}
+
+.market-refresh-btn:hover {
+  background: #FFD43B;
+  color: #000000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 212, 59, 0.3);
+}
+
+.market-refresh-btn:active {
+  transform: scale(0.98);
+}
+
+.market-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.market-refresh-btn svg {
+  stroke-width: 2;
+}
+
 /* Market Grid */
 .market-grid {
   display: grid;

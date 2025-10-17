@@ -30,10 +30,20 @@ export function useMarkets(page = 1) {
           const currentTimestamp = Math.floor(Date.now() / 1000);
           const isExpired = payload.new.deadline < currentTimestamp;
           
+          console.log('🔔 Real-time INSERT event received:', {
+            market_id: payload.new.market_id,
+            status: payload.new.status,
+            deadline: payload.new.deadline,
+            currentTimestamp,
+            isExpired
+          });
+          
           // Only add if active and not expired
           if (payload.new.status === 'active' && !isExpired) {
-            console.log('🆕 New market created:', payload.new);
+            console.log('🆕 New market added to list:', payload.new.market_id);
             setMarkets((current) => [payload.new, ...current]);
+          } else {
+            console.log('⚠️ Market not added - status:', payload.new.status, 'isExpired:', isExpired);
           }
         }
       )
@@ -78,6 +88,14 @@ export function useMarkets(page = 1) {
       const to = from + ITEMS_PER_PAGE - 1;
       const currentTimestamp = Math.floor(Date.now() / 1000);
 
+      console.log('📊 Fetching markets:', {
+        page,
+        from,
+        to,
+        currentTimestamp,
+        currentTime: new Date().toISOString()
+      });
+
       // SECURITY FIX: Select only non-sensitive columns (no id, no creator_id)
       // Only show active markets that haven't expired
       const { data, error: fetchError, count } = await supabase
@@ -108,11 +126,17 @@ export function useMarkets(page = 1) {
 
       if (fetchError) throw fetchError;
 
+      console.log('✅ Fetched markets:', {
+        count: data?.length || 0,
+        total: count,
+        hasMore: count > page * ITEMS_PER_PAGE
+      });
+
       setMarkets(data || []);
       setHasMore(count > page * ITEMS_PER_PAGE);
       setError(null);
     } catch (err) {
-      console.error('Error fetching markets:', err);
+      console.error('❌ Error fetching markets:', err);
       setError(err.message);
     } finally {
       setLoading(false);

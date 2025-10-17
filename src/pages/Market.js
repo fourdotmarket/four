@@ -20,7 +20,7 @@ export default function Market() {
   const { balance } = useBalance(user?.wallet_address);
   const { t } = useLanguage();
   const [page, setPage] = useState(1);
-  const { markets, loading: marketsLoading, error: marketsError, hasMore } = useMarkets(page);
+  const { markets, loading: marketsLoading, error: marketsError, hasMore, refetch } = useMarkets(page);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [depositMessage, setDepositMessage] = useState('');
@@ -219,7 +219,9 @@ export default function Market() {
 
       showNotification('Market created successfully!', 'success');
 
+      // Refetch markets to show the new market immediately
       setTimeout(() => {
+        refetch();
         handleClose();
       }, 1500);
 
@@ -257,13 +259,30 @@ export default function Market() {
           <h1 className="market-title">{t('market.title')}</h1>
           <p className="market-subtitle">{t('market.subtitle')}</p>
         </div>
-        <button className="market-create-btn" onClick={handleOpenCreateModal}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          {t('market.createBet')}
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button 
+            className="market-refresh-btn" 
+            onClick={() => {
+              refetch();
+              showNotification('Markets refreshed', 'success');
+            }}
+            disabled={marketsLoading}
+            title="Refresh markets"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
+          <button className="market-create-btn" onClick={handleOpenCreateModal}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            {t('market.createBet')}
+          </button>
+        </div>
       </div>
 
       {/* Markets Grid */}

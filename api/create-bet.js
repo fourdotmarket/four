@@ -254,6 +254,18 @@ export default async function handler(req, res) {
         const ticketPriceInBNB = parseFloat(ethers.formatEther(eventData.ticketPrice));
 
         console.log('💾 Saving to database...');
+        console.log('📝 Market data:', {
+          market_id: eventData.marketId,
+          question: eventData.question.substring(0, 50) + '...',
+          creator_username: authenticatedUser.username,
+          creator_wallet: eventData.marketMaker,
+          stake: stakeInBNB,
+          ticket_price: ticketPriceInBNB,
+          total_tickets: parseInt(eventData.totalTickets),
+          deadline: parseInt(eventData.deadline),
+          deadline_date: new Date(parseInt(eventData.deadline) * 1000).toISOString(),
+          status: 'active'
+        });
 
         const { data: insertedMarket, error: insertError } = await supabase
           .from('markets')
@@ -278,13 +290,18 @@ export default async function handler(req, res) {
           .single();
 
         if (insertError) {
-          console.error('⚠️ Failed to save market to DB:', insertError);
+          console.error('❌ Failed to save market to DB:', insertError);
+          console.error('❌ Insert error details:', JSON.stringify(insertError, null, 2));
         } else {
-          console.log('✅ Market saved to database');
-          // Don't log full market data (contains creator_id)
+          console.log('✅ Market saved to database successfully!');
+          console.log('✅ Market ID:', insertedMarket.market_id);
+          console.log('✅ Status:', insertedMarket.status);
+          console.log('✅ Deadline:', insertedMarket.deadline, '(', new Date(insertedMarket.deadline * 1000).toISOString(), ')');
+          // Real-time subscription should pick this up automatically
         }
       } catch (dbError) {
-        console.error('⚠️ Database save failed (non-critical):', dbError.message);
+        console.error('❌ Database save failed (non-critical):', dbError.message);
+        console.error('❌ Stack trace:', dbError.stack);
       }
     }
 

@@ -14,7 +14,7 @@ const ADMIN_CONTRACT_ADDRESS = process.env.ADMIN_CONTRACT_ADDRESS || "0x8dDbbBEA
 const ADMIN_PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY;
 
 const CONTRACT_ABI = [
-  "function withdrawProtocolFees()",
+  "function withdrawProtocolFees() external",
   "function accumulatedFees() view returns (uint256)"
 ];
 

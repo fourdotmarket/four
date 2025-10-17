@@ -14,7 +14,7 @@ const ADMIN_CONTRACT_ADDRESS = process.env.ADMIN_CONTRACT_ADDRESS || "0x8dDbbBEA
 const ADMIN_PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY;
 
 const CONTRACT_ABI = [
-  "function emergencyWithdraw(uint256 _marketId)",
+  "function emergencyWithdraw(uint256 _marketId) external",
   "function markets(uint256) view returns (uint256 id, string question, address marketMaker, uint256 marketMakerStake, uint256 ticketPrice, uint256 totalTickets, uint256 ticketsSold, uint256 deadline, uint8 status, bool outcome, uint256 createdAt, uint256 totalPayout, bool makerClaimed)"
 ];
 
