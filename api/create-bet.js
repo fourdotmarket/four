@@ -99,7 +99,7 @@ export default async function handler(req, res) {
         required: true,
         type: 'number',
         min: 0,
-        max: 4  // Valid duration indices: 0=6h, 1=12h, 2=24h, 3=3d, 4=7d
+        max: 5  // Valid duration indices: 0=6h, 1=12h, 2=18h, 3=24h, 4=3d, 5=7d
       },
       ticketAmount: {
         required: true,

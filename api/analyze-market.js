@@ -7,9 +7,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// Rate limiting store
-const analysisCache = new Map();
-const CACHE_DURATION = 3600000; // 1 hour
+// Cache duration - 24 hours to prevent re-analysis on refresh
+const CACHE_DURATION = 86400000; // 24 hours
 
 module.exports = async function handler(req, res) {
   // CORS headers
@@ -33,12 +32,20 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Market ID and question required' });
     }
 
-    // Check cache first
-    const cacheKey = `${marketId}`;
-    const cached = analysisCache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
-      console.log('📋 Returning cached analysis for market:', marketId);
-      return res.status(200).json({ analysis: cached.analysis });
+    // CRITICAL: Check database FIRST to prevent re-analysis on refresh
+    console.log('🔍 Checking database for existing analysis...');
+    const { data: existingMarket, error: dbError } = await supabase
+      .from('markets')
+      .select('ai_analysis')
+      .eq('market_id', marketId)
+      .single();
+
+    if (!dbError && existingMarket && existingMarket.ai_analysis) {
+      console.log('✅ Found existing analysis in database for market:', marketId);
+      return res.status(200).json({ 
+        analysis: existingMarket.ai_analysis,
+        fromCache: true 
+      });
     }
 
     // Check if market should be analyzed
@@ -71,43 +78,52 @@ module.exports = async function handler(req, res) {
         messages: [
           {
             role: 'system',
-            content: `You are an expert market analyst with real-time data access. Use your web search capabilities to find CURRENT prices and data.
+            content: `You are an expert market analyst with real-time web search capabilities. You MUST search the web for current data before analyzing.
 
-CRITICAL: ALWAYS search for current prices FIRST before analyzing:
-- For BTC/ETH/SOL/BNB: Search Twitter, CoinGecko, CoinMarketCap for REAL current price
-- For followers: Search for ACTUAL current follower count
-- If Twitter/X link provided: Search and read the actual post + community reactions
+MANDATORY STEPS:
+1. SEARCH WEB for current prices/data (CoinGecko, CoinMarketCap, Twitter, news sites)
+2. VERIFY the data is recent (within last hour)
+3. ANALYZE using ONLY the real data you found
 
-Rules:
-- STEP 1: Search for current price/data
-- STEP 2: Analyze using REAL data from your search
-- Analysis MUST be 400-600 characters
-- Include ACTUAL numbers from search results
-- Provide probability % based on REAL current data
-- Structure: [Probability] + [Current REAL Price/State] + [Technical/Social Analysis] + [Market Context] + [Risk Assessment]
-- For test markets: return "SKIP"
+For crypto predictions (BTC, ETH, SOL, BNB):
+- Search "bitcoin price" OR "BTC USD" on CoinGecko/CoinMarketCap
+- Get EXACT current price (e.g., $67,234.56)
+- Check recent price action (1H, 4H, 24H charts)
+- Search Twitter for "BTC" + "crypto" sentiment
 
-Output format (400-600 characters with REAL data):
-[X% Probability]: [Asset] currently at $[SEARCHED PRICE] (verified [time]). [Technical analysis with real indicators]. [Market sentiment from Twitter/socials]. [Key levels]. [Risk factors]. [Conclusion based on real data].
+For social media predictions (followers, engagement):
+- Search the actual profile/page
+- Get REAL current follower count
+- Check recent growth trends
 
-Example: "42% Probability: Bitcoin at $67,234 (verified 3 min ago via CoinGecko). Recent 4H candles show consolidation $66.8K-$67.5K. Twitter crypto sentiment 64% bullish (last 6hrs). RSI 56 (neutral-bullish), MACD upward. Whale wallets +8% activity. Move to $70K needs $68.2K resistance break + 18% volume. Support $66K. Moderate probability given consolidation + positive sentiment."`
+For event predictions:
+- Search news sites for latest updates
+- Verify event status and timeline
+- Check expert opinions and betting odds
+
+OUTPUT FORMAT (400-600 characters):
+[X% Probability]: [Asset] at $[EXACT PRICE] (via [source], [time] ago). [Price action: support/resistance levels]. [Technical indicators if applicable]. [Market sentiment from social/news]. [Key factors affecting outcome]. [Risk assessment]. [Conclusion with reasoning].
+
+CRITICAL: Include ACTUAL numbers from your search. Do NOT estimate or guess prices. If you cannot find real data, state "Unable to verify current data" and provide limited analysis.
+
+Example: "38% Probability: Bitcoin currently at $67,234 (CoinGecko, 2 min ago). Trading in $66.8K-$67.5K range past 4 hours. Target $70K requires breaking $68.2K resistance with volume spike. Twitter sentiment 61% bullish. RSI 54 (neutral). Major support at $66K. Moderate-low probability given tight consolidation and resistance overhead."`
           },
           {
             role: 'user',
-            content: `Analyze this prediction market:\n\nQuestion: ${question}${context}\n\nProvide your analysis.`
+            content: `Analyze this prediction market. You MUST search the web for current prices/data first:\n\nQuestion: ${question}${context}\n\nSearch for real-time data and provide your analysis based on what you find.`
           }
         ],
-        model: 'grok-4-latest', // Latest model with real-time web search
+        model: 'grok-beta', // Model with web search
         stream: false,
-        temperature: 0.3,
-        max_tokens: 800
+        temperature: 0.2, // Lower temp for more factual responses
+        max_tokens: 1000
       },
       {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${grokApiKey}`
         },
-        timeout: 8000 // 8 second timeout
+        timeout: 300000 // 5 minutes timeout - allows time for web searches
       }
     );
 
@@ -123,13 +139,7 @@ Example: "42% Probability: Bitcoin at $67,234 (verified 3 min ago via CoinGecko)
 
     console.log('✅ AI analysis generated:', analysis);
 
-    // Store in cache
-    analysisCache.set(cacheKey, {
-      analysis,
-      timestamp: Date.now()
-    });
-
-    // Save to database
+    // Save to database immediately (primary cache)
     try {
       const { error: updateError } = await supabase
         .from('markets')
@@ -139,14 +149,17 @@ Example: "42% Probability: Bitcoin at $67,234 (verified 3 min ago via CoinGecko)
       if (updateError) {
         console.error('❌ Error saving analysis to DB:', updateError);
       } else {
-        console.log('💾 Analysis saved to database');
+        console.log('💾 Analysis saved to database - will be cached for 24 hours');
       }
     } catch (dbError) {
       console.error('❌ Database error:', dbError);
       // Don't fail the request if DB save fails
     }
 
-    return res.status(200).json({ analysis });
+    return res.status(200).json({ 
+      analysis,
+      fromCache: false 
+    });
 
   } catch (error) {
     console.error('❌ Error in AI analysis:', error);
