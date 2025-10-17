@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import MarketCard from '../components/MarketCard';
 import { useMarkets } from '../hooks/useMarkets';
 
-const CONTRACT_ADDRESS = "0xB05bAeff61e6E2CfB85d383911912C3248e3214f";
+const CONTRACT_ADDRESS = "0x1975B27384a4B2597Bc105C5CB37c2ee486957fF";
 const MIN_STAKE = 0.05;
 const MIN_PREDICTION_LENGTH = 50;
 const MAX_PREDICTION_LENGTH = 256;
