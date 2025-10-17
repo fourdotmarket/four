@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../context/LanguageContext';
+import USFlag from '../components/flags/USFlag';
+import ChinaFlag from '../components/flags/ChinaFlag';
 import './Settings.css';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { user, getFreshToken } = useAuth();
-  const { language, changeLanguage } = useLanguage();
+  const { language, changeLanguage, t } = useLanguage();
   const [privateKey, setPrivateKey] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -106,8 +108,8 @@ SECURITY WARNINGS:
       </button>
 
       <div className="settings-header">
-        <h1 className="settings-title">SETTINGS</h1>
-        <p className="settings-subtitle">Manage your account and security settings</p>
+        <h1 className="settings-title">{t('settings.title')}</h1>
+        <p className="settings-subtitle">{t('settings.subtitle')}</p>
       </div>
 
       {/* Private Key Section */}
@@ -123,11 +125,11 @@ SECURITY WARNINGS:
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                 <line x1="12" y1="22.08" x2="12" y2="12"></line>
               </svg>
-              <h2 className="settings-card-title">PRIVATE KEY</h2>
+              <h2 className="settings-card-title">{t('settings.privateKey')}</h2>
             </div>
 
             <div className="settings-description">
-              <p>Your private key grants complete access to your wallet and funds. Keep it secure and never share it with anyone.</p>
+              <p>{t('settings.privateKeyDesc')}</p>
               
               <div className="settings-warning">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -135,7 +137,7 @@ SECURITY WARNINGS:
                   <line x1="12" y1="9" x2="12" y2="13"></line>
                   <line x1="12" y1="17" x2="12.01" y2="17"></line>
                 </svg>
-                <span>Store in a secure location</span>
+                <span>{t('settings.warning')}</span>
               </div>
             </div>
           </div>
@@ -150,7 +152,7 @@ SECURITY WARNINGS:
                 {loading ? (
                   <>
                     <div className="btn-spinner"></div>
-                    RETRIEVING...
+                    {t('settings.retrieving')}
                   </>
                 ) : (
                   <>
@@ -158,7 +160,7 @@ SECURITY WARNINGS:
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                       <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
-                    GET PRIVATE KEY
+                    {t('settings.getPrivateKey')}
                   </>
                 )}
               </button>
@@ -177,7 +179,7 @@ SECURITY WARNINGS:
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
-                        COPIED
+                        {t('settings.copied')}
                       </>
                     ) : (
                       <>
@@ -185,7 +187,7 @@ SECURITY WARNINGS:
                           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
-                        COPY
+                        {t('settings.copy')}
                       </>
                     )}
                   </button>
@@ -198,7 +200,7 @@ SECURITY WARNINGS:
                       <polyline points="7 10 12 15 17 10"></polyline>
                       <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
-                    DOWNLOAD
+                    {t('settings.download')}
                   </button>
                 </div>
               </div>
@@ -228,11 +230,11 @@ SECURITY WARNINGS:
                 <line x1="2" y1="12" x2="22" y2="12"/>
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
               </svg>
-              <h2 className="settings-card-title">DEFAULT LANGUAGE</h2>
+              <h2 className="settings-card-title">{t('settings.defaultLanguage')}</h2>
             </div>
 
             <div className="settings-description">
-              <p>Choose your preferred language for the interface. The site will automatically detect your location on first visit.</p>
+              <p>{t('settings.languageDesc')}</p>
             </div>
           </div>
 
@@ -242,8 +244,10 @@ SECURITY WARNINGS:
                 className={`settings-language-btn ${language === 'en' ? 'active' : ''}`}
                 onClick={() => changeLanguage('en')}
               >
-                <span className="language-flag">🇺🇸</span>
-                <span className="language-name">English</span>
+                <span className="language-flag">
+                  <USFlag width={32} height={24} />
+                </span>
+                <span className="language-name">{t('settings.english')}</span>
                 {language === 'en' && (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12"></polyline>
@@ -255,8 +259,10 @@ SECURITY WARNINGS:
                 className={`settings-language-btn ${language === 'zh' ? 'active' : ''}`}
                 onClick={() => changeLanguage('zh')}
               >
-                <span className="language-flag">🇨🇳</span>
-                <span className="language-name">中文 (Chinese)</span>
+                <span className="language-flag">
+                  <ChinaFlag width={32} height={24} />
+                </span>
+                <span className="language-name">{t('settings.chinese')}</span>
                 {language === 'zh' && (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12"></polyline>
@@ -272,18 +278,18 @@ SECURITY WARNINGS:
       <div className="settings-section">
         <div className="settings-info-grid">
           <div className="settings-info-card">
-            <div className="settings-info-label">USERNAME</div>
+            <div className="settings-info-label">{t('settings.username')}</div>
             <div className="settings-info-value">{user?.username || 'N/A'}</div>
           </div>
           <div className="settings-info-card">
-            <div className="settings-info-label">WALLET ADDRESS</div>
+            <div className="settings-info-label">{t('settings.walletAddress')}</div>
             <div className="settings-info-value">
               <code>{user?.wallet_address || 'N/A'}</code>
             </div>
           </div>
           {user?.email && (
             <div className="settings-info-card">
-              <div className="settings-info-label">EMAIL</div>
+              <div className="settings-info-label">{t('settings.email')}</div>
               <div className="settings-info-value">{user.email}</div>
             </div>
           )}

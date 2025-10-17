@@ -1,10 +1,17 @@
 {
+  "home": {
+    "trending": "Trending",
+    "market": "Market",
+    "deposit": "Deposit",
+    "settings": "Settings",
+    "tagline": "Decentralized Prediction Markets"
+  },
   "header": {
     "trending": "Trending",
     "publicMarket": "Public Market",
     "resolved": "Resolved",
-    "signIn": "Sign In",
-    "deposit": "Deposit"
+    "signIn": "SIGN IN",
+    "deposit": "DEPOSIT"
   },
   "deposit": {
     "title": "Deposit BNB",
@@ -15,32 +22,137 @@
     "warning": "Sending other tokens may result in permanent loss of funds."
   },
   "market": {
-    "title": "Prediction Markets",
+    "title": "PREDICTION MARKETS",
     "subtitle": "Create or challenge predictions.",
-    "createBet": "Create Bet",
-    "noMarkets": "No Active Markets",
+    "createBet": "CREATE BET",
+    "noMarkets": "NO ACTIVE MARKETS",
     "beFirst": "Be the first to create a prediction market",
-    "loadMore": "Load More"
+    "loadMore": "LOAD MORE",
+    "loading": "LOADING MARKETS...",
+    "error": "ERROR LOADING MARKETS"
   },
   "createBet": {
     "title": "Create Bet",
     "description": "Make a prediction. Challengers buy tickets. Winner takes the pot.",
-    "prediction": "Prediction",
+    "prediction": "PREDICTION",
     "predictionPlaceholder": "What will happen? Be specific and clear...",
+    "stake": "STAKE",
+    "expiresIn": "EXPIRES IN",
+    "advancedOptions": "ADVANCED OPTIONS",
+    "totalTickets": "TOTAL TICKETS",
+    "creating": "CREATING BET...",
+    "create": "CREATE BET",
+    "minStake": "min {amount} • ticket price: {price} BNB",
+    "charCount": "{current}/{max} characters"
+  },
+  "trending": {
+    "title": "TRENDING NOW",
+    "subtitle": "Most popular prediction.",
+    "topMarket": "Top Market",
+    "otherTrending": "Other Trending Markets",
+    "noTrending": "No trending markets yet",
+    "beFirst": "Be the first to start trading"
+  },
+  "resolved": {
+    "title": "RESOLVED MARKETS",
+    "subtitle": "View completed and expired predictions",
+    "noResolved": "No resolved markets yet"
+  },
+  "bet": {
+    "back": "BACK",
+    "challengeTickets": "CHALLENGE TICKETS",
+    "selectAmount": "Select Amount",
+    "totalCost": "Total Cost",
+    "buyTickets": "BUY TICKETS",
+    "buying": "BUYING...",
+    "transactions": "Transactions",
+    "yourPosition": "Your Position",
+    "ticketHolders": "Ticket Holders",
+    "marketInfo": "Market Info",
+    "creator": "Creator",
     "stake": "Stake",
-    "expiresIn": "Expires In",
-    "advancedOptions": "Advanced Options",
+    "ticketPrice": "Ticket Price",
     "totalTickets": "Total Tickets",
-    "creating": "Creating Bet...",
-    "create": "Create Bet"
+    "ticketsSold": "Tickets Sold",
+    "expires": "Expires",
+    "status": "Status",
+    "outcome": "Outcome",
+    "resolution": "Resolution",
+    "noTransactions": "No transactions yet",
+    "noPosition": "You don't have any tickets"
   },
   "settings": {
-    "title": "Settings",
+    "title": "SETTINGS",
     "subtitle": "Manage your account and security settings",
-    "defaultLanguage": "Default Language",
+    "privateKey": "PRIVATE KEY",
+    "privateKeyDesc": "Your private key grants complete access to your wallet and funds. Keep it secure and never share it with anyone.",
+    "getPrivateKey": "GET PRIVATE KEY",
+    "retrieving": "RETRIEVING...",
+    "copy": "COPY",
+    "copied": "COPIED",
+    "download": "DOWNLOAD",
+    "warning": "Store in a secure location",
+    "defaultLanguage": "DEFAULT LANGUAGE",
+    "languageDesc": "Choose your preferred language for the interface. The site will automatically detect your location on first visit.",
     "english": "English",
     "chinese": "Chinese",
-    "languageDescription": "Choose your preferred language for the interface"
+    "accountInfo": "Account Information",
+    "username": "USERNAME",
+    "walletAddress": "WALLET ADDRESS",
+    "email": "EMAIL"
+  },
+  "profile": {
+    "copyAddress": "Copy Wallet Address",
+    "addressCopied": "Address Copied!",
+    "myPositions": "My Positions",
+    "myWinnings": "My Winnings",
+    "settings": "Settings",
+    "administrator": "Administrator",
+    "logout": "Logout"
+  },
+  "positions": {
+    "title": "MY POSITIONS",
+    "subtitle": "View all your active market positions",
+    "totalTickets": "Total Tickets",
+    "totalSpent": "Total Spent",
+    "market": "Market",
+    "tickets": "Tickets",
+    "spent": "Spent",
+    "avgPrice": "Avg Price",
+    "noPositions": "You don't have any positions yet",
+    "startTrading": "Start trading to see your positions here"
+  },
+  "winnings": {
+    "title": "MY WINNINGS",
+    "subtitle": "Track your earnings from resolved markets",
+    "totalWinnings": "TOTAL WINNINGS",
+    "youWon": "You Won",
+    "market": "Market",
+    "tickets": "Tickets Held",
+    "winnings": "Winnings",
+    "noWinnings": "No winnings yet",
+    "startTrading": "Participate in markets to earn winnings"
+  },
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "active": "Active",
+    "expired": "Expired",
+    "resolved": "Resolved",
+    "cancelled": "Cancelled",
+    "soldOut": "SOLD OUT",
+    "hot": "HOT",
+    "new": "NEW",
+    "awaitingResolution": "AWAITING RESOLUTION",
+    "hours": "hours",
+    "days": "days",
+    "ago": "ago",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save"
   }
 }
-

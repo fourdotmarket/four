@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import './ProfileDropdown.css';
 
 // Generate random admin route
@@ -15,6 +16,7 @@ const generateAdminRoute = () => {
 export default function ProfileDropdown({ user, onLogout, onClose }) {
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [adminToken] = useState(() => generateAdminRoute());
 
   const handleAdminClick = () => {
@@ -78,7 +80,7 @@ export default function ProfileDropdown({ user, onLogout, onClose }) {
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                 <line x1="12" y1="22.08" x2="12" y2="12"></line>
               </svg>
-              <span>{copied ? 'Copied!' : 'Copy Wallet Address'}</span>
+              <span>{copied ? t('profile.addressCopied') : t('profile.copyAddress')}</span>
             </button>
           )}
 
@@ -91,7 +93,7 @@ export default function ProfileDropdown({ user, onLogout, onClose }) {
               <line x1="3" y1="9" x2="21" y2="9"></line>
               <line x1="9" y1="21" x2="9" y2="9"></line>
             </svg>
-            <span>Positions</span>
+            <span>{t('profile.myPositions')}</span>
           </button>
 
           <button 
@@ -106,7 +108,7 @@ export default function ProfileDropdown({ user, onLogout, onClose }) {
               <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
               <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
             </svg>
-            <span>Winnings</span>
+            <span>{t('profile.myWinnings')}</span>
           </button>
 
           <button 
@@ -117,7 +119,7 @@ export default function ProfileDropdown({ user, onLogout, onClose }) {
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M12 1v6M12 17v6M5.64 5.64l4.24 4.24M14.12 14.12l4.24 4.24M1 12h6M17 12h6M5.64 18.36l4.24-4.24M14.12 9.88l4.24-4.24"></path>
             </svg>
-            <span>Settings</span>
+            <span>{t('profile.settings')}</span>
           </button>
 
           {/* ADMIN ONLY - Random route generated on each render */}
@@ -130,7 +132,7 @@ export default function ProfileDropdown({ user, onLogout, onClose }) {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
-              <span>Administrator</span>
+              <span>{t('profile.administrator')}</span>
             </button>
           )}
 
@@ -145,7 +147,7 @@ export default function ProfileDropdown({ user, onLogout, onClose }) {
               <polyline points="16 17 21 12 16 7"></polyline>
               <line x1="21" y1="12" x2="9" y2="12"></line>
             </svg>
-            <span>Log Out</span>
+            <span>{t('profile.logout')}</span>
           </button>
         </div>
       </div>

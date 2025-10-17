@@ -149,8 +149,15 @@
 }
 
 .language-option-flag {
-  font-size: 32px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.language-option-flag svg {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
 }
 
 .language-option-info {
@@ -216,8 +223,9 @@
     padding: 14px;
   }
 
-  .language-option-flag {
-    font-size: 28px;
+  .language-option-flag svg {
+    width: 36px;
+    height: 27px;
   }
 }
 
@@ -232,8 +240,9 @@
     padding: 16px 12px;
   }
 
-  .language-option-flag {
-    font-size: 26px;
+  .language-option-flag svg {
+    width: 32px;
+    height: 24px;
   }
 }
 

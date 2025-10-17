@@ -1,5 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import USFlag from './flags/USFlag';
+import ChinaFlag from './flags/ChinaFlag';
 import './LanguageSelector.css';
 
 export default function LanguageSelector({ onClose }) {
@@ -28,7 +30,9 @@ export default function LanguageSelector({ onClose }) {
             className={`language-option ${language === 'en' ? 'active' : ''}`}
             onClick={() => handleLanguageChange('en')}
           >
-            <div className="language-option-flag">🇺🇸</div>
+            <div className="language-option-flag">
+              <USFlag width={40} height={30} />
+            </div>
             <div className="language-option-info">
               <div className="language-option-name">English</div>
               <div className="language-option-native">English</div>
@@ -44,7 +48,9 @@ export default function LanguageSelector({ onClose }) {
             className={`language-option ${language === 'zh' ? 'active' : ''}`}
             onClick={() => handleLanguageChange('zh')}
           >
-            <div className="language-option-flag">🇨🇳</div>
+            <div className="language-option-flag">
+              <ChinaFlag width={40} height={30} />
+            </div>
             <div className="language-option-info">
               <div className="language-option-name">Chinese</div>
               <div className="language-option-native">中文</div>

@@ -1,4 +1,11 @@
 {
+  "home": {
+    "trending": "热门",
+    "market": "市场",
+    "deposit": "存款",
+    "settings": "设置",
+    "tagline": "去中心化预测市场"
+  },
   "header": {
     "trending": "热门",
     "publicMarket": "公共市场",
@@ -20,7 +27,9 @@
     "createBet": "创建赌注",
     "noMarkets": "没有活跃市场",
     "beFirst": "成为第一个创建预测市场的人",
-    "loadMore": "加载更多"
+    "loadMore": "加载更多",
+    "loading": "正在加载市场...",
+    "error": "加载市场时出错"
   },
   "createBet": {
     "title": "创建赌注",
@@ -32,15 +41,118 @@
     "advancedOptions": "高级选项",
     "totalTickets": "总票数",
     "creating": "正在创建赌注...",
-    "create": "创建赌注"
+    "create": "创建赌注",
+    "minStake": "最低 {amount} • 票价：{price} BNB",
+    "charCount": "{current}/{max} 字符"
+  },
+  "trending": {
+    "title": "热门市场",
+    "subtitle": "最受欢迎的预测。",
+    "topMarket": "顶级市场",
+    "otherTrending": "其他热门市场",
+    "noTrending": "暂无热门市场",
+    "beFirst": "成为第一个开始交易的人"
+  },
+  "resolved": {
+    "title": "已解决市场",
+    "subtitle": "查看已完成和过期的预测",
+    "noResolved": "暂无已解决的市场"
+  },
+  "bet": {
+    "back": "返回",
+    "challengeTickets": "挑战票",
+    "selectAmount": "选择数量",
+    "totalCost": "总成本",
+    "buyTickets": "购买票",
+    "buying": "正在购买...",
+    "transactions": "交易",
+    "yourPosition": "您的仓位",
+    "ticketHolders": "持票人",
+    "marketInfo": "市场信息",
+    "creator": "创建者",
+    "stake": "赌注",
+    "ticketPrice": "票价",
+    "totalTickets": "总票数",
+    "ticketsSold": "已售票数",
+    "expires": "过期",
+    "status": "状态",
+    "outcome": "结果",
+    "resolution": "解决方案",
+    "noTransactions": "暂无交易",
+    "noPosition": "您没有任何票"
   },
   "settings": {
     "title": "设置",
     "subtitle": "管理您的帐户和安全设置",
+    "privateKey": "私钥",
+    "privateKeyDesc": "您的私钥可以完全访问您的钱包和资金。请保密，切勿与任何人分享。",
+    "getPrivateKey": "获取私钥",
+    "retrieving": "正在检索...",
+    "copy": "复制",
+    "copied": "已复制",
+    "download": "下载",
+    "warning": "存储在安全位置",
     "defaultLanguage": "默认语言",
+    "languageDesc": "选择界面的首选语言。网站将在首次访问时自动检测您的位置。",
     "english": "英语",
     "chinese": "中文",
-    "languageDescription": "选择界面的首选语言"
+    "accountInfo": "账户信息",
+    "username": "用户名",
+    "walletAddress": "钱包地址",
+    "email": "电子邮件"
+  },
+  "profile": {
+    "copyAddress": "复制钱包地址",
+    "addressCopied": "地址已复制！",
+    "myPositions": "我的仓位",
+    "myWinnings": "我的奖金",
+    "settings": "设置",
+    "administrator": "管理员",
+    "logout": "退出登录"
+  },
+  "positions": {
+    "title": "我的仓位",
+    "subtitle": "查看您的所有活跃市场仓位",
+    "totalTickets": "总票数",
+    "totalSpent": "总支出",
+    "market": "市场",
+    "tickets": "票数",
+    "spent": "支出",
+    "avgPrice": "平均价格",
+    "noPositions": "您还没有任何仓位",
+    "startTrading": "开始交易以在此处查看您的仓位"
+  },
+  "winnings": {
+    "title": "我的奖金",
+    "subtitle": "跟踪您从已解决市场中获得的收益",
+    "totalWinnings": "总奖金",
+    "youWon": "您赢了",
+    "market": "市场",
+    "tickets": "持有票数",
+    "winnings": "奖金",
+    "noWinnings": "暂无奖金",
+    "startTrading": "参与市场以赚取奖金"
+  },
+  "common": {
+    "yes": "是",
+    "no": "否",
+    "active": "活跃",
+    "expired": "已过期",
+    "resolved": "已解决",
+    "cancelled": "已取消",
+    "soldOut": "已售罄",
+    "hot": "热门",
+    "new": "新",
+    "awaitingResolution": "等待解决",
+    "hours": "小时",
+    "days": "天",
+    "ago": "前",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "close": "关闭",
+    "cancel": "取消",
+    "confirm": "确认",
+    "save": "保存"
   }
 }
-

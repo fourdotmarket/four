@@ -1,10 +1,263 @@
+/* Home Page - Crypto/Web3 Theme */
 .home-page {
-  padding: 40px 48px;
-  color: var(--color-white);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  position: relative;
+  z-index: 1;
 }
 
-.home-page h1 {
-  font-family: var(--font-display);
-  font-size: 32px;
-  color: var(--color-yellow-primary);
+.home-container {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+}
+
+/* Header Section */
+.home-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.home-logo {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 20px rgba(255, 212, 59, 0.2));
+}
+
+.home-title {
+  font-family: 'Courier New', monospace;
+  font-size: 42px;
+  font-weight: 700;
+  color: #FFD43B;
+  margin: 0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.home-tagline {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #808080;
+  margin: 0;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Navigation Grid */
+.home-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: 100%;
+}
+
+.home-nav-btn {
+  background: #0a0a0a;
+  border: 1px solid #2a2a2a;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  position: relative;
+  overflow: hidden;
+}
+
+.home-nav-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 212, 59, 0.05) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.home-nav-btn:hover {
+  border-color: rgba(255, 212, 59, 0.5);
+  transform: translateY(-4px);
+}
+
+.home-nav-btn:hover::before {
+  opacity: 1;
+}
+
+.home-nav-btn:active {
+  transform: translateY(-2px);
+}
+
+.home-nav-icon {
+  color: #FFD43B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  transition: transform 0.3s ease;
+}
+
+.home-nav-btn:hover .home-nav-icon {
+  transform: scale(1.1);
+}
+
+.home-nav-label {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Footer */
+.home-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.home-tech-stack {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tech-badge {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #FFD43B;
+  padding: 6px 12px;
+  background: rgba(255, 212, 59, 0.1);
+  border: 1px solid rgba(255, 212, 59, 0.3);
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.tech-separator {
+  color: rgba(255, 212, 59, 0.3);
+  font-size: 12px;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+  .home-container {
+    gap: 40px;
+  }
+
+  .home-logo {
+    width: 100px;
+    height: 100px;
+  }
+
+  .home-title {
+    font-size: 36px;
+  }
+
+  .home-tagline {
+    font-size: 13px;
+  }
+
+  .home-nav-grid {
+    gap: 16px;
+  }
+
+  .home-nav-btn {
+    padding: 28px 20px;
+  }
+
+  .home-nav-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .home-nav-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .home-nav-label {
+    font-size: 13px;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+  .home-page {
+    padding: 30px 16px;
+  }
+
+  .home-container {
+    gap: 32px;
+  }
+
+  .home-logo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .home-title {
+    font-size: 28px;
+    letter-spacing: 1px;
+  }
+
+  .home-tagline {
+    font-size: 12px;
+  }
+
+  .home-nav-grid {
+    gap: 12px;
+  }
+
+  .home-nav-btn {
+    padding: 24px 16px;
+    gap: 12px;
+  }
+
+  .home-nav-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .home-nav-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .home-nav-label {
+    font-size: 12px;
+  }
+
+  .tech-badge {
+    font-size: 10px;
+    padding: 5px 10px;
+  }
+
+  .tech-separator {
+    font-size: 10px;
+  }
+}
+
+/* Touch-friendly */
+@media (hover: none) and (pointer: coarse) {
+  .home-nav-btn {
+    min-height: 120px;
+  }
 }
