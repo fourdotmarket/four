@@ -857,68 +857,6 @@
   }
 }
 
-/* AI Analysis Display */
-.bet-ai-analysis {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.bet-ai-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px;
-  background: linear-gradient(90deg, rgba(138, 43, 226, 0.1) 0%, transparent 100%);
-  border-left: 3px solid #8A2BE2;
-}
-
-.bet-ai-header svg {
-  color: #8A2BE2;
-  flex-shrink: 0;
-}
-
-.bet-ai-header h3 {
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin: 0;
-}
-
-.bet-ai-content {
-  padding: 24px;
-  background: rgba(138, 43, 226, 0.03);
-  border: 1px solid rgba(138, 43, 226, 0.2);
-  border-radius: 4px;
-}
-
-.bet-ai-content p {
-  font-family: 'Inter', sans-serif;
-  font-size: 15px;
-  line-height: 1.7;
-  color: #e0e0e0;
-  margin: 0;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.bet-ai-footer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 16px;
-  background: rgba(138, 43, 226, 0.05);
-  border-top: 1px solid rgba(138, 43, 226, 0.2);
-  font-family: 'Courier New', monospace;
-  font-size: 11px;
-  color: #8A2BE2;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 /* Resolution Display */
 .bet-resolution-display {
   display: flex;
