@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import './Market.css';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
@@ -31,6 +32,10 @@ export default function Market() {
   const [tickets, setTickets] = useState('100');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isBeautifying, setIsBeautifying] = useState(false);
+  const [beautifiedPrediction, setBeautifiedPrediction] = useState('');
+  const [showBeautified, setShowBeautified] = useState(false);
+  const debounceTimerRef = useRef(null);
 
   // Allow English, Chinese, numbers, and common punctuation
   const allowedChars = /^[\u4e00-\u9fa5a-zA-Z0-9\s.,?!-]+$/;
@@ -51,6 +56,19 @@ export default function Market() {
     if (value === '' || allowedChars.test(value)) {
       if (value.length <= MAX_PREDICTION_LENGTH) {
         setPrediction(value);
+        setShowBeautified(false); // Reset beautified state when user types
+        
+        // Clear previous timer
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        
+        // Set new timer for AI beautification (1 second after typing stops)
+        if (value.trim().length >= 10) {
+          debounceTimerRef.current = setTimeout(() => {
+            beautifyPrediction(value);
+          }, 1000);
+        }
       }
     }
   };
@@ -84,7 +102,55 @@ export default function Market() {
     setTickets('100');
     setShowAdvanced(false);
     setIsCreating(false);
+    setBeautifiedPrediction('');
+    setShowBeautified(false);
+    setIsBeautifying(false);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
   };
+
+  const beautifyPrediction = async (text) => {
+    try {
+      setIsBeautifying(true);
+      console.log('🤖 Calling AI to beautify prediction...');
+
+      const response = await axios.post('/api/beautify-prediction', {
+        prediction: text,
+        timeframe: expiry
+      });
+
+      if (response.data.success) {
+        console.log('✅ AI beautification successful');
+        setBeautifiedPrediction(response.data.beautified);
+        setShowBeautified(true);
+      }
+    } catch (error) {
+      console.error('❌ AI beautification failed:', error);
+      // Silently fail - don't show error to user
+    } finally {
+      setIsBeautifying(false);
+    }
+  };
+
+  const handleAcceptBeautified = () => {
+    setPrediction(beautifiedPrediction);
+    setShowBeautified(false);
+  };
+
+  const handleCancelBeautified = () => {
+    setShowBeautified(false);
+    setBeautifiedPrediction('');
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleClose = () => {
     if (isCreating) return;
@@ -259,30 +325,13 @@ export default function Market() {
           <h1 className="market-title">{t('market.title')}</h1>
           <p className="market-subtitle">{t('market.subtitle')}</p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button 
-            className="market-refresh-btn" 
-            onClick={() => {
-              refetch();
-              showNotification('Markets refreshed', 'success');
-            }}
-            disabled={marketsLoading}
-            title="Refresh markets"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-          </button>
-          <button className="market-create-btn" onClick={handleOpenCreateModal}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            {t('market.createBet')}
-          </button>
-        </div>
+        <button className="market-create-btn" onClick={handleOpenCreateModal}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          {t('market.createBet')}
+        </button>
       </div>
 
       {/* Markets Grid */}
@@ -389,6 +438,52 @@ export default function Market() {
                   rows="3"
                   disabled={isCreating}
                 />
+                
+                {/* AI Beautification Status */}
+                {isBeautifying && (
+                  <div className="ai-beautifying">
+                    <div className="ai-spinner"></div>
+                    <span>AI is improving your prediction...</span>
+                  </div>
+                )}
+
+                {/* AI Beautified Suggestion */}
+                {showBeautified && beautifiedPrediction && !isBeautifying && (
+                  <div className="ai-suggestion">
+                    <div className="ai-suggestion-header">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                      </svg>
+                      <span>AI SUGGESTION</span>
+                    </div>
+                    <div className="ai-suggestion-text">{beautifiedPrediction}</div>
+                    <div className="ai-suggestion-actions">
+                      <button 
+                        className="ai-accept-btn"
+                        onClick={handleAcceptBeautified}
+                        type="button"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Use This
+                      </button>
+                      <button 
+                        className="ai-cancel-btn"
+                        onClick={handleCancelBeautified}
+                        type="button"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        Keep Original
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Grid: Stake + Expiry */}

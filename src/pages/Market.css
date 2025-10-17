@@ -101,45 +101,6 @@
   flex-shrink: 0;
 }
 
-/* Refresh Button */
-.market-refresh-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #1a1a1a;
-  border: 1px solid #FFD43B;
-  color: #FFD43B;
-  padding: 14px;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-  position: relative;
-}
-
-.market-refresh-btn:hover {
-  background: #FFD43B;
-  color: #000000;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 212, 59, 0.3);
-}
-
-.market-refresh-btn:active {
-  transform: scale(0.98);
-}
-
-.market-refresh-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.market-refresh-btn svg {
-  stroke-width: 2;
-}
-
 /* Market Grid */
 .market-grid {
   display: grid;
@@ -506,6 +467,120 @@
 .create-input:focus {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 212, 59, 0.3);
+}
+
+/* AI Beautification Styles */
+.ai-beautifying {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(147, 51, 234, 0.1);
+  border: 1px solid rgba(147, 51, 234, 0.3);
+  border-radius: 4px;
+  margin-top: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #a78bfa;
+  letter-spacing: 0.5px;
+}
+
+.ai-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(147, 51, 234, 0.3);
+  border-top-color: #a78bfa;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.ai-suggestion {
+  margin-top: 12px;
+  padding: 14px;
+  background: rgba(147, 51, 234, 0.05);
+  border: 1px solid rgba(147, 51, 234, 0.3);
+  border-radius: 4px;
+}
+
+.ai-suggestion-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #a78bfa;
+  letter-spacing: 1px;
+}
+
+.ai-suggestion-header svg {
+  color: #a78bfa;
+  flex-shrink: 0;
+}
+
+.ai-suggestion-text {
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: 2px;
+  margin-bottom: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #ffffff;
+  min-height: 60px;
+}
+
+.ai-suggestion-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.ai-accept-btn,
+.ai-cancel-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid;
+  border-radius: 2px;
+}
+
+.ai-accept-btn {
+  background: #a78bfa;
+  border-color: #a78bfa;
+  color: #000000;
+}
+
+.ai-accept-btn:hover {
+  background: #c4b5fd;
+  border-color: #c4b5fd;
+  transform: translateY(-1px);
+}
+
+.ai-cancel-btn {
+  background: transparent;
+  border-color: #4a4a4a;
+  color: #888888;
+}
+
+.ai-cancel-btn:hover {
+  border-color: #6a6a6a;
+  color: #aaaaaa;
+}
+
+.ai-accept-btn svg,
+.ai-cancel-btn svg {
+  flex-shrink: 0;
 }
 
 /* Remove number input spinners */
