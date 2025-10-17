@@ -1,10 +1,64 @@
-// API Endpoint: Beautify Prediction using GROK AI
+// API Endpoint: Beautify Prediction using GROK AI (x.ai)
 import axios from 'axios';
 
+// Rate limiting store (in-memory)
+const rateLimitStore = new Map();
+const MAX_REQUESTS = 10; // Max 10 requests per user
+const TIME_WINDOW = 60000; // 1 minute window
+
+function checkRateLimit(identifier) {
+  const now = Date.now();
+  const userRequests = rateLimitStore.get(identifier) || [];
+  
+  // Remove old requests outside the time window
+  const validRequests = userRequests.filter(timestamp => now - timestamp < TIME_WINDOW);
+  
+  if (validRequests.length >= MAX_REQUESTS) {
+    const oldestRequest = validRequests[0];
+    const resetIn = Math.ceil((oldestRequest + TIME_WINDOW - now) / 1000);
+    return {
+      allowed: false,
+      resetIn
+    };
+  }
+  
+  validRequests.push(now);
+  rateLimitStore.set(identifier, validRequests);
+  
+  // Cleanup old entries periodically
+  if (Math.random() < 0.01) {
+    cleanupRateLimitStore(now);
+  }
+  
+  return { allowed: true };
+}
+
+function cleanupRateLimitStore(now) {
+  for (const [key, timestamps] of rateLimitStore.entries()) {
+    const validTimestamps = timestamps.filter(ts => now - ts < TIME_WINDOW);
+    if (validTimestamps.length === 0) {
+      rateLimitStore.delete(key);
+    } else {
+      rateLimitStore.set(key, validTimestamps);
+    }
+  }
+}
+
+// Allowed origins
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://four-lovat-mu.vercel.app',
+  'https://four.market'
+];
+
 export default async function handler(req, res) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -17,6 +71,18 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Rate limiting based on IP
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    const rateLimit = checkRateLimit(clientIp);
+    
+    if (!rateLimit.allowed) {
+      console.log(`⚠️ Rate limit exceeded for ${clientIp}`);
+      return res.status(429).json({ 
+        error: 'Too many requests',
+        message: `Please wait ${rateLimit.resetIn} seconds before trying again`
+      });
+    }
+
     const { prediction, timeframe } = req.body;
 
     if (!prediction) {
@@ -25,6 +91,15 @@ export default async function handler(req, res) {
 
     if (!timeframe) {
       return res.status(400).json({ error: 'Timeframe is required' });
+    }
+
+    // Check for API key
+    if (!process.env.API_KEY_GROK) {
+      console.error('❌ API_KEY_GROK not configured');
+      return res.status(500).json({ 
+        error: 'AI service not configured',
+        message: 'API key missing'
+      });
     }
 
     console.log('🤖 Beautifying prediction with GROK AI...');
@@ -43,7 +118,7 @@ export default async function handler(req, res) {
 
     const readableTimeframe = timeframeMap[timeframe] || timeframe;
 
-    // Call GROK AI API
+    // Call GROK AI API (x.ai)
     const grokResponse = await axios.post(
       'https://api.x.ai/v1/chat/completions',
       {
@@ -65,7 +140,8 @@ export default async function handler(req, res) {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.API_KEY_GROK}`
-        }
+        },
+        timeout: 10000 // 10 second timeout
       }
     );
 
@@ -81,12 +157,39 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('❌ GROK AI Error:', error.response?.data || error.message);
+    console.error('❌ GROK AI Error:', error.message);
     
+    // Detailed error logging
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
+
+    // Handle specific errors
+    if (error.code === 'ECONNABORTED') {
+      return res.status(504).json({
+        error: 'AI service timeout',
+        message: 'Request took too long'
+      });
+    }
+
+    if (error.response?.status === 401) {
+      return res.status(500).json({
+        error: 'AI authentication failed',
+        message: 'Invalid API key'
+      });
+    }
+
+    if (error.response?.status === 429) {
+      return res.status(429).json({
+        error: 'AI rate limit exceeded',
+        message: 'Too many requests to AI service'
+      });
+    }
+
     return res.status(500).json({
       error: 'Failed to beautify prediction',
-      details: error.response?.data?.error?.message || error.message
+      message: error.response?.data?.error?.message || error.message
     });
   }
 }
-
