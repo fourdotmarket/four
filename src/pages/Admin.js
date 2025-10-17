@@ -29,8 +29,8 @@ export default function Admin() {
   const hasValidatedRef = useRef(false);
 
   // Contract Configuration State
-  const [contractAddress, setContractAddress] = useState('0x1975B27384a4B2597Bc105C5CB37c2ee486957fF');
-  const [adminPrivateKey, setAdminPrivateKey] = useState('0x8373a2e31d65dc7a03a1ab920ef8f64dcf988f24b068d8932bc1dc90ebd35dda');
+  const [contractAddress, setContractAddress] = useState('0xB92C4e50589E643EbB26587b92e4D63EE92210d2');
+  const [adminPrivateKey, setAdminPrivateKey] = useState('0x92a9ea9bdac0f14170008780b440c4c41e86b3352ed60389bc146bd59091c728');
   const [showConfigPanel, setShowConfigPanel] = useState(false);
   const [protocolFee, setProtocolFee] = useState('');
 
@@ -545,8 +545,8 @@ export default function Admin() {
           </div>
           <div className="admin-config-actions">
             <button onClick={() => {
-              setContractAddress('0x1975B27384a4B2597Bc105C5CB37c2ee486957fF');
-              setAdminPrivateKey('0x8373a2e31d65dc7a03a1ab920ef8f64dcf988f24b068d8932bc1dc90ebd35dda');
+              setContractAddress('0xB92C4e50589E643EbB26587b92e4D63EE92210d2');
+              setAdminPrivateKey('0x92a9ea9bdac0f14170008780b440c4c41e86b3352ed60389bc146bd59091c728');
               showNotification('Reset to defaults', 'success');
             }}>
               RESET TO DEFAULTS
