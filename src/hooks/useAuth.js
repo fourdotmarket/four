@@ -76,8 +76,16 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
-    if (!ready || !authenticated) {
-      console.log('🔴 Not ready or not authenticated', { ready, authenticated });
+    // CRITICAL: Wait for Privy to be fully ready before doing anything
+    if (!ready) {
+      console.log('⏳ Waiting for Privy to initialize...', { ready });
+      setLoading(true);
+      setAuthReady(false);
+      return;
+    }
+
+    if (!authenticated) {
+      console.log('🔴 Not authenticated', { ready, authenticated });
       setUser(null);
       setAccessToken(null);
       setLoading(false);
@@ -87,33 +95,36 @@ export function useAuth() {
       privateKeyCheckRef.current = false;
       retryCountRef.current = 0;
       
-      if (!authenticated) {
-        completedAuthUsers.clear();
-        authRequestsInFlight.clear();
-        
-        try {
-          const keys = Object.keys(localStorage);
-          keys.forEach(key => {
-            if (key.startsWith('pkui_shown_')) {
-              localStorage.removeItem(key);
-            }
-          });
-          console.log('🧹 Cleared auth cache on logout');
-        } catch (e) {
-          console.error('Failed to clear auth cache:', e);
-        }
+      // Clear cache on logout
+      completedAuthUsers.clear();
+      authRequestsInFlight.clear();
+      
+      try {
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.startsWith('pkui_shown_')) {
+            localStorage.removeItem(key);
+          }
+        });
+        console.log('🧹 Cleared auth cache on logout');
+      } catch (e) {
+        console.error('Failed to clear auth cache:', e);
       }
       return;
     }
 
+    console.log('✅ Privy ready and user authenticated', { ready, authenticated });
+
     const currentPrivyUserId = privyUser?.id || privyUser?.sub;
     
     if (!currentPrivyUserId) {
-      console.log('⚠️ No Privy user ID available');
-      setLoading(false);
-      setAuthReady(true);
+      console.log('⚠️ No Privy user ID available yet, waiting...');
+      setLoading(true);
+      setAuthReady(false);
       return;
     }
+
+    console.log('✅ Privy user ID available:', currentPrivyUserId);
 
     // Check cache first
     const hasSeenPrivateKey = localStorage.getItem(`pkui_shown_${currentPrivyUserId}`) === 'true';

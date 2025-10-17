@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { PrivyProvider } from '@privy-io/react-auth';
+import { PrivyProvider, usePrivy } from '@privy-io/react-auth';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import Header from './components/Header';
@@ -20,38 +20,53 @@ import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 
 function AppContent() {
+  const [initialLoad, setInitialLoad] = useState(true);
+  const { ready: privyReady } = usePrivy();
+  
   // CRITICAL: Get ALL the values from useAuth
   const { 
     user, 
-    loading, 
+    loading: authLoading, 
     showPrivateKeyUI, 
     privateKeyData, 
     closePrivateKeyUI 
   } = useAuth();
 
-  // Enhanced debug logging for Private Key UI
+  // Wait for initial animation AND Privy to be ready
+  useEffect(() => {
+    const randomDuration = Math.floor(Math.random() * (2200 - 1500 + 1)) + 1500;
+    const timer = setTimeout(() => {
+      console.log('🎬 Initial animation complete');
+      setInitialLoad(false);
+    }, randomDuration);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Enhanced debug logging
   useEffect(() => {
     console.log('🎯 App State:', {
+      initialLoad,
+      privyReady,
+      authLoading,
       hasUser: !!user,
       username: user?.username,
       showPrivateKeyUI,
-      hasPrivateKeyData: !!privateKeyData,
-      privateKeyData: privateKeyData ? {
-        hasPrivateKey: !!privateKeyData.privateKey,
-        privateKeyLength: privateKeyData.privateKey?.length,
-        hasWalletAddress: !!privateKeyData.walletAddress,
-        walletAddress: privateKeyData.walletAddress
-      } : null
+      hasPrivateKeyData: !!privateKeyData
     });
-    
-    if (showPrivateKeyUI && privateKeyData) {
-      console.log('✅ PRIVATE KEY UI IS SHOWING');
-    }
-  }, [user, showPrivateKeyUI, privateKeyData]);
+  }, [initialLoad, privyReady, authLoading, user, showPrivateKeyUI, privateKeyData]);
 
-  if (loading) {
+  // Show loading screen while: 
+  // 1. Initial animation is playing, OR
+  // 2. Privy is not ready yet, OR  
+  // 3. Auth is loading
+  const showLoading = initialLoad || !privyReady || authLoading;
+
+  if (showLoading) {
+    console.log('🔄 Showing loading screen:', { initialLoad, privyReady, authLoading });
     return <LoadingScreen />;
   }
+
+  console.log('✅ App fully loaded and ready');
 
   return (
     <>
@@ -86,47 +101,6 @@ function AppContent() {
 }
 
 export default function App() {
-  const [initialLoad, setInitialLoad] = useState(true);
-
-  useEffect(() => {
-    const randomDuration = Math.floor(Math.random() * (2200 - 1500 + 1)) + 1500;
-    const timer = setTimeout(() => setInitialLoad(false), randomDuration);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (initialLoad) {
-    return (
-      <PrivyProvider
-        appId="cmggw74r800rujm0cccr9s7np"
-        config={{
-          appearance: {
-            theme: {
-              colors: {
-                backgroundPrimary: '#0E0E0E',
-                backgroundSecondary: '#000000',
-                backgroundTertiary: '#1a1a1a',
-                textPrimary: '#ffffff',
-                textSecondary: '#b8b8b8',
-                accent: '#FFD43B',
-                buttonBackground: '#FFD43B',
-                buttonText: '#000000',
-              },
-            },
-            accentColor: '#FFD43B',
-            logo: '/logo.png',
-            showWalletLoginFirst: false,
-          },
-          loginMethods: ['email', 'google', 'twitter'],
-          embeddedWallets: {
-            createOnLogin: 'users-without-wallets',
-          },
-        }}
-      >
-        <LoadingScreen />
-      </PrivyProvider>
-    );
-  }
-
   return (
     <PrivyProvider
       appId="cmggw74r800rujm0cccr9s7np"
