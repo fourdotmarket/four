@@ -1,0 +1,46 @@
+{
+  "header": {
+    "trending": "Trending",
+    "publicMarket": "Public Market",
+    "resolved": "Resolved",
+    "signIn": "Sign In",
+    "deposit": "Deposit"
+  },
+  "deposit": {
+    "title": "Deposit BNB",
+    "description": "Deposit funds by sending BNB to this wallet",
+    "insufficientBalance": "You need at least {amount} BNB deposited to create a bet. Current balance: {balance} BNB",
+    "walletAddress": "Wallet Address",
+    "onlySend": "Only send BNB to this address.",
+    "warning": "Sending other tokens may result in permanent loss of funds."
+  },
+  "market": {
+    "title": "Prediction Markets",
+    "subtitle": "Create or challenge predictions.",
+    "createBet": "Create Bet",
+    "noMarkets": "No Active Markets",
+    "beFirst": "Be the first to create a prediction market",
+    "loadMore": "Load More"
+  },
+  "createBet": {
+    "title": "Create Bet",
+    "description": "Make a prediction. Challengers buy tickets. Winner takes the pot.",
+    "prediction": "Prediction",
+    "predictionPlaceholder": "What will happen? Be specific and clear...",
+    "stake": "Stake",
+    "expiresIn": "Expires In",
+    "advancedOptions": "Advanced Options",
+    "totalTickets": "Total Tickets",
+    "creating": "Creating Bet...",
+    "create": "Create Bet"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account and security settings",
+    "defaultLanguage": "Default Language",
+    "english": "English",
+    "chinese": "Chinese",
+    "languageDescription": "Choose your preferred language for the interface"
+  }
+}
+

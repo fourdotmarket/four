@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import './Market.css';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
+import { useBalance } from '../hooks/useBalance';
 import MarketCard from '../components/MarketCard';
 import { useMarkets } from '../hooks/useMarkets';
 import Notification from '../components/Notification';
+import DepositModal from '../components/DepositModal';
 
 const CONTRACT_ADDRESS = "0x1975B27384a4B2597Bc105C5CB37c2ee486957fF";
 const MIN_STAKE = 0.05;
@@ -14,9 +16,12 @@ const MAX_PREDICTION_LENGTH = 256;
 export default function Market() {
   const { user, authReady, getFreshToken } = useAuth();
   const { notification, showNotification, hideNotification } = useNotification();
+  const { balance } = useBalance(user?.wallet_address);
   const [page, setPage] = useState(1);
   const { markets, loading: marketsLoading, error: marketsError, hasMore } = useMarkets(page);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [depositMessage, setDepositMessage] = useState('');
   const [isClosing, setIsClosing] = useState(false);
   const [prediction, setPrediction] = useState('');
   const [stake, setStake] = useState('0.05');
@@ -25,7 +30,8 @@ export default function Market() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
-  const allowedChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,?!-';
+  // Allow English, Chinese, numbers, and common punctuation
+  const allowedChars = /^[\u4e00-\u9fa5a-zA-Z0-9\s.,?!-]+$/;
 
   // Map expiry to duration index
   const expiryToDuration = {
@@ -39,9 +45,11 @@ export default function Market() {
 
   const handlePredictionChange = (e) => {
     const value = e.target.value;
-    const filtered = value.split('').filter(char => allowedChars.includes(char)).join('');
-    if (filtered.length <= MAX_PREDICTION_LENGTH) {
-      setPrediction(filtered);
+    // Only allow if it matches the allowed pattern or if it's empty
+    if (value === '' || allowedChars.test(value)) {
+      if (value.length <= MAX_PREDICTION_LENGTH) {
+        setPrediction(value);
+      }
     }
   };
 
@@ -117,6 +125,14 @@ export default function Market() {
 
     if (!authReady) {
       showNotification('Authentication is still loading. Please wait a moment and try again.', 'warning');
+      return;
+    }
+
+    // Check if user has sufficient balance
+    if (balance !== null && balance < MIN_STAKE) {
+      setDepositMessage(`You need at least ${MIN_STAKE} BNB deposited to create a bet. Current balance: ${balance.toFixed(4)} BNB`);
+      setShowDepositModal(true);
+      handleClose();
       return;
     }
 
@@ -432,6 +448,18 @@ export default function Market() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Deposit Modal */}
+      {showDepositModal && user && user.wallet_address && (
+        <DepositModal 
+          walletAddress={user.wallet_address}
+          message={depositMessage}
+          onClose={() => {
+            setShowDepositModal(false);
+            setDepositMessage('');
+          }}
+        />
       )}
     </div>
   );

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../context/LanguageContext';
 import './Settings.css';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { user, getFreshToken } = useAuth();
+  const { language, changeLanguage } = useLanguage();
   const [privateKey, setPrivateKey] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -212,6 +214,56 @@ SECURITY WARNINGS:
                 <span>{error}</span>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Language Settings Section */}
+      <div className="settings-section">
+        <div className="settings-card">
+          <div className="settings-card-left">
+            <div className="settings-icon-header">
+              <svg className="settings-wallet-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              <h2 className="settings-card-title">DEFAULT LANGUAGE</h2>
+            </div>
+
+            <div className="settings-description">
+              <p>Choose your preferred language for the interface. The site will automatically detect your location on first visit.</p>
+            </div>
+          </div>
+
+          <div className="settings-card-right">
+            <div className="settings-language-options">
+              <button
+                className={`settings-language-btn ${language === 'en' ? 'active' : ''}`}
+                onClick={() => changeLanguage('en')}
+              >
+                <span className="language-flag">🇺🇸</span>
+                <span className="language-name">English</span>
+                {language === 'en' && (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                )}
+              </button>
+
+              <button
+                className={`settings-language-btn ${language === 'zh' ? 'active' : ''}`}
+                onClick={() => changeLanguage('zh')}
+              >
+                <span className="language-flag">🇨🇳</span>
+                <span className="language-name">中文 (Chinese)</span>
+                {language === 'zh' && (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './DepositModal.css';
 
-export default function DepositModal({ walletAddress, onClose }) {
+export default function DepositModal({ walletAddress, onClose, message }) {
   const [copied, setCopied] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
 
@@ -28,8 +28,8 @@ export default function DepositModal({ walletAddress, onClose }) {
         </button>
 
         <div className="deposit-modal-header">
-          <h2>Deposit BSC</h2>
-          <p>Deposit funds by sending BSC to this wallet</p>
+          <h2>Deposit BNB</h2>
+          <p>{message || 'Deposit funds by sending BNB to this wallet'}</p>
         </div>
 
         <div className="deposit-modal-content">
@@ -53,7 +53,7 @@ export default function DepositModal({ walletAddress, onClose }) {
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                 <line x1="12" y1="22.08" x2="12" y2="12"></line>
               </svg>
-              <span>BSC</span>
+              <span>BNB</span>
             </div>
 
             <div className="deposit-address-container">
@@ -86,7 +86,7 @@ export default function DepositModal({ walletAddress, onClose }) {
                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
               </svg>
               <div>
-                <strong>Only send BSC to this address.</strong>
+                <strong>Only send BNB to this address.</strong>
                 <br />
                 Sending other tokens may result in permanent loss of funds.
               </div>

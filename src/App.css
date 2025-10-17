@@ -177,3 +177,52 @@ input[class*="privy"]:focus {
   background: var(--color-yellow-primary);
   box-shadow: var(--glow-yellow);
 }
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  body {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+  }
+
+  * {
+    -webkit-tap-highlight-color: rgba(255, 212, 59, 0.2);
+  }
+
+  button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
+  }
+
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+
+  /* Adjust scrollbar for mobile */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  /* Reduce grid size on mobile */
+  body::before {
+    background-size: 30px 30px;
+  }
+}
+
+/* Extra small devices (phones in portrait) */
+@media (max-width: 480px) {
+  body::before {
+    background-size: 20px 20px;
+    opacity: 0.5;
+  }
+
+  /* Hide scrollbar on very small devices */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}

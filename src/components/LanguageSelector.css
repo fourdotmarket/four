@@ -1,0 +1,239 @@
+/* Language Selector - Cyberpunk Theme */
+.language-selector-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: overlayFadeIn 0.2s ease forwards;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.language-selector {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  border: 1px solid #2a2a2a;
+  width: 90%;
+  max-width: 400px;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  position: relative;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.language-selector::before,
+.language-selector::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #FFD43B;
+  z-index: 1;
+}
+
+.language-selector::before {
+  top: -1px;
+  left: -1px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.language-selector::after {
+  bottom: -1px;
+  right: -1px;
+  border-left: none;
+  border-top: none;
+}
+
+.language-selector-header {
+  padding: 24px;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.language-selector-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #FFD43B 50%, 
+    transparent 100%
+  );
+  opacity: 0.3;
+}
+
+.language-selector-header h3 {
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: #FFD43B;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.language-selector-close {
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #808080;
+  transition: all 0.2s ease;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+
+.language-selector-close:hover {
+  border-color: #FFD43B;
+  color: #FFD43B;
+}
+
+.language-selector-options {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #2a2a2a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  width: 100%;
+  text-align: left;
+}
+
+.language-option:hover {
+  background: rgba(255, 212, 59, 0.08);
+  border-color: rgba(255, 212, 59, 0.3);
+}
+
+.language-option.active {
+  background: rgba(255, 212, 59, 0.15);
+  border-color: rgba(255, 212, 59, 0.5);
+}
+
+.language-option-flag {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.language-option-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.language-option-name {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.language-option-native {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #808080;
+  letter-spacing: 0.5px;
+}
+
+.language-option-check {
+  color: #FFD43B;
+  flex-shrink: 0;
+}
+
+/* Touch-friendly for mobile devices */
+@media (hover: none) and (pointer: coarse) {
+  .language-option {
+    min-height: 60px;
+  }
+
+  .language-selector-close {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .language-selector {
+    width: 95%;
+    max-width: none;
+    margin: 0 16px;
+  }
+
+  .language-selector-header {
+    padding: 20px;
+  }
+
+  .language-selector-header h3 {
+    font-size: 16px;
+  }
+
+  .language-selector-options {
+    padding: 12px;
+  }
+
+  .language-option {
+    padding: 14px;
+  }
+
+  .language-option-flag {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .language-selector {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .language-option {
+    padding: 16px 12px;
+  }
+
+  .language-option-flag {
+    font-size: 26px;
+  }
+}
+

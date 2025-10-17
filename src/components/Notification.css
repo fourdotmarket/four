@@ -115,3 +115,26 @@
   }
 }
 
+@media (max-width: 480px) {
+  .notification {
+    top: 70px;
+    right: 12px;
+    left: 12px;
+    padding: 14px 16px;
+  }
+
+  .notification-message {
+    font-size: 12px;
+  }
+
+  .notification-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .notification-close {
+    width: 24px;
+    height: 24px;
+  }
+}
+

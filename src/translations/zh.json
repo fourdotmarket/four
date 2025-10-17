@@ -1,0 +1,46 @@
+{
+  "header": {
+    "trending": "热门",
+    "publicMarket": "公共市场",
+    "resolved": "已解决",
+    "signIn": "登录",
+    "deposit": "存款"
+  },
+  "deposit": {
+    "title": "存入 BNB",
+    "description": "通过向此钱包发送 BNB 来存入资金",
+    "insufficientBalance": "您需要至少 {amount} BNB 才能创建赌注。当前余额：{balance} BNB",
+    "walletAddress": "钱包地址",
+    "onlySend": "仅向此地址发送 BNB。",
+    "warning": "发送其他代币可能会导致资金永久损失。"
+  },
+  "market": {
+    "title": "预测市场",
+    "subtitle": "创建或挑战预测。",
+    "createBet": "创建赌注",
+    "noMarkets": "没有活跃市场",
+    "beFirst": "成为第一个创建预测市场的人",
+    "loadMore": "加载更多"
+  },
+  "createBet": {
+    "title": "创建赌注",
+    "description": "做出预测。挑战者购买票。赢家获得奖池。",
+    "prediction": "预测",
+    "predictionPlaceholder": "会发生什么？请具体明确...",
+    "stake": "赌注",
+    "expiresIn": "过期时间",
+    "advancedOptions": "高级选项",
+    "totalTickets": "总票数",
+    "creating": "正在创建赌注...",
+    "create": "创建赌注"
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "管理您的帐户和安全设置",
+    "defaultLanguage": "默认语言",
+    "english": "英语",
+    "chinese": "中文",
+    "languageDescription": "选择界面的首选语言"
+  }
+}
+

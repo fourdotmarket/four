@@ -290,6 +290,19 @@
   color: var(--color-yellow-primary);
 }
 
+/* Touch-friendly */
+@media (hover: none) and (pointer: coarse) {
+  .deposit-modal-close {
+    width: 44px;
+    height: 44px;
+  }
+
+  .deposit-copy-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .deposit-modal {

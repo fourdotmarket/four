@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import { PrivyProvider } from '@privy-io/react-auth';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { LanguageProvider } from './context/LanguageContext';
 import Header from './components/Header';
 import SubHeader from './components/SubHeader';
 import LoadingScreen from './components/LoadingScreen';
@@ -153,9 +154,11 @@ export default function App() {
         },
       }}
     >
-      <Router>
-        <AppContent />
-      </Router>
+      <LanguageProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </LanguageProvider>
     </PrivyProvider>
   );
 }

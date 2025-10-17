@@ -7,6 +7,7 @@ import { useBalance } from '../hooks/useBalance';
 import DepositModal from './DepositModal';
 import ProfileDropdown from './ProfileDropdown';
 import Notification from './Notification';
+import LanguageSelector from './LanguageSelector';
 import './Header.css';
 
 export default function Header() {
@@ -18,6 +19,7 @@ export default function Header() {
   const location = useLocation();
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const profileRef = useRef(null);
 
   // REMOVED: Debug console.log that was causing spam
@@ -152,7 +154,7 @@ export default function Header() {
           
           <span className="header-separator">|</span>
           
-          <button className="header-globe">
+          <button className="header-globe" onClick={() => setShowLanguageSelector(true)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/>
               <line x1="2" y1="12" x2="22" y2="12"/>
@@ -167,6 +169,10 @@ export default function Header() {
           walletAddress={user.wallet_address}
           onClose={() => setShowDepositModal(false)}
         />
+      )}
+
+      {showLanguageSelector && (
+        <LanguageSelector onClose={() => setShowLanguageSelector(false)} />
       )}
     </>
   );
