@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
+import { useLanguage } from '../context/LanguageContext';
 import { useTransactions } from '../hooks/useTransactions';
 import MarketCard from '../components/MarketCard';
 import Notification from '../components/Notification';
@@ -23,6 +24,7 @@ export default function Trending() {
   const navigate = useNavigate();
   const { user, authReady, getFreshToken } = useAuth();
   const { notification, showNotification, hideNotification } = useNotification();
+  const { t } = useLanguage();
   const [topMarket, setTopMarket] = useState(null);
   const [topMarkets, setTopMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -385,8 +387,8 @@ export default function Trending() {
       {/* Header */}
       <div className="trending-header">
         <div className="trending-title-section">
-          <h1 className="trending-title">TRENDING NOW</h1>
-          <p className="trending-subtitle">Most popular prediction.</p>
+          <h1 className="trending-title">{t('trending.title')}</h1>
+          <p className="trending-subtitle">{t('trending.subtitle')}</p>
         </div>
       </div>
 
@@ -697,7 +699,7 @@ export default function Trending() {
       {/* Top 4 Markets by Recent Activity */}
       <div className="trending-markets-section">
         <div className="trending-markets-header">
-          <h2 className="trending-markets-title">TOP MARKETS BY ACTIVITY</h2>
+          <h2 className="trending-markets-title">{t('trending.otherTrending')}</h2>
           <p className="trending-markets-subtitle">Most active in the past 3 hours.</p>
         </div>
         

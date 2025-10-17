@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../context/LanguageContext';
 import './Winnings.css';
 
 const supabase = createClient(
@@ -12,6 +13,7 @@ const supabase = createClient(
 export default function Winnings() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [winnings, setWinnings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -137,7 +139,7 @@ export default function Winnings() {
       </button>
 
       <div className="winnings-header">
-        <h1 className="winnings-title">MY WINNINGS</h1>
+          <h1 className="winnings-title">{t('winnings.title')}</h1>
         <p className="winnings-subtitle">Track your earnings from resolved markets</p>
       </div>
 

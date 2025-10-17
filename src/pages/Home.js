@@ -31,30 +31,6 @@ export default function Home() {
       ),
       path: '/market',
     },
-    {
-      id: 'deposit',
-      label: t('home.deposit'),
-      icon: (
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-        </svg>
-      ),
-      path: '/deposit',
-      requiresAuth: true,
-    },
-    {
-      id: 'settings',
-      label: t('home.settings'),
-      icon: (
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M12 1v6m0 6v6m0-6h6m-6 0H6"></path>
-          <path d="M19.07 4.93l-4.24 4.24m0 5.66l4.24 4.24M4.93 4.93l4.24 4.24m0 5.66l-4.24 4.24"></path>
-        </svg>
-      ),
-      path: '/settings',
-      requiresAuth: true,
-    },
   ];
 
   return (

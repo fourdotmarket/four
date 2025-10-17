@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { useLanguage } from '../context/LanguageContext';
 import MarketCard from '../components/MarketCard';
 import './Resolved.css';
 
@@ -11,6 +12,7 @@ const supabase = createClient(
 const ITEMS_PER_PAGE = 30;
 
 export default function Resolved() {
+  const { t } = useLanguage();
   const [markets, setMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -105,7 +107,7 @@ export default function Resolved() {
     <div className="resolved-page">
       <div className="resolved-header">
         <div className="resolved-title-section">
-          <h1 className="resolved-title">RESOLVED MARKETS</h1>
+          <h1 className="resolved-title">{t('resolved.title')}</h1>
           <p className="resolved-subtitle">Completed, expired, and awaiting resolution markets</p>
         </div>
       </div>
@@ -134,7 +136,7 @@ export default function Resolved() {
             <line x1="3" y1="9" x2="21" y2="9"></line>
             <line x1="9" y1="21" x2="9" y2="9"></line>
           </svg>
-          <h3>NO RESOLVED MARKETS</h3>
+          <h3>{t('resolved.noResolved')}</h3>
           <p>Completed markets will appear here</p>
         </div>
       ) : (

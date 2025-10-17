@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import './DepositModal.css';
 
 export default function DepositModal({ walletAddress, onClose, message }) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
 
@@ -28,8 +30,8 @@ export default function DepositModal({ walletAddress, onClose, message }) {
         </button>
 
         <div className="deposit-modal-header">
-          <h2>Deposit BNB</h2>
-          <p>{message || 'Deposit funds by sending BNB to this wallet'}</p>
+          <h2>{t('deposit.title')}</h2>
+          <p>{message || t('deposit.description')}</p>
         </div>
 
         <div className="deposit-modal-content">
@@ -57,7 +59,7 @@ export default function DepositModal({ walletAddress, onClose, message }) {
             </div>
 
             <div className="deposit-address-container">
-              <div className="deposit-address-label">Wallet Address</div>
+              <div className="deposit-address-label">{t('deposit.walletAddress')}</div>
               <div className="deposit-address-box">
                 <span className="deposit-address-text">{walletAddress}</span>
                 <button 
@@ -86,9 +88,9 @@ export default function DepositModal({ walletAddress, onClose, message }) {
                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
               </svg>
               <div>
-                <strong>Only send BNB to this address.</strong>
+                <strong>{t('deposit.onlySend')}</strong>
                 <br />
-                Sending other tokens may result in permanent loss of funds.
+                {t('deposit.warning')}
               </div>
             </div>
           </div>

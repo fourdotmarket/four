@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../context/LanguageContext';
 import './Position.css';
 
 const supabase = createClient(
@@ -12,6 +13,7 @@ const supabase = createClient(
 export default function Position() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [allPositions, setAllPositions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -163,7 +165,7 @@ export default function Position() {
         </button>
 
         <div className="position-header">
-          <h1 className="position-title">MY POSITIONS</h1>
+          <h1 className="position-title">{t('positions.title')}</h1>
           <p className="position-subtitle">Track your ticket holdings across all markets</p>
         </div>
 
@@ -190,7 +192,7 @@ export default function Position() {
         </button>
 
         <div className="position-header">
-          <h1 className="position-title">MY POSITIONS</h1>
+          <h1 className="position-title">{t('positions.title')}</h1>
           <p className="position-subtitle">Track your ticket holdings across all markets</p>
         </div>
 
@@ -214,7 +216,7 @@ export default function Position() {
         </button>
 
         <div className="position-header">
-          <h1 className="position-title">MY POSITIONS</h1>
+          <h1 className="position-title">{t('positions.title')}</h1>
           <p className="position-subtitle">Track your ticket holdings across all markets</p>
         </div>
 
@@ -237,7 +239,7 @@ export default function Position() {
         </button>
 
         <div className="position-header">
-          <h1 className="position-title">MY POSITIONS</h1>
+          <h1 className="position-title">{t('positions.title')}</h1>
           <p className="position-subtitle">Track your ticket holdings across all markets</p>
         </div>
 

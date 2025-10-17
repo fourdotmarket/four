@@ -110,15 +110,18 @@ export function useAuth() {
     
     if (completedAuthUsers.has(currentPrivyUserId) && hasSeenPrivateKey) {
       const cachedData = completedAuthUsers.get(currentPrivyUserId);
+      console.log('✅ Loading from cache for user:', currentPrivyUserId);
       setUser(cachedData.user);
       setAccessToken(cachedData.token);
       setLoading(false);
       setAuthReady(true);
+      console.log('✅ Auth ready from cache');
       return;
     }
 
     // Check if request is already in flight for this user
     if (authRequestsInFlight.has(currentPrivyUserId)) {
+      console.log('⏸️  Auth request already in flight, waiting...');
       return;
     }
 
@@ -173,10 +176,11 @@ export function useAuth() {
           hasWallet: !!userData.wallet_address 
         });
 
-        // Set user data first
+        // Set user data immediately - this is critical for components that check user state
         setUser(userData);
         setAccessToken(token);
         setLoading(false);
+        // Set authReady to true immediately so components can proceed
         setAuthReady(true);
 
         // Check if this is a new user who hasn't seen their private key yet
