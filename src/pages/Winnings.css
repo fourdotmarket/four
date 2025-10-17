@@ -1,6 +1,6 @@
-/* Winnings Page - Cyberpunk Theme */
+/* Winnings Page - Cyberpunk Theme with MarketCards */
 .winnings-page {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 48px;
   min-height: 100vh;
@@ -143,15 +143,26 @@
   line-height: 1.6;
 }
 
-/* Total Card */
+/* Summary Cards */
+.winnings-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
 .winnings-total-card {
   background: linear-gradient(135deg, rgba(255, 212, 59, 0.1) 0%, rgba(255, 212, 59, 0.02) 100%);
   border: 2px solid #FFD43B;
   padding: 32px;
-  margin-bottom: 40px;
   text-align: center;
   clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
   position: relative;
+}
+
+.winnings-total-card.refunds {
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.02) 100%);
+  border-color: #2196f3;
 }
 
 .winnings-total-card::before {
@@ -163,6 +174,10 @@
   bottom: 0;
   background: linear-gradient(135deg, rgba(255, 212, 59, 0.05) 0%, transparent 100%);
   pointer-events: none;
+}
+
+.winnings-total-card.refunds::before {
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.05) 0%, transparent 100%);
 }
 
 .winnings-total-label {
@@ -177,11 +192,15 @@
 
 .winnings-total-amount {
   font-family: 'Courier New', monospace;
-  font-size: 48px;
+  font-size: 40px;
   font-weight: 700;
   color: #FFD43B;
   margin-bottom: 8px;
   letter-spacing: 2px;
+}
+
+.winnings-total-card.refunds .winnings-total-amount {
+  color: #2196f3;
 }
 
 .winnings-total-count {
@@ -191,140 +210,142 @@
   letter-spacing: 1px;
 }
 
-/* Winnings List */
-.winnings-list {
+/* Section Titles */
+.winnings-section {
+  margin-bottom: 48px;
+}
+
+.winnings-section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: #FFD43B;
+  margin: 0 0 24px 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #2a2a2a;
+}
+
+.winnings-section-title.refund {
+  color: #2196f3;
+}
+
+.winnings-section-title svg {
+  color: #FFD43B;
+  flex-shrink: 0;
+}
+
+.winnings-section-title.refund svg {
+  color: #2196f3;
+}
+
+/* Market Grid with Overlays */
+.winnings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
 }
 
-.winnings-card {
-  background: #0a0a0a;
-  border: 1px solid #2a2a2a;
-  padding: 24px;
-  cursor: pointer;
-  transition: all 0.3s;
-  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+.winnings-market-wrapper {
+  position: relative;
 }
 
-.winnings-card:hover {
-  border-color: #FFD43B;
-  transform: translateY(-2px);
-}
-
-.winnings-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.winnings-type-badge {
-  padding: 6px 12px;
-  font-family: 'Courier New', monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
-}
-
-.winnings-type-badge.maker {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
-  border: 1px solid #4caf50;
-}
-
-.winnings-type-badge.challenger {
-  background: rgba(255, 152, 0, 0.2);
-  color: #ff9800;
-  border: 1px solid #ff9800;
-}
-
-.winnings-market-id {
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  font-weight: 700;
-  color: #FFD43B;
-  letter-spacing: 1px;
-}
-
-.winnings-card-question {
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #ffffff;
-  margin-bottom: 20px;
-  min-height: 44px;
-}
-
-.winnings-card-details {
+.winnings-claim-overlay {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%);
+  border: 2px solid #FFD43B;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
-  background: rgba(255, 212, 59, 0.03);
-  border-left: 2px solid #FFD43B;
-  margin-bottom: 16px;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  z-index: 10;
 }
 
-.winnings-detail {
+.winnings-claim-overlay.refund {
+  border-color: #2196f3;
+}
+
+.winnings-amount-display {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 4px;
   align-items: center;
 }
 
-.winnings-detail-label {
+.winnings-amount-label {
   font-family: 'Courier New', monospace;
   font-size: 10px;
   font-weight: 700;
   color: #808080;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
 }
 
-.winnings-detail-value {
+.winnings-amount-value {
   font-family: 'Courier New', monospace;
-  font-size: 13px;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.winnings-detail-value.winnings-amount {
+  font-size: 20px;
+  font-weight: 700;
   color: #FFD43B;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.winnings-resolution {
-  padding: 16px;
-  background: #000000;
-  border: 1px solid #2a2a2a;
-}
-
-.winnings-resolution-label {
-  font-family: 'Courier New', monospace;
-  font-size: 10px;
-  font-weight: 700;
-  color: #808080;
   letter-spacing: 1px;
-  text-transform: uppercase;
-  display: block;
-  margin-bottom: 8px;
 }
 
-.winnings-resolution p {
+.winnings-claim-overlay.refund .winnings-amount-value {
+  color: #2196f3;
+}
+
+.winnings-claim-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #FFD43B;
+  border: none;
+  color: #000000;
+  padding: 12px 20px;
   font-family: 'Courier New', monospace;
   font-size: 12px;
-  line-height: 1.6;
-  color: #cccccc;
-  margin: 0;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  width: 100%;
+}
+
+.winnings-claim-btn.refund {
+  background: #2196f3;
+}
+
+.winnings-claim-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 212, 59, 0.4);
+}
+
+.winnings-claim-btn.refund:hover {
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+.winnings-claim-btn:active {
+  transform: scale(0.98);
+}
+
+.winnings-claim-btn svg {
+  flex-shrink: 0;
 }
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .winnings-list {
-    grid-template-columns: 1fr;
+  .winnings-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
 }
 
@@ -337,11 +358,35 @@
     font-size: 24px;
   }
 
-  .winnings-total-amount {
-    font-size: 36px;
+  .winnings-summary {
+    grid-template-columns: 1fr;
   }
 
-  .winnings-list {
-    gap: 16px;
+  .winnings-total-amount {
+    font-size: 32px;
+  }
+
+  .winnings-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .winnings-section-title {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .winnings-total-amount {
+    font-size: 28px;
+  }
+
+  .winnings-amount-value {
+    font-size: 18px;
+  }
+
+  .winnings-claim-btn {
+    font-size: 11px;
+    padding: 10px 16px;
   }
 }

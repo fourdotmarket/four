@@ -36,10 +36,10 @@ export default function Resolved() {
         (payload) => {
           const currentTimestamp = Math.floor(Date.now() / 1000);
           const isExpired = payload.new.deadline < currentTimestamp;
-          const isResolved = payload.new.status === 'resolved' || payload.new.status === 'awaiting_resolution';
+          const isResolved = payload.new.status === 'resolved' || payload.new.status === 'awaiting_resolution' || payload.new.status === 'cancelled';
           
           if (isResolved || isExpired) {
-            console.log('🔄 Market updated (resolved/expired):', payload.new);
+            console.log('🔄 Market updated (resolved/expired/cancelled):', payload.new);
             fetchResolvedMarkets();
           }
         }
@@ -80,7 +80,7 @@ export default function Resolved() {
           created_at,
           updated_at
         `, { count: 'exact' })
-        .or(`status.in.(resolved,awaiting_resolution),deadline.lt.${currentTimestamp}`)
+        .or(`status.in.(resolved,awaiting_resolution,cancelled),deadline.lt.${currentTimestamp}`)
         .order('updated_at', { ascending: false })
         .range(from, to);
 
