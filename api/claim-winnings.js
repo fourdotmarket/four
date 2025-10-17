@@ -1,15 +1,15 @@
 // API Endpoint: Claim Winnings from Resolved Markets
-const { ethers } = require('ethers');
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
+import { ethers } from 'ethers';
+import { verifyAuth, validateInput, checkRateLimit, logAudit } from './auth-middleware';
 
-// Initialize Supabase
 const supabase = createClient(
-  process.env.SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Import auth middleware
-const { authenticateToken } = require('./auth-middleware');
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || "0x8dDbbBEAc546B4AeF8DFe8edd0084eF19B9077b6";
+const BSC_RPC_URL = process.env.BSC_RPC_URL || "https://bsc-dataseed.binance.org/";
 
 // Contract ABI - only the functions we need
 const CONTRACT_ABI = [
@@ -20,92 +20,140 @@ const CONTRACT_ABI = [
   "event WinningsClaimed(uint256 indexed marketId, address indexed claimer, uint256 amount)"
 ];
 
-module.exports = async (req, res) => {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+// Allowed origins
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://four-lovat-mu.vercel.app',
+  'https://four.market'
+];
+
+export default async function handler(req, res) {
+  // Strict CORS
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  let authenticatedUser = null;
+  let auditLog = {
+    endpoint: 'claim-winnings',
+    timestamp: new Date().toISOString(),
+    ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    success: false
+  };
+
   try {
-    // Authenticate user
-    const authenticatedUser = authenticateToken(req);
-    if (!authenticatedUser) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    // 1. VERIFY JWT TOKEN
+    try {
+      authenticatedUser = await verifyAuth(req.headers.authorization);
+      auditLog.user_id = authenticatedUser.user_id;
+      auditLog.wallet = authenticatedUser.wallet_address;
+    } catch (authError) {
+      auditLog.error = 'Authentication failed';
+      await logAudit(auditLog);
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        details: 'Please sign in to claim winnings'
+      });
     }
 
-    const { marketId } = req.body;
+    // 2. RATE LIMITING
+    const rateLimit = checkRateLimit(authenticatedUser.user_id, 3, 60000);
+    if (!rateLimit.allowed) {
+      auditLog.error = 'Rate limit exceeded';
+      await logAudit(auditLog);
+      return res.status(429).json({ 
+        error: 'Too many requests',
+        details: `Please wait ${rateLimit.resetIn} seconds before trying again`
+      });
+    }
 
-    if (!marketId && marketId !== 0) {
-      return res.status(400).json({ error: 'Market ID is required' });
+    // 3. VALIDATE INPUT
+    const { marketId } = req.body;
+    
+    const validationErrors = validateInput(req.body, {
+      marketId: { 
+        required: true, 
+        type: 'number',
+        min: 0
+      }
+    });
+
+    if (validationErrors.length > 0) {
+      auditLog.error = validationErrors.join(', ');
+      await logAudit(auditLog);
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: validationErrors
+      });
     }
 
     console.log(`\n🎉 Claim Winnings Request`);
     console.log(`User: ${authenticatedUser.username} (${authenticatedUser.wallet_address})`);
     console.log(`Market ID: ${marketId}`);
 
-    // Get user's private key securely
-    const { data: keyData, error: keyError } = await supabase
-      .from('user_keys')
-      .select('encrypted_private_key')
-      .eq('user_id', authenticatedUser.user_id)
-      .single();
+    // 4. GET USER'S PRIVATE KEY
+    const privateKey = authenticatedUser.wallet_private_key;
 
-    if (keyError || !keyData) {
-      console.error('❌ Private key not found:', keyError);
-      return res.status(404).json({ error: 'Private key not found' });
+    if (!privateKey) {
+      auditLog.error = 'Private key not found';
+      await logAudit(auditLog);
+      return res.status(404).json({ error: 'Wallet not configured' });
     }
 
-    const privateKey = keyData.encrypted_private_key;
-
-    // Validate private key format
-    if (!privateKey.startsWith('0x')) {
-      return res.status(400).json({ error: 'Invalid private key format' });
-    }
-
-    // Connect to BSC
+    // 5. CONNECT TO BSC
     console.log('🔧 Connecting to BSC network...');
-    const provider = new ethers.JsonRpcProvider(process.env.BSC_RPC_URL);
+    const provider = new ethers.JsonRpcProvider(BSC_RPC_URL);
     const wallet = new ethers.Wallet(privateKey, provider);
-    const contract = new ethers.Contract(process.env.CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
 
     // Verify wallet address matches authenticated user
     if (wallet.address.toLowerCase() !== authenticatedUser.wallet_address.toLowerCase()) {
       console.error('❌ Wallet address mismatch!');
+      auditLog.error = 'Wallet address mismatch';
+      await logAudit(auditLog);
       return res.status(403).json({ error: 'Wallet address mismatch' });
     }
 
-    // Get market details from blockchain
+    // 6. GET MARKET DETAILS FROM BLOCKCHAIN
     console.log(`📊 Fetching Market #${marketId} from blockchain...`);
     const market = await contract.markets(marketId);
 
-    // Check if market is resolved
+    // Check if market is resolved (status = 1)
     if (market.status !== 1n) {
+      auditLog.error = 'Market not resolved';
+      await logAudit(auditLog);
       return res.status(400).json({ error: 'Market has not been resolved yet' });
     }
 
-    // Get player's tickets
+    // 7. GET PLAYER'S TICKETS
     const tickets = await contract.ticketsBought(marketId, wallet.address);
     console.log(`🎫 User's Tickets: ${tickets.toString()}`);
 
-    // Check if already claimed
+    // 8. CHECK IF ALREADY CLAIMED
     const hasClaimed = await contract.getUserHasClaimed(marketId, wallet.address);
     if (hasClaimed) {
+      auditLog.error = 'Already claimed';
+      await logAudit(auditLog);
       return res.status(400).json({ error: 'You have already claimed your winnings' });
     }
 
-    // Determine if player is eligible to claim
+    // 9. DETERMINE ELIGIBILITY
     const isMarketMaker = wallet.address.toLowerCase() === market.marketMaker.toLowerCase();
 
     if (market.outcome && !isMarketMaker) {
+      auditLog.error = 'Not eligible - maker won';
+      await logAudit(auditLog);
       return res.status(400).json({ 
         error: 'Market Maker won this market. You cannot claim.',
         details: 'Challengers did not win this time.'
@@ -113,14 +161,18 @@ module.exports = async (req, res) => {
     }
 
     if (!market.outcome && tickets === 0n) {
+      auditLog.error = 'No tickets purchased';
+      await logAudit(auditLog);
       return res.status(400).json({ error: 'You did not purchase any tickets in this market' });
     }
 
     if (!market.outcome && isMarketMaker) {
+      auditLog.error = 'Not eligible - challengers won';
+      await logAudit(auditLog);
       return res.status(400).json({ error: 'Challengers won this market. Market maker cannot claim.' });
     }
 
-    // Calculate estimated payout
+    // 10. CALCULATE ESTIMATED PAYOUT
     let estimatedPayout;
     if (market.outcome && isMarketMaker) {
       estimatedPayout = market.totalPayout;
@@ -133,15 +185,16 @@ module.exports = async (req, res) => {
     // Get balance before
     const balanceBefore = await provider.getBalance(wallet.address);
 
-    // Claim winnings
+    // 11. CLAIM WINNINGS ON BLOCKCHAIN
     console.log('🎉 Claiming winnings on blockchain...');
     const tx = await contract.claimWinnings(marketId, {
       gasLimit: 300000n
     });
 
     console.log(`⏳ Transaction sent: ${tx.hash}`);
-    console.log('⏳ Waiting for confirmation...');
+    auditLog.tx_hash = tx.hash;
 
+    console.log('⏳ Waiting for confirmation...');
     const receipt = await tx.wait();
 
     // Get balance after
@@ -153,20 +206,26 @@ module.exports = async (req, res) => {
     console.log(`⛽ Gas Used: ${receipt.gasUsed.toString()}`);
 
     // Parse the WinningsClaimed event to get actual amount
-    const claimEvent = receipt.logs
-      .map(log => {
-        try {
-          return contract.interface.parseLog(log);
-        } catch {
-          return null;
-        }
-      })
-      .find(event => event && event.name === 'WinningsClaimed');
+    let actualAmount = estimatedPayout;
+    try {
+      const claimEvent = receipt.logs
+        .map(log => {
+          try {
+            return contract.interface.parseLog(log);
+          } catch {
+            return null;
+          }
+        })
+        .find(event => event && event.name === 'WinningsClaimed');
 
-    const actualAmount = claimEvent ? claimEvent.args.amount : estimatedPayout;
+      if (claimEvent) {
+        actualAmount = claimEvent.args.amount;
+      }
+    } catch (e) {
+      console.log('⚠️ Could not parse event, using estimated amount');
+    }
 
-    // Update database to mark as claimed (optional tracking)
-    // This is informational only - blockchain is source of truth
+    // 12. RECORD IN DATABASE (optional tracking)
     try {
       await supabase
         .from('winnings_claimed')
@@ -183,6 +242,12 @@ module.exports = async (req, res) => {
       // Don't fail the request - blockchain transaction succeeded
     }
 
+    // 13. SUCCESS AUDIT LOG
+    auditLog.success = true;
+    auditLog.market_id = marketId;
+    auditLog.amount = ethers.formatEther(actualAmount);
+    await logAudit(auditLog);
+
     // Return success response
     return res.status(200).json({
       success: true,
@@ -198,6 +263,9 @@ module.exports = async (req, res) => {
   } catch (error) {
     console.error('\n❌ Claim Winnings Error:', error);
     
+    auditLog.error = error.message;
+    await logAudit(auditLog);
+    
     // Parse error messages
     let errorMessage = 'Failed to claim winnings';
     if (error.reason) {
@@ -211,5 +279,4 @@ module.exports = async (req, res) => {
       details: error.message
     });
   }
-};
-
+}

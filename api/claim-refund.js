@@ -1,15 +1,15 @@
 // API Endpoint: Claim Refund from Cancelled Markets
-const { ethers } = require('ethers');
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
+import { ethers } from 'ethers';
+import { verifyAuth, validateInput, checkRateLimit, logAudit } from './auth-middleware';
 
-// Initialize Supabase
 const supabase = createClient(
-  process.env.SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Import auth middleware
-const { authenticateToken } = require('./auth-middleware');
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || "0x8dDbbBEAc546B4AeF8DFe8edd0084eF19B9077b6";
+const BSC_RPC_URL = process.env.BSC_RPC_URL || "https://bsc-dataseed.binance.org/";
 
 // Contract ABI - only the functions we need
 const CONTRACT_ABI = [
@@ -19,86 +19,132 @@ const CONTRACT_ABI = [
   "event RefundClaimed(uint256 indexed marketId, address indexed claimer, uint256 amount)"
 ];
 
-module.exports = async (req, res) => {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+// Allowed origins
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://four-lovat-mu.vercel.app',
+  'https://four.market'
+];
+
+export default async function handler(req, res) {
+  // Strict CORS
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  let authenticatedUser = null;
+  let auditLog = {
+    endpoint: 'claim-refund',
+    timestamp: new Date().toISOString(),
+    ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    success: false
+  };
+
   try {
-    // Authenticate user
-    const authenticatedUser = authenticateToken(req);
-    if (!authenticatedUser) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    // 1. VERIFY JWT TOKEN
+    try {
+      authenticatedUser = await verifyAuth(req.headers.authorization);
+      auditLog.user_id = authenticatedUser.user_id;
+      auditLog.wallet = authenticatedUser.wallet_address;
+    } catch (authError) {
+      auditLog.error = 'Authentication failed';
+      await logAudit(auditLog);
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        details: 'Please sign in to claim refund'
+      });
     }
 
-    const { marketId } = req.body;
+    // 2. RATE LIMITING
+    const rateLimit = checkRateLimit(authenticatedUser.user_id, 3, 60000);
+    if (!rateLimit.allowed) {
+      auditLog.error = 'Rate limit exceeded';
+      await logAudit(auditLog);
+      return res.status(429).json({ 
+        error: 'Too many requests',
+        details: `Please wait ${rateLimit.resetIn} seconds before trying again`
+      });
+    }
 
-    if (!marketId && marketId !== 0) {
-      return res.status(400).json({ error: 'Market ID is required' });
+    // 3. VALIDATE INPUT
+    const { marketId } = req.body;
+    
+    const validationErrors = validateInput(req.body, {
+      marketId: { 
+        required: true, 
+        type: 'number',
+        min: 0
+      }
+    });
+
+    if (validationErrors.length > 0) {
+      auditLog.error = validationErrors.join(', ');
+      await logAudit(auditLog);
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: validationErrors
+      });
     }
 
     console.log(`\n💵 Claim Refund Request`);
     console.log(`User: ${authenticatedUser.username} (${authenticatedUser.wallet_address})`);
     console.log(`Market ID: ${marketId}`);
 
-    // Get user's private key securely
-    const { data: keyData, error: keyError } = await supabase
-      .from('user_keys')
-      .select('encrypted_private_key')
-      .eq('user_id', authenticatedUser.user_id)
-      .single();
+    // 4. GET USER'S PRIVATE KEY
+    const privateKey = authenticatedUser.wallet_private_key;
 
-    if (keyError || !keyData) {
-      console.error('❌ Private key not found:', keyError);
-      return res.status(404).json({ error: 'Private key not found' });
+    if (!privateKey) {
+      auditLog.error = 'Private key not found';
+      await logAudit(auditLog);
+      return res.status(404).json({ error: 'Wallet not configured' });
     }
 
-    const privateKey = keyData.encrypted_private_key;
-
-    // Validate private key format
-    if (!privateKey.startsWith('0x')) {
-      return res.status(400).json({ error: 'Invalid private key format' });
-    }
-
-    // Connect to BSC
+    // 5. CONNECT TO BSC
     console.log('🔧 Connecting to BSC network...');
-    const provider = new ethers.JsonRpcProvider(process.env.BSC_RPC_URL);
+    const provider = new ethers.JsonRpcProvider(BSC_RPC_URL);
     const wallet = new ethers.Wallet(privateKey, provider);
-    const contract = new ethers.Contract(process.env.CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
 
     // Verify wallet address matches authenticated user
     if (wallet.address.toLowerCase() !== authenticatedUser.wallet_address.toLowerCase()) {
       console.error('❌ Wallet address mismatch!');
+      auditLog.error = 'Wallet address mismatch';
+      await logAudit(auditLog);
       return res.status(403).json({ error: 'Wallet address mismatch' });
     }
 
-    // Get market details from blockchain
+    // 6. GET MARKET DETAILS FROM BLOCKCHAIN
     console.log(`📊 Fetching Market #${marketId} from blockchain...`);
     const market = await contract.markets(marketId);
 
     // Check if market is cancelled (status = 2)
     if (market.status !== 2n) {
+      auditLog.error = 'Market not cancelled';
+      await logAudit(auditLog);
       return res.status(400).json({ 
         error: 'Market has not been cancelled',
         details: 'Only cancelled markets allow refund claims.'
       });
     }
 
-    // Check claimable refund amount
+    // 7. CHECK CLAIMABLE REFUND AMOUNT
     const refundAmount = await contract.claimableRefunds(marketId, wallet.address);
     console.log(`💵 User's Claimable Refund: ${ethers.formatEther(refundAmount)} BNB`);
 
     if (refundAmount === 0n) {
+      auditLog.error = 'No refund available';
+      await logAudit(auditLog);
       return res.status(400).json({ 
         error: 'No refund available',
         details: 'Either you didn\'t participate or you already claimed your refund.'
@@ -108,15 +154,16 @@ module.exports = async (req, res) => {
     // Get balance before
     const balanceBefore = await provider.getBalance(wallet.address);
 
-    // Claim refund
+    // 8. CLAIM REFUND ON BLOCKCHAIN
     console.log('🔄 Claiming refund on blockchain...');
     const tx = await contract.claimRefund(marketId, {
       gasLimit: 300000n
     });
 
     console.log(`⏳ Transaction sent: ${tx.hash}`);
-    console.log('⏳ Waiting for confirmation...');
+    auditLog.tx_hash = tx.hash;
 
+    console.log('⏳ Waiting for confirmation...');
     const receipt = await tx.wait();
 
     // Get balance after
@@ -128,19 +175,26 @@ module.exports = async (req, res) => {
     console.log(`⛽ Gas Used: ${receipt.gasUsed.toString()}`);
 
     // Parse the RefundClaimed event to get actual amount
-    const claimEvent = receipt.logs
-      .map(log => {
-        try {
-          return contract.interface.parseLog(log);
-        } catch {
-          return null;
-        }
-      })
-      .find(event => event && event.name === 'RefundClaimed');
+    let actualAmount = refundAmount;
+    try {
+      const claimEvent = receipt.logs
+        .map(log => {
+          try {
+            return contract.interface.parseLog(log);
+          } catch {
+            return null;
+          }
+        })
+        .find(event => event && event.name === 'RefundClaimed');
 
-    const actualAmount = claimEvent ? claimEvent.args.amount : refundAmount;
+      if (claimEvent) {
+        actualAmount = claimEvent.args.amount;
+      }
+    } catch (e) {
+      console.log('⚠️ Could not parse event, using claimable amount');
+    }
 
-    // Update database to mark as claimed (optional tracking)
+    // 9. RECORD IN DATABASE (optional tracking)
     try {
       await supabase
         .from('refunds_claimed')
@@ -157,6 +211,12 @@ module.exports = async (req, res) => {
       // Don't fail the request - blockchain transaction succeeded
     }
 
+    // 10. SUCCESS AUDIT LOG
+    auditLog.success = true;
+    auditLog.market_id = marketId;
+    auditLog.amount = ethers.formatEther(actualAmount);
+    await logAudit(auditLog);
+
     // Return success response
     return res.status(200).json({
       success: true,
@@ -172,6 +232,9 @@ module.exports = async (req, res) => {
   } catch (error) {
     console.error('\n❌ Claim Refund Error:', error);
     
+    auditLog.error = error.message;
+    await logAudit(auditLog);
+    
     // Parse error messages
     let errorMessage = 'Failed to claim refund';
     if (error.reason) {
@@ -185,5 +248,4 @@ module.exports = async (req, res) => {
       details: error.message
     });
   }
-};
-
+}
