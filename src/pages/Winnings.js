@@ -140,7 +140,7 @@ export default function Winnings() {
 
       <div className="winnings-header">
           <h1 className="winnings-title">{t('winnings.title')}</h1>
-        <p className="winnings-subtitle">Track your earnings from resolved markets</p>
+        <p className="winnings-subtitle">{t('winnings.subtitle')}</p>
       </div>
 
       {loading ? (
@@ -162,8 +162,8 @@ export default function Winnings() {
             <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
             <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
           </svg>
-          <h3>NO WINNINGS YET</h3>
-          <p>You haven't won any resolved markets yet. Keep participating!</p>
+          <h3>{t('winnings.noWinningsYet')}</h3>
+          <p>{t('winnings.haventWonYet')}</p>
         </div>
       ) : (
         <>

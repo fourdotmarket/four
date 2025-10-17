@@ -397,15 +397,15 @@ export default function Bet() {
   const getBuyDisabledReason = () => {
     // Smart auth check: only show "Authenticating" if no user AND authReady is false
     if (!user) {
-      if (!authReady) return 'Authenticating, please wait...';
-      return 'Sign in to buy challenge tickets';
+      if (!authReady) return t('bet.authenticating');
+      return t('bet.signInToBuy');
     }
-    if (isMarketMaker()) return 'Cannot buy challenge tickets in your own market';
-    if (market?.status === 'awaiting_resolution') return 'Market awaiting resolution';
-    if (market?.status === 'resolved') return 'Market has been resolved';
-    if (isMarketExpired()) return 'Market has expired';
-    if (ticketsRemaining === 0) return 'Sold out';
-    if (isBuying) return 'Processing...';
+    if (isMarketMaker()) return t('bet.cannotBuyOwn');
+    if (market?.status === 'awaiting_resolution') return t('bet.marketAwaiting');
+    if (market?.status === 'resolved') return t('bet.marketResolved');
+    if (isMarketExpired()) return t('bet.marketExpired');
+    if (ticketsRemaining === 0) return t('bet.soldOut');
+    if (isBuying) return t('bet.processing');
     return null;
   };
 
@@ -413,10 +413,10 @@ export default function Bet() {
     // Smart auth check: if user exists, proceed
     if (!user) {
       if (!authReady) {
-        showNotification('Authenticating, please wait...', 'warning');
+        showNotification(t('bet.authenticating'), 'warning');
         return;
       }
-      showNotification('Please sign in to buy tickets', 'error');
+      showNotification(t('bet.pleaseBuyTickets'), 'error');
       return;
     }
     
@@ -427,12 +427,12 @@ export default function Bet() {
     }
 
     if (ticketAmount < 1) {
-      showNotification('Please select at least 1 challenge ticket', 'error');
+      showNotification(t('bet.pleaseBuyAtLeast'), 'error');
       return;
     }
 
     if (ticketAmount > ticketsRemaining) {
-      showNotification(`Only ${ticketsRemaining} challenge tickets remaining`, 'warning');
+      showNotification(t('bet.onlyRemaining').replace('{count}', ticketsRemaining), 'warning');
       return;
     }
 
@@ -479,7 +479,7 @@ export default function Bet() {
       }
 
       if (!response.ok) {
-        throw new Error(result.error || result.details || 'Failed to buy challenge tickets');
+        throw new Error(result.error || result.details || t('bet.failedToBuy'));
       }
       
       console.log('✅ Tickets purchased!');
@@ -501,13 +501,13 @@ export default function Bet() {
       setTicketInputValue(ticketAmount.toString());
       
       if (error.message.includes('Authentication required')) {
-        showNotification('Please sign in again to buy challenge tickets', 'error');
+        showNotification(t('bet.signInAgainToBuy'), 'error');
       } else if (error.message.includes('Too many requests')) {
-        showNotification('You are making too many purchases. Please wait a moment and try again.', 'warning');
+        showNotification(t('bet.tooManyPurchases'), 'warning');
       } else if (error.message.includes('Cannot buy your own tickets')) {
-        showNotification('Market creators cannot purchase challenge tickets in their own markets', 'error');
+        showNotification(t('bet.cannotBuyOwnTickets'), 'error');
       } else {
-        showNotification(`Failed to buy challenge tickets: ${error.message}`, 'error');
+        showNotification(`${t('bet.failedToBuy')}: ${error.message}`, 'error');
       }
     }
   };
@@ -553,7 +553,7 @@ export default function Bet() {
     const ticketsRemaining = market.total_tickets - market.tickets_sold;
     if (ticketsRemaining > 0) {
       userDistribution.push({
-        name: 'Available',
+        name: t('bet.available'),
         value: ticketsRemaining,
         color: '#2a2a2a',
         isRemaining: true
@@ -632,7 +632,7 @@ export default function Bet() {
               <span className="bet-label">{t('bet.createdBy')}</span>
               <span className="bet-creator-name">
                 {market.creator_username}
-                {isMarketMaker() && <span style={{ marginLeft: '8px', fontSize: '10px', color: '#FFD43B' }}>(YOU)</span>}
+                {isMarketMaker() && <span style={{ marginLeft: '8px', fontSize: '10px', color: '#FFD43B' }}>{t('bet.you')}</span>}
               </span>
             </div>
             <div className="bet-stats-grid">
@@ -738,7 +738,7 @@ export default function Bet() {
                 ></div>
               </div>
               <div className="bet-progress-text">
-                <span>{holdersCount} {holdersCount === 1 ? 'HOLDER' : 'HOLDERS'} • {ticketsRemaining} LEFT</span>
+                <span>{holdersCount} {holdersCount === 1 ? t('bet.holder') : t('bet.holders')} • {ticketsRemaining} {t('bet.left')}</span>
                 <span>{progressPercentage.toFixed(0)}%</span>
               </div>
             </div>
@@ -886,7 +886,7 @@ export default function Bet() {
                 disabled={isBuyDisabled}
               >
                 <span>
-                  {buyDisabledReason || `BUY ${ticketAmount} CHALLENGE TICKET${ticketAmount > 1 ? 'S' : ''}`}
+                  {buyDisabledReason || (ticketAmount > 1 ? t('bet.buyChallengeTickets').replace('{count}', ticketAmount) : t('bet.buyChallengeTicket').replace('{count}', ticketAmount))}
                 </span>
                 {!isBuyDisabled && (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -986,7 +986,7 @@ export default function Bet() {
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
                   </svg>
-                  <p>Sign in to view your positions</p>
+                  <p>{t('bet.signInToView')}</p>
                 </div>
               ) : (
                 <AllUserPositions userId={user.user_id} />
