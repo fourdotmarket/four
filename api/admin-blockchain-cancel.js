@@ -10,7 +10,7 @@ const supabase = createClient(
 const BSC_RPC_URL = "https://bsc-dataseed.binance.org/";
 
 // CRITICAL: These are server-side environment variables - NEVER exposed to frontend
-const ADMIN_CONTRACT_ADDRESS = process.env.ADMIN_CONTRACT_ADDRESS || "0xB92C4e50589E643EbB26587b92e4D63EE92210d2";
+const ADMIN_CONTRACT_ADDRESS = process.env.ADMIN_CONTRACT_ADDRESS || "0x8dDbbBEAc546B4AeF8DFe8edd0084eF19B9077b6";
 const ADMIN_PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY;
 
 const CONTRACT_ABI = [

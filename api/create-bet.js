@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const CONTRACT_ADDRESS = "0xB92C4e50589E643EbB26587b92e4D63EE92210d2";
+const CONTRACT_ADDRESS = "0x8dDbbBEAc546B4AeF8DFe8edd0084eF19B9077b6";
 const BSC_RPC_URL = "https://bsc-dataseed.binance.org/";
 
 const CONTRACT_ABI = [

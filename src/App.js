@@ -17,7 +17,7 @@ import Bet from './pages/Bet';
 import Position from './pages/Position';
 import Winnings from './pages/Winnings';
 import Settings from './pages/Settings';
-import Admin from './pages/Admin';
+import SystemCore from './pages/a7k2m9p3x6q5w8n4';
 
 function AppContent() {
   const [initialLoad, setInitialLoad] = useState(true);
@@ -93,7 +93,7 @@ function AppContent() {
           <Route path="/winnings" element={<Winnings />} />
           <Route path="/settings" element={<Settings />} />
           {/* Admin route - random token-based access */}
-          <Route path="/admin/:token" element={<Admin />} />
+          <Route path="/admin/:token" element={<SystemCore />} />
         </Routes>
       </div>
     </>

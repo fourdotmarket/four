@@ -9,7 +9,7 @@ import { useMarkets } from '../hooks/useMarkets';
 import Notification from '../components/Notification';
 import DepositModal from '../components/DepositModal';
 
-const CONTRACT_ADDRESS = "0xB92C4e50589E643EbB26587b92e4D63EE92210d2";
+const CONTRACT_ADDRESS = "0x8dDbbBEAc546B4AeF8DFe8edd0084eF19B9077b6";
 const MIN_STAKE = 0.05;
 const MIN_PREDICTION_LENGTH = 50;
 const MAX_PREDICTION_LENGTH = 256;
