@@ -1,5 +1,5 @@
 // API Endpoint: Beautify Prediction using GROK AI (x.ai)
-import axios from 'axios';
+const axios = require('axios');
 
 // Rate limiting store (in-memory)
 const rateLimitStore = new Map();
@@ -52,7 +52,7 @@ const ALLOWED_ORIGINS = [
   'https://four.market'
 ];
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // CORS
   const origin = req.headers.origin;
   if (ALLOWED_ORIGINS.includes(origin)) {
@@ -216,4 +216,4 @@ export default async function handler(req, res) {
       message: error.response?.data?.error?.message || error.message
     });
   }
-}
+};
