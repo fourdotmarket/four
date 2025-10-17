@@ -84,8 +84,6 @@ REACT_APP_CONTRACT_ADDRESS=0x8dDbbBEAc546B4AeF8DFe8edd0084eF19B9077b6
 REACT_APP_BSC_RPC_URL=https://bsc-dataseed.binance.org/
 REACT_APP_CHAIN_ID=56
 
-# Admin (for admin operations only)
-ADMIN_PRIVATE_KEY=0x[your_admin_private_key]
 ```
 
 ### Development
@@ -224,16 +222,6 @@ function cancelMarket(uint256 _marketId) external onlyOwner;
 ## Documentation
 
 - [Whitepaper](https://four.market/whitepaper) - Technical documentation
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## Testing
 
