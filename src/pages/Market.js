@@ -170,10 +170,17 @@ export default function Market() {
 
       console.log('📥 AI Response:', response.data);
 
-      // Check if timeframe changed during request - skip if it did
+      // Check if timeframe changed during request - skip if it did and trigger new request
       if (timeframeAtRequest !== currentTimeframe) {
-        console.log('⏭️ Timeframe changed during AI generation - skipping result');
+        console.log('⏭️ Timeframe changed during AI generation - skipping result and re-triggering');
         setIsBeautifying(false);
+        
+        // Trigger new beautification with current timeframe
+        if (!rateLimited && text.trim().length >= 10) {
+          setTimeout(() => {
+            beautifyPrediction(text, currentTimeframe);
+          }, 100);
+        }
         return;
       }
 
@@ -216,10 +223,76 @@ export default function Market() {
   };
 
   const handleExpiryChange = (newExpiry) => {
+    const oldTimeframe = currentTimeframe;
     setExpiry(newExpiry);
     setCurrentTimeframe(newExpiry);
-    setShowBeautified(false); // Hide AI suggestion when timeframe changes
-    setAiDecided(false); // Reset AI decision
+    
+    // If user already accepted AI suggestion, update the prediction with new timeframe
+    if (aiDecided && prediction.trim().length >= 10) {
+      console.log(`⏰ Timeframe changed from ${oldTimeframe} to ${newExpiry}, updating prediction...`);
+      
+      // Extract the core prediction by removing timeframe references
+      let corePrediction = prediction;
+      
+      // Remove common timeframe patterns
+      const timeframePatterns = [
+        /\s+in\s+\d+\s+(hour|hours|day|days)\??$/i,
+        /\s+within\s+\d+\s+(hour|hours|day|days)\??$/i,
+        /\s+over\s+\d+\s+(hour|hours|day|days)\??$/i,
+        /\s+by\s+\d+\s+(hour|hours|day|days)\??$/i
+      ];
+      
+      for (const pattern of timeframePatterns) {
+        corePrediction = corePrediction.replace(pattern, '');
+      }
+      
+      // Re-trigger AI beautification with new timeframe
+      setShowBeautified(false);
+      setAiDecided(false); // Allow re-beautification
+      
+      if (!rateLimited) {
+        // Clear previous timer
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        
+        // Trigger beautification immediately with core prediction
+        debounceTimerRef.current = setTimeout(() => {
+          beautifyPrediction(corePrediction.trim(), newExpiry);
+        }, 300);
+      }
+    } 
+    // If AI suggestion is showing but user hasn't decided, re-trigger with new timeframe
+    else if (showBeautified && prediction.trim().length >= 10) {
+      console.log(`⏰ Re-triggering AI suggestion for new timeframe: ${newExpiry}`);
+      setShowBeautified(false);
+      
+      if (!rateLimited) {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        
+        debounceTimerRef.current = setTimeout(() => {
+          beautifyPrediction(prediction, newExpiry);
+        }, 300);
+      }
+    }
+    // If user is typing but hasn't gotten AI suggestion yet, just update timeframe
+    else {
+      setShowBeautified(false);
+      setAiDecided(false);
+      
+      // Re-trigger AI if prediction is long enough
+      if (prediction.trim().length >= 10 && !rateLimited) {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        
+        debounceTimerRef.current = setTimeout(() => {
+          beautifyPrediction(prediction, newExpiry);
+        }, 600);
+      }
+    }
   };
 
   // Cleanup timer on unmount
