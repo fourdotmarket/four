@@ -38,8 +38,8 @@ export default function Market() {
   const [twitterLink, setTwitterLink] = useState('');
   const debounceTimerRef = useRef(null);
 
-  // Allow English, Chinese, numbers, and common punctuation
-  const allowedChars = /^[\u4e00-\u9fa5a-zA-Z0-9\s.,?!-]+$/;
+  // Allow English, Chinese, numbers, and common punctuation (including $)
+  const allowedChars = /^[\u4e00-\u9fa5a-zA-Z0-9\s.,?!$-]+$/;
 
   // Map expiry to duration index
   const expiryToDuration = {
@@ -64,11 +64,11 @@ export default function Market() {
           clearTimeout(debounceTimerRef.current);
         }
         
-        // Set new timer for AI beautification (1 second after typing stops)
+        // Set new timer for AI beautification (0.35 seconds after typing stops)
         if (value.trim().length >= 10) {
           debounceTimerRef.current = setTimeout(() => {
             beautifyPrediction(value);
-          }, 1000);
+          }, 350);
         }
       }
     }

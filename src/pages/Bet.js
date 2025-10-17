@@ -264,11 +264,13 @@ export default function Bet() {
   const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('transactions');
+  const [activeTab, setActiveTab] = useState('analysis');
   const [ticketAmount, setTicketAmount] = useState(1);
   const [ticketInputValue, setTicketInputValue] = useState('1');
   const [isBuying, setIsBuying] = useState(false);
   const [buyStatus, setBuyStatus] = useState('');
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
 
   const { transactions, loading: txLoading } = useTransactions(market?.market_id);
   const { positions, totalTickets, totalSpent, loading: posLoading } = usePositions(user?.user_id, market?.market_id);
@@ -361,6 +363,8 @@ export default function Bet() {
           outcome,
           resolution_reason,
           banner_url,
+          twitter_link,
+          ai_analysis,
           created_at,
           updated_at
         `)
@@ -370,6 +374,7 @@ export default function Bet() {
       if (fetchError) throw fetchError;
 
       setMarket(data);
+      setAiAnalysis(data.ai_analysis);
       setError(null);
     } catch (err) {
       console.error('Error fetching market:', err);
@@ -378,6 +383,52 @@ export default function Bet() {
       setLoading(false);
     }
   };
+
+  // Trigger AI Analysis
+  const triggerAiAnalysis = async () => {
+    if (!market || aiAnalysis || analysisLoading) return;
+
+    try {
+      setAnalysisLoading(true);
+      console.log('🤖 Triggering AI analysis for market:', market.market_id);
+
+      const response = await fetch('/api/analyze-market', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          marketId: market.market_id,
+          question: market.question,
+          twitterLink: market.twitter_link
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.analysis) {
+        setAiAnalysis(data.analysis);
+        console.log('✅ AI analysis received:', data.analysis);
+      } else if (data.skipped) {
+        console.log('⏭️ Analysis skipped for this market');
+        setAiAnalysis('Analysis not available for this market type.');
+      }
+    } catch (error) {
+      console.error('❌ Error triggering AI analysis:', error);
+      setAiAnalysis('Failed to generate analysis.');
+    } finally {
+      setAnalysisLoading(false);
+    }
+  };
+
+  // Trigger AI analysis 1 second after market loads
+  useEffect(() => {
+    if (market && !aiAnalysis && !analysisLoading) {
+      const timer = setTimeout(() => {
+        triggerAiAnalysis();
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [market]);
 
   const handleBack = () => {
     navigate('/market');
@@ -635,6 +686,26 @@ export default function Bet() {
                 {isMarketMaker() && <span style={{ marginLeft: '8px', fontSize: '10px', color: '#FFD43B' }}>{t('bet.you')}</span>}
               </span>
             </div>
+
+            {/* Twitter/Website Link */}
+            {market.twitter_link && (
+              <div className="bet-twitter-section">
+                <a 
+                  href={market.twitter_link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="bet-twitter-link"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '6px' }}>
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                  {market.twitter_link.includes('twitter.com') || market.twitter_link.includes('x.com') 
+                    ? 'VIEW ON X / TWITTER' 
+                    : 'VIEW SOURCE LINK'}
+                </a>
+              </div>
+            )}
+
             <div className="bet-stats-grid">
               <div className="bet-stat-item">
                 <span className="bet-stat-label">STAKE</span>
@@ -903,6 +974,12 @@ export default function Bet() {
       <div className="bet-tabs-container">
         <div className="bet-tabs-header">
           <button 
+            className={`bet-tab ${activeTab === 'analysis' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analysis')}
+          >
+            AI ANALYSIS
+          </button>
+          <button 
             className={`bet-tab ${activeTab === 'transactions' ? 'active' : ''}`}
             onClick={() => setActiveTab('transactions')}
           >
@@ -923,6 +1000,44 @@ export default function Bet() {
         </div>
 
         <div className="bet-tabs-content" style={{ padding: activeTab === 'transactions' || activeTab === 'positions' ? 0 : '40px' }}>
+          {activeTab === 'analysis' && (
+            <div className="bet-tab-panel">
+              {analysisLoading ? (
+                <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
+                  <div className="loading-spinner"></div>
+                  <p>Generating AI analysis...</p>
+                </div>
+              ) : aiAnalysis ? (
+                <div className="bet-ai-analysis">
+                  <div className="bet-ai-header">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                      <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    <h3>AI MARKET ANALYSIS</h3>
+                  </div>
+                  <div className="bet-ai-content">
+                    <p>{aiAnalysis}</p>
+                  </div>
+                  <div className="bet-ai-footer">
+                    <span>Powered by GROK AI</span>
+                    <span style={{ color: '#808080', fontSize: '10px' }}>• Analysis is for informational purposes only</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                  </svg>
+                  <p>No AI analysis available for this market</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'transactions' && (
             <div className="bet-tab-panel">
               {txLoading ? (

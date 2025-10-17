@@ -116,6 +116,7 @@ export function useMarkets(page = 1) {
           status,
           outcome,
           banner_url,
+          twitter_link,
           created_at,
           updated_at
         `, { count: 'exact' })
