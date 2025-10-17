@@ -4,7 +4,9 @@ import axios from 'axios';
 
 // Module-level tracking - survives React Strict Mode unmount/remount
 const authRequestsInFlight = new Map();
-const completedAuthUsers = new Map(); // Now stores user data, not just a Set
+const completedAuthUsers = new Map();
+const AUTH_TIMEOUT_MS = 15000; // 15 seconds timeout
+const MAX_RETRIES = 3;
 
 export function useAuth() {
   const { ready, authenticated, user: privyUser, getAccessToken } = usePrivy();
@@ -17,7 +19,9 @@ export function useAuth() {
   
   const abortControllerRef = useRef(null);
   const tokenRefreshTimeoutRef = useRef(null);
-  const privateKeyCheckRef = useRef(false); // Prevent duplicate checks
+  const privateKeyCheckRef = useRef(false);
+  const authTimeoutRef = useRef(null);
+  const retryCountRef = useRef(0);
 
   const closePrivateKeyUI = useCallback(() => {
     console.log('🔒 Closing Private Key UI');
@@ -25,14 +29,12 @@ export function useAuth() {
     setPrivateKeyData(null);
     privateKeyCheckRef.current = false;
     
-    // Mark that user has seen their private key and cache the auth data
     const currentPrivyUserId = privyUser?.id || privyUser?.sub;
     if (currentPrivyUserId) {
       try {
         localStorage.setItem(`pkui_shown_${currentPrivyUserId}`, 'true');
         console.log('✅ Marked private key as shown in localStorage');
         
-        // Now safe to cache the user data since they've seen the private key
         if (user && accessToken) {
           completedAuthUsers.set(currentPrivyUserId, {
             user: user,
@@ -46,7 +48,6 @@ export function useAuth() {
     }
   }, [privyUser, user, accessToken]);
 
-  // Helper function to get fresh token with retry logic
   const getFreshToken = useCallback(async (retries = 3) => {
     for (let i = 0; i < retries; i++) {
       try {
@@ -57,7 +58,6 @@ export function useAuth() {
       } catch (error) {
         console.error(`Token fetch attempt ${i + 1} failed:`, error);
         if (i < retries - 1) {
-          // Wait before retrying (exponential backoff)
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 500));
         }
       }
@@ -65,23 +65,32 @@ export function useAuth() {
     throw new Error('Failed to get access token after retries');
   }, [getAccessToken]);
 
+  // Clear stuck auth requests after timeout
+  const clearStuckAuth = useCallback((userId) => {
+    console.log('🧹 Clearing stuck auth for user:', userId);
+    authRequestsInFlight.delete(userId);
+    if (authTimeoutRef.current) {
+      clearTimeout(authTimeoutRef.current);
+      authTimeoutRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     if (!ready || !authenticated) {
-      console.log('🔴 Not ready or not authenticated - clearing state', { ready, authenticated });
+      console.log('🔴 Not ready or not authenticated', { ready, authenticated });
       setUser(null);
       setAccessToken(null);
       setLoading(false);
-      setAuthReady(true); // CRITICAL: Auth check is "complete" - user just isn't signed in
+      setAuthReady(true); // Not authenticated, but check is complete
       setShowPrivateKeyUI(false);
       setPrivateKeyData(null);
       privateKeyCheckRef.current = false;
+      retryCountRef.current = 0;
       
-      // Clear cache on logout
       if (!authenticated) {
         completedAuthUsers.clear();
         authRequestsInFlight.clear();
         
-        // Clear all private key UI flags from localStorage
         try {
           const keys = Object.keys(localStorage);
           keys.forEach(key => {
@@ -89,9 +98,9 @@ export function useAuth() {
               localStorage.removeItem(key);
             }
           });
-          console.log('🧹 Cleared all private key UI flags on logout');
+          console.log('🧹 Cleared auth cache on logout');
         } catch (e) {
-          console.error('Failed to clear private key UI flags:', e);
+          console.error('Failed to clear auth cache:', e);
         }
       }
       return;
@@ -100,13 +109,13 @@ export function useAuth() {
     const currentPrivyUserId = privyUser?.id || privyUser?.sub;
     
     if (!currentPrivyUserId) {
-      setLoading(true);
-      setAuthReady(false);
+      console.log('⚠️ No Privy user ID available');
+      setLoading(false);
+      setAuthReady(true);
       return;
     }
 
-    // Check if already completed for this user - load from cache
-    // BUT: Always make API call if user hasn't seen private key yet (for new users)
+    // Check cache first
     const hasSeenPrivateKey = localStorage.getItem(`pkui_shown_${currentPrivyUserId}`) === 'true';
     
     if (completedAuthUsers.has(currentPrivyUserId) && hasSeenPrivateKey) {
@@ -116,22 +125,56 @@ export function useAuth() {
       setAccessToken(cachedData.token);
       setLoading(false);
       setAuthReady(true);
-      console.log('✅ Auth ready from cache - user can proceed immediately');
+      retryCountRef.current = 0;
       return;
     }
 
-    // Check if request is already in flight for this user
-    if (authRequestsInFlight.has(currentPrivyUserId)) {
-      console.log('⏸️  Auth request already in flight, waiting...');
-      return;
+    // Check if request is already in flight
+    const requestData = authRequestsInFlight.get(currentPrivyUserId);
+    if (requestData) {
+      const timeSinceStart = Date.now() - requestData.startTime;
+      
+      if (timeSinceStart > AUTH_TIMEOUT_MS) {
+        console.log('⏰ Auth request timed out, retrying...');
+        clearStuckAuth(currentPrivyUserId);
+        retryCountRef.current++;
+        
+        if (retryCountRef.current >= MAX_RETRIES) {
+          console.error('❌ Max retries reached, giving up');
+          setUser(null);
+          setAccessToken(null);
+          setLoading(false);
+          setAuthReady(true);
+          authRequestsInFlight.delete(currentPrivyUserId);
+          return;
+        }
+      } else {
+        console.log('⏸️ Auth request in progress, waiting...', `${Math.round(timeSinceStart/1000)}s elapsed`);
+        // Set loading state so UI shows authenticating
+        setLoading(true);
+        setAuthReady(false);
+        return;
+      }
     }
 
-    // Mark request as in flight BEFORE any async work
-    authRequestsInFlight.set(currentPrivyUserId, true);
+    // Mark request as in flight
+    authRequestsInFlight.set(currentPrivyUserId, { 
+      startTime: Date.now(),
+      attempt: retryCountRef.current + 1
+    });
     setLoading(true);
     setAuthReady(false);
     
+    console.log(`🔄 Starting auth request (attempt ${retryCountRef.current + 1}/${MAX_RETRIES})`);
+    
     abortControllerRef.current = new AbortController();
+
+    // Set timeout to clear stuck requests
+    authTimeoutRef.current = setTimeout(() => {
+      console.log('⏰ Auth timeout triggered, will retry on next render');
+      clearStuckAuth(currentPrivyUserId);
+      setAuthReady(true); // Trigger re-render
+    }, AUTH_TIMEOUT_MS);
 
     async function registerOrLogin() {
       try {
@@ -149,13 +192,14 @@ export function useAuth() {
           email = privyUser.twitter.username;
         }
 
-        // CRITICAL: Wait for token with retry logic
+        console.log('🔑 Getting access token...');
         const token = await getFreshToken();
         
         if (!token) {
           throw new Error('No access token available');
         }
 
+        console.log('📡 Calling /api/auth...');
         const response = await axios.post('/api/auth', 
           { provider, email },
           {
@@ -163,7 +207,8 @@ export function useAuth() {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             },
-            signal: abortControllerRef.current?.signal
+            signal: abortControllerRef.current?.signal,
+            timeout: 10000 // 10 second timeout for API call
           }
         );
 
@@ -171,67 +216,79 @@ export function useAuth() {
         const isNewUser = response.data.isNewUser;
         const privateKey = response.data.privateKey;
 
-        console.log('🔑 Auth response:', { 
+        console.log('✅ Auth API success:', { 
           isNewUser, 
-          hasPrivateKey: !!privateKey, 
-          hasWallet: !!userData.wallet_address 
+          hasPrivateKey: !!privateKey,
+          username: userData.username
         });
 
-        // Set user data immediately - this is critical for components that check user state
+        // Clear timeout since we succeeded
+        if (authTimeoutRef.current) {
+          clearTimeout(authTimeoutRef.current);
+          authTimeoutRef.current = null;
+        }
+
+        // Set user data immediately
         setUser(userData);
         setAccessToken(token);
         setLoading(false);
-        // Set authReady to true immediately so components can proceed
         setAuthReady(true);
-        console.log('✅ User authenticated successfully - authReady=true, user:', userData.username);
+        retryCountRef.current = 0; // Reset retry count on success
 
-        // Check if this is a new user who hasn't seen their private key yet
+        console.log('✅ User authenticated - authReady=true');
+
+        // Handle private key UI for new users
         const hasSeenPrivateKey = localStorage.getItem(`pkui_shown_${currentPrivyUserId}`) === 'true';
         
         if (isNewUser && privateKey && userData.wallet_address && !hasSeenPrivateKey) {
           console.log('🔐 NEW USER! Showing Private Key UI');
-          console.log('Private Key:', privateKey);
-          console.log('Wallet Address:', userData.wallet_address);
-          
-          // Mark that we're showing the private key
           privateKeyCheckRef.current = true;
           
-          // Set the private key data with a slight delay to ensure state updates properly
           setTimeout(() => {
             setPrivateKeyData({
               privateKey: privateKey,
               walletAddress: userData.wallet_address
             });
             setShowPrivateKeyUI(true);
-            console.log('✅ Private Key UI state set');
           }, 100);
           
-          // Don't cache until user dismisses the private key UI
           authRequestsInFlight.delete(currentPrivyUserId);
         } else {
-          // Cache the user data and token only if not showing private key UI
+          // Cache for existing users
           completedAuthUsers.set(currentPrivyUserId, {
             user: userData,
             token: token
           });
+          console.log('✅ Auth complete, data cached');
           authRequestsInFlight.delete(currentPrivyUserId);
-          privateKeyCheckRef.current = false;
         }
 
       } catch (error) {
+        // Clear timeout
+        if (authTimeoutRef.current) {
+          clearTimeout(authTimeoutRef.current);
+          authTimeoutRef.current = null;
+        }
+
         if (axios.isCancel(error) || error.name === 'CanceledError' || error.name === 'AbortError') {
+          console.log('🚫 Auth request cancelled');
           authRequestsInFlight.delete(currentPrivyUserId);
           return;
         }
 
-        console.error('Auth error:', error);
+        console.error('❌ Auth error:', error.message);
         authRequestsInFlight.delete(currentPrivyUserId);
 
-        // Don't set fallback user with null token - better to show error
+        // On error, allow retry
         setUser(null);
         setAccessToken(null);
         setLoading(false);
-        setAuthReady(true); // CRITICAL: Auth check is "complete" even if it failed
+        setAuthReady(true); // Set true to allow retry
+
+        // Auto-retry on next render if not at max retries
+        if (retryCountRef.current < MAX_RETRIES) {
+          console.log(`🔄 Will retry on next render (${retryCountRef.current + 1}/${MAX_RETRIES})`);
+        }
       }
     }
 
@@ -244,49 +301,33 @@ export function useAuth() {
       if (tokenRefreshTimeoutRef.current) {
         clearTimeout(tokenRefreshTimeoutRef.current);
       }
-    };
-
-  }, [ready, authenticated, privyUser, getFreshToken]);
-
-  // Refresh token periodically (every 5 minutes)
-  useEffect(() => {
-    if (!authReady || !authenticated) return;
-
-    const refreshToken = async () => {
-      try {
-        const newToken = await getFreshToken();
-        if (newToken) {
-          setAccessToken(newToken);
-          // Update cache
-          const currentPrivyUserId = privyUser?.id || privyUser?.sub;
-          if (currentPrivyUserId && completedAuthUsers.has(currentPrivyUserId)) {
-            const cached = completedAuthUsers.get(currentPrivyUserId);
-            completedAuthUsers.set(currentPrivyUserId, {
-              ...cached,
-              token: newToken
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Token refresh failed:', error);
+      if (authTimeoutRef.current) {
+        clearTimeout(authTimeoutRef.current);
       }
     };
 
-    // Refresh token every 5 minutes
-    const interval = setInterval(refreshToken, 5 * 60 * 1000);
+  }, [ready, authenticated, privyUser, getFreshToken, clearStuckAuth]);
 
-    return () => clearInterval(interval);
-  }, [authReady, authenticated, getFreshToken, privyUser]);
+  // Expose method to manually trigger auth retry
+  const retryAuth = useCallback(() => {
+    console.log('🔄 Manual auth retry triggered');
+    const currentPrivyUserId = privyUser?.id || privyUser?.sub;
+    if (currentPrivyUserId) {
+      authRequestsInFlight.delete(currentPrivyUserId);
+      retryCountRef.current = 0;
+      setAuthReady(false); // Trigger re-auth
+    }
+  }, [privyUser]);
 
-  return { 
-    user, 
-    loading, 
-    authenticated, 
+  return {
+    user,
+    loading,
+    authReady,
     accessToken,
-    authReady, // NEW: explicit flag for when auth is fully ready
     showPrivateKeyUI,
     privateKeyData,
     closePrivateKeyUI,
-    getFreshToken // Export for manual token refresh
+    getFreshToken,
+    retryAuth // Expose retry function
   };
 }
