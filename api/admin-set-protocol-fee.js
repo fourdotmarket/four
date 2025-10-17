@@ -9,6 +9,10 @@ const supabase = createClient(
 
 const BSC_RPC_URL = "https://bsc-dataseed.binance.org/";
 
+// CRITICAL: These are server-side environment variables - NEVER exposed to frontend
+const ADMIN_CONTRACT_ADDRESS = process.env.ADMIN_CONTRACT_ADDRESS || "0xB92C4e50589E643EbB26587b92e4D63EE92210d2";
+const ADMIN_PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY;
+
 const CONTRACT_ABI = [
   "function setProtocolFee(uint256 _newFeeBps)",
   "function protocolFeeBps() view returns (uint256)"
@@ -59,10 +63,10 @@ module.exports = async function handler(req, res) {
       return res.status(403).json({ error: 'Admin access only' });
     }
 
-    const { contractAddress, adminPrivateKey, feeBps } = req.body;
+    const { feeBps } = req.body;
 
-    if (!contractAddress || !adminPrivateKey || feeBps === undefined) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (feeBps === undefined) {
+      return res.status(400).json({ error: 'Missing fee value' });
     }
 
     const feeNumber = parseInt(feeBps);
@@ -70,11 +74,15 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Fee must be between 0 and 1000 basis points (0-10%)' });
     }
 
+    if (!ADMIN_PRIVATE_KEY) {
+      return res.status(500).json({ error: 'Server configuration error: Admin private key not set' });
+    }
+
     console.log(`🔧 Setting protocol fee to ${feeNumber} bps (${feeNumber / 100}%)...`);
 
     const provider = new ethers.JsonRpcProvider(BSC_RPC_URL);
-    const wallet = new ethers.Wallet(adminPrivateKey, provider);
-    const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, wallet);
+    const wallet = new ethers.Wallet(ADMIN_PRIVATE_KEY, provider);
+    const contract = new ethers.Contract(ADMIN_CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
 
     const currentFee = await contract.protocolFeeBps();
     console.log(`Current fee: ${currentFee} bps`);

@@ -28,10 +28,7 @@ export default function Admin() {
   const [isValidAccess, setIsValidAccess] = useState(false);
   const hasValidatedRef = useRef(false);
 
-  // Contract Configuration State
-  const [contractAddress, setContractAddress] = useState('0xB92C4e50589E643EbB26587b92e4D63EE92210d2');
-  const [adminPrivateKey, setAdminPrivateKey] = useState('0x92a9ea9bdac0f14170008780b440c4c41e86b3352ed60389bc146bd59091c728');
-  const [showConfigPanel, setShowConfigPanel] = useState(false);
+  // No sensitive data in frontend - all handled server-side
   const [protocolFee, setProtocolFee] = useState('');
 
   // Token Validation: Check if token matches stored token
@@ -130,8 +127,6 @@ export default function Admin() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          contractAddress,
-          adminPrivateKey,
           action: 'pause'
         })
       });
@@ -168,8 +163,6 @@ export default function Admin() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          contractAddress,
-          adminPrivateKey,
           action: 'unpause'
         })
       });
@@ -211,8 +204,6 @@ export default function Admin() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          contractAddress,
-          adminPrivateKey,
           feeBps: parseInt(protocolFee)
         })
       });
@@ -249,10 +240,7 @@ export default function Admin() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          contractAddress,
-          adminPrivateKey
-        })
+        body: JSON.stringify({})
       });
 
       const result = await response.json();
@@ -292,8 +280,6 @@ export default function Admin() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          contractAddress,
-          adminPrivateKey,
           market_id: market.market_id,
           outcome: outcome
         })
@@ -353,8 +339,6 @@ export default function Admin() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          contractAddress,
-          adminPrivateKey,
           market_id: market.market_id
         })
       });
@@ -392,8 +376,6 @@ export default function Admin() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          contractAddress,
-          adminPrivateKey,
           market_id: market.market_id
         })
       });
@@ -494,16 +476,6 @@ export default function Admin() {
         </div>
         <div className="admin-header-right">
           <button 
-            className="admin-config-btn"
-            onClick={() => setShowConfigPanel(!showConfigPanel)}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M12 1v6m0 6v6m-1-5l-1.732 1m3.464 0L14 13m-8.66-4l5.196 3m5.196-3L10.536 12M4.268 9.732L10 12.732m8.66 3L10 12.732"></path>
-            </svg>
-            CONFIG
-          </button>
-          <button 
             className="admin-exit-btn" 
             onClick={() => {
               sessionStorage.removeItem('admin_token');
@@ -520,41 +492,6 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Config Panel */}
-      {showConfigPanel && (
-        <div className="admin-config-panel">
-          <div className="admin-config-grid">
-            <div className="admin-config-item">
-              <label>Contract Address</label>
-              <input
-                type="text"
-                value={contractAddress}
-                onChange={(e) => setContractAddress(e.target.value)}
-                placeholder="0x..."
-              />
-            </div>
-            <div className="admin-config-item">
-              <label>Admin Private Key</label>
-              <input
-                type="password"
-                value={adminPrivateKey}
-                onChange={(e) => setAdminPrivateKey(e.target.value)}
-                placeholder="0x..."
-              />
-            </div>
-          </div>
-          <div className="admin-config-actions">
-            <button onClick={() => {
-              setContractAddress('0xB92C4e50589E643EbB26587b92e4D63EE92210d2');
-              setAdminPrivateKey('0x92a9ea9bdac0f14170008780b440c4c41e86b3352ed60389bc146bd59091c728');
-              showNotification('Reset to defaults', 'success');
-            }}>
-              RESET TO DEFAULTS
-            </button>
-            <button onClick={() => setShowConfigPanel(false)}>CLOSE</button>
-          </div>
-        </div>
-      )}
 
       {/* Global Contract Operations */}
       <div className="admin-global-operations">

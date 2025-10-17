@@ -9,6 +9,10 @@ const supabase = createClient(
 
 const BSC_RPC_URL = "https://bsc-dataseed.binance.org/";
 
+// CRITICAL: These are server-side environment variables - NEVER exposed to frontend
+const ADMIN_CONTRACT_ADDRESS = process.env.ADMIN_CONTRACT_ADDRESS || "0xB92C4e50589E643EbB26587b92e4D63EE92210d2";
+const ADMIN_PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY;
+
 const CONTRACT_ABI = [
   "function resolveMarket(uint256 _marketId, bool _outcome)",
   "function markets(uint256) view returns (uint256 id, string question, address marketMaker, uint256 marketMakerStake, uint256 ticketPrice, uint256 totalTickets, uint256 ticketsSold, uint256 deadline, uint8 status, bool outcome, uint256 createdAt, uint256 totalPayout, bool makerClaimed)"
@@ -59,17 +63,21 @@ module.exports = async function handler(req, res) {
       return res.status(403).json({ error: 'Admin access only' });
     }
 
-    const { contractAddress, adminPrivateKey, market_id, outcome } = req.body;
+    const { market_id, outcome } = req.body;
 
-    if (!contractAddress || !adminPrivateKey || market_id === undefined || outcome === undefined) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (market_id === undefined || outcome === undefined) {
+      return res.status(400).json({ error: 'Missing market_id or outcome' });
+    }
+
+    if (!ADMIN_PRIVATE_KEY) {
+      return res.status(500).json({ error: 'Server configuration error: Admin private key not set' });
     }
 
     console.log(`🎯 Resolving market #${market_id} on blockchain with outcome: ${outcome}...`);
 
     const provider = new ethers.JsonRpcProvider(BSC_RPC_URL);
-    const wallet = new ethers.Wallet(adminPrivateKey, provider);
-    const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, wallet);
+    const wallet = new ethers.Wallet(ADMIN_PRIVATE_KEY, provider);
+    const contract = new ethers.Contract(ADMIN_CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
 
     // Get market details
     const market = await contract.markets(market_id);
