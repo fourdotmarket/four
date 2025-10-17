@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
 import { useBalance } from '../hooks/useBalance';
+import { useLanguage } from '../context/LanguageContext';
 import DepositModal from './DepositModal';
 import ProfileDropdown from './ProfileDropdown';
 import Notification from './Notification';
@@ -15,6 +16,7 @@ export default function Header() {
   const { user, loading, authReady } = useAuth();
   const { notification, showNotification, hideNotification } = useNotification();
   const { balance, loading: balanceLoading } = useBalance(user?.wallet_address);
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -67,7 +69,7 @@ export default function Header() {
                 <path d="M1.75,12.25l3.646-3.646c.195-.195,.512-.195,.707,0l3.293,3.293c.195,.195,.512,.195,.707,0l6.146-6.146" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"></path>
                 <polyline fill="none" points="11.25 5.75 16.25 5.75 16.25 10.75" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"></polyline>
               </svg>
-              <span>Trending</span>
+              <span>{t('header.trending')}</span>
             </div>
             
             
@@ -75,14 +77,14 @@ export default function Header() {
               className={`header-nav-item ${location.pathname === '/market' ? 'active' : ''}`}
               onClick={() => navigate('/market')}
             >
-              <span>Public Market</span>
+              <span>{t('header.publicMarket')}</span>
             </div>
             
             <div 
               className={`header-nav-item ${location.pathname === '/resolved' ? 'active' : ''}`}
               onClick={() => navigate('/resolved')}
             >
-              <span>Resolved</span>
+              <span>{t('header.resolved')}</span>
             </div>
           </div>
         </div>
@@ -90,7 +92,7 @@ export default function Header() {
         <div className="header-right">
           {ready && !authenticated && (
             <button className="header-button" onClick={login}>
-              SIGN IN
+              {t('header.signIn')}
             </button>
           )}
           
@@ -100,7 +102,7 @@ export default function Header() {
                 className="header-button header-deposit-btn" 
                 onClick={handleDepositClick}
               >
-                DEPOSIT
+                {t('header.deposit')}
               </button>
               
               <div 

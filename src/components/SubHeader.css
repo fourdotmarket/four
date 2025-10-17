@@ -265,6 +265,60 @@
   }
 }
 
+/* Extra small devices */
+@media (max-width: 480px) {
+  .subheader {
+    padding: 2px 0;
+  }
+  
+  .subheader-content {
+    height: 20px;
+  }
+  
+  .activity-item {
+    font-size: 9px;
+    gap: 4px;
+    padding: 0 10px;
+  }
+  
+  .activity-icon {
+    width: 11px;
+    height: 11px;
+    font-size: 8px;
+  }
+  
+  .purchase-icon {
+    font-size: 9px;
+  }
+  
+  .activity-detail {
+    max-width: 100px;
+  }
+  
+  .activity-time {
+    font-size: 7px;
+    margin-left: 3px;
+  }
+  
+  .activity-scroll {
+    gap: 18px;
+  }
+  
+  .subheader-content::before,
+  .subheader-content::after {
+    width: 20px;
+  }
+  
+  .activity-empty-text {
+    font-size: 9px;
+  }
+  
+  /* Speed up animation on mobile */
+  .activity-scroll-wrapper.animate {
+    animation-duration: 45s;
+  }
+}
+
 /* Performance optimization */
 .activity-scroll-wrapper {
   transform: translateZ(0);

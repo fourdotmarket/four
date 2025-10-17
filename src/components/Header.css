@@ -280,16 +280,25 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .header {
-    padding: 8px 24px;
+    padding: 12px 20px;
+  }
+  
+  .header-left {
+    gap: 20px;
   }
   
   .header-logo {
-    height: 40px;
+    height: 36px;
+  }
+  
+  .header-brand {
+    font-size: 16px;
   }
   
   .header-button {
-    padding: 5px 12px;
+    padding: 8px 14px;
     font-size: 12px;
+    letter-spacing: 0.5px;
   }
   
   .header-right {
@@ -297,11 +306,17 @@
   }
   
   .header-nav {
-    gap: 16px;
+    gap: 14px;
   }
   
   .header-nav-item {
     font-size: 12px;
+    gap: 4px;
+  }
+  
+  .trend-icon {
+    width: 16px;
+    height: 16px;
   }
   
   .header-profile-name,
@@ -310,6 +325,95 @@
   }
   
   .header-profile {
+    padding: 8px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+  
+  .header-profile-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+  }
+  
+  .header-separator {
+    font-size: 16px;
+  }
+  
+  .header-globe {
     padding: 6px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+}
+
+/* Extra small devices (phones under 480px) */
+@media (max-width: 480px) {
+  .header {
+    padding: 10px 16px;
+  }
+  
+  .header-left {
+    gap: 12px;
+  }
+  
+  .header-logo {
+    height: 32px;
+  }
+  
+  .header-brand {
+    font-size: 14px;
+  }
+  
+  .header-nav {
+    gap: 10px;
+  }
+  
+  .header-nav-item {
+    font-size: 11px;
+  }
+  
+  .header-nav-item span {
+    display: none;
+  }
+  
+  /* Show only icons on very small screens */
+  .trend-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .header-button {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  
+  .header-deposit-btn {
+    padding: 8px 12px;
+  }
+  
+  .header-separator {
+    display: none;
+  }
+  
+  .header-globe {
+    padding: 8px;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .header-nav-item,
+  .header-button,
+  .header-profile,
+  .header-globe,
+  .header-logo-brand {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .header-button {
+    min-width: 80px;
   }
 }

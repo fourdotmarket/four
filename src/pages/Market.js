@@ -3,6 +3,7 @@ import './Market.css';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
 import { useBalance } from '../hooks/useBalance';
+import { useLanguage } from '../context/LanguageContext';
 import MarketCard from '../components/MarketCard';
 import { useMarkets } from '../hooks/useMarkets';
 import Notification from '../components/Notification';
@@ -17,6 +18,7 @@ export default function Market() {
   const { user, authReady, getFreshToken } = useAuth();
   const { notification, showNotification, hideNotification } = useNotification();
   const { balance } = useBalance(user?.wallet_address);
+  const { t } = useLanguage();
   const [page, setPage] = useState(1);
   const { markets, loading: marketsLoading, error: marketsError, hasMore } = useMarkets(page);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -98,6 +100,22 @@ export default function Market() {
     if (e.target === e.currentTarget && !isCreating) {
       handleClose();
     }
+  };
+
+  const handleOpenCreateModal = () => {
+    // Check if user has sufficient balance before opening modal
+    if (!user) {
+      showNotification('Please sign in to create a bet', 'error');
+      return;
+    }
+
+    if (balance !== null && balance < MIN_STAKE) {
+      setDepositMessage(`You need at least ${MIN_STAKE} BNB deposited to create a bet. Current balance: ${balance.toFixed(4)} BNB`);
+      setShowDepositModal(true);
+      return;
+    }
+
+    setShowCreateModal(true);
   };
 
   const handleCreateBet = async () => {
@@ -226,15 +244,15 @@ export default function Market() {
       {/* Header */}
       <div className="market-header">
         <div className="market-title-section">
-          <h1 className="market-title">PREDICTION MARKETS</h1>
-          <p className="market-subtitle">Create or challenge predictions.</p>
+          <h1 className="market-title">{t('market.title')}</h1>
+          <p className="market-subtitle">{t('market.subtitle')}</p>
         </div>
-        <button className="market-create-btn" onClick={() => setShowCreateModal(true)}>
+        <button className="market-create-btn" onClick={handleOpenCreateModal}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          CREATE BET
+          {t('market.createBet')}
         </button>
       </div>
 
@@ -263,8 +281,8 @@ export default function Market() {
             <line x1="3" y1="9" x2="21" y2="9"></line>
             <line x1="9" y1="21" x2="9" y2="9"></line>
           </svg>
-          <h3>NO ACTIVE MARKETS</h3>
-          <p>Be the first to create a prediction market</p>
+          <h3>{t('market.noMarkets')}</h3>
+          <p>{t('market.beFirst')}</p>
         </div>
       ) : (
         <>
@@ -287,7 +305,7 @@ export default function Market() {
                     LOADING...
                   </>
                 ) : (
-                  'LOAD MORE'
+                  t('market.loadMore')
                 )}
               </button>
             </div>
