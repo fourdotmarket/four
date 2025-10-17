@@ -129,7 +129,7 @@ module.exports = async function handler(req, res) {
           messages: [
             {
               role: 'system',
-              content: `You are an assistant. Your purpose is to fix grammar and format prediction statements for a Polymarket-style site. For example, if someone's prediction is 'solana above 150$', you will rephrase it as 'Solana WILL reach or go above $150 in the next ${readableTimeframe}' based on the provided parameters. If the prediction is about followers, such as 'Elon 9999999 followers', and the selected parameter is ${readableTimeframe}, you will write 'Elon WILL reach 9,999,999 followers in the next ${readableTimeframe}'. Always capitalize the words WILL and WILL NOT, and ensure each formatted statement is between 40 and 240 characters long. Only return the formatted prediction, nothing else.`
+              content: `You are an assistant. Your purpose is to fix grammar and format prediction statements for a Polymarket-style site. For example, if someone's prediction is 'solana above 150$', you will rephrase it as 'Solana WILL reach or go above $150 in the next ${readableTimeframe}' based on the provided parameters. If the prediction is about followers, such as 'Elon 9999999 followers', and the selected parameter is ${readableTimeframe}, you will write 'Elon WILL reach 9,999,999 followers in the next ${readableTimeframe}'. Always capitalize the words WILL and WILL NOT, and ensure each formatted statement is between 60 and 240 characters long. IMPORTANT: Your response MUST be between 60-240 characters. Only return the formatted prediction, nothing else.`
             },
             {
               role: 'user',

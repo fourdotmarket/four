@@ -36,7 +36,13 @@ export default function Market() {
   const [beautifiedPrediction, setBeautifiedPrediction] = useState('');
   const [showBeautified, setShowBeautified] = useState(false);
   const [twitterLink, setTwitterLink] = useState('');
+  const [websiteLink, setWebsiteLink] = useState('');
+  const [aiDecided, setAiDecided] = useState(false);
+  const [requestCount, setRequestCount] = useState(0);
+  const [rateLimited, setRateLimited] = useState(false);
+  const [currentTimeframe, setCurrentTimeframe] = useState('24');
   const debounceTimerRef = useRef(null);
+  const rateLimitTimerRef = useRef(null);
 
   // Allow English, Chinese, numbers, and common punctuation (including $)
   const allowedChars = /^[\u4e00-\u9fa5a-zA-Z0-9\s.,?!$-]+$/;
@@ -58,17 +64,18 @@ export default function Market() {
       if (value.length <= MAX_PREDICTION_LENGTH) {
         setPrediction(value);
         setShowBeautified(false); // Reset beautified state when user types
+        setAiDecided(false); // Reset AI decision when user changes prediction
         
         // Clear previous timer
         if (debounceTimerRef.current) {
           clearTimeout(debounceTimerRef.current);
         }
         
-        // Set new timer for AI beautification (0.35 seconds after typing stops)
-        if (value.trim().length >= 10) {
+        // Set new timer for AI beautification (0.6 seconds after typing stops)
+        if (value.trim().length >= 10 && !rateLimited) {
           debounceTimerRef.current = setTimeout(() => {
-            beautifyPrediction(value);
-          }, 350);
+            beautifyPrediction(value, currentTimeframe);
+          }, 600);
         }
       }
     }
@@ -102,30 +109,84 @@ export default function Market() {
     setExpiry('24');
     setTickets('100');
     setTwitterLink('');
+    setWebsiteLink('');
     setShowAdvanced(false);
     setIsCreating(false);
     setBeautifiedPrediction('');
     setShowBeautified(false);
     setIsBeautifying(false);
+    setAiDecided(false);
+    setCurrentTimeframe('24');
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
   };
 
-  const beautifyPrediction = async (text) => {
+  const beautifyPrediction = async (text, timeframeAtRequest) => {
+    // Rate limiting check
+    if (rateLimited) {
+      console.log('⏸️ Rate limited - try again later');
+      return;
+    }
+
+    // Track request count
+    setRequestCount(prev => {
+      const newCount = prev + 1;
+      
+      // If 10 requests in 5 seconds, rate limit for 1 hour
+      if (newCount >= 10) {
+        setRateLimited(true);
+        console.warn('🚫 Rate limit exceeded! Blocked for 1 hour.');
+        
+        if (rateLimitTimerRef.current) {
+          clearTimeout(rateLimitTimerRef.current);
+        }
+        
+        rateLimitTimerRef.current = setTimeout(() => {
+          setRateLimited(false);
+          setRequestCount(0);
+          console.log('✅ Rate limit reset');
+        }, 3600000); // 1 hour
+        
+        return newCount;
+      }
+      
+      // Reset count after 5 seconds
+      setTimeout(() => {
+        setRequestCount(prev => Math.max(0, prev - 1));
+      }, 5000);
+      
+      return newCount;
+    });
+
     try {
       setIsBeautifying(true);
       console.log('🤖 Calling AI to beautify prediction...');
 
       const response = await axios.post('/api/beautify-prediction', {
         prediction: text,
-        timeframe: expiry
+        timeframe: timeframeAtRequest
       });
 
+      // Check if timeframe changed during request - skip if it did
+      if (timeframeAtRequest !== currentTimeframe) {
+        console.log('⏭️ Timeframe changed during AI generation - skipping result');
+        setIsBeautifying(false);
+        return;
+      }
+
       if (response.data.success) {
-        console.log('✅ AI beautification successful');
-        setBeautifiedPrediction(response.data.beautified);
-        setShowBeautified(true);
+        const beautified = response.data.beautified;
+        // Validate length (60-240 characters)
+        if (beautified.length >= 60 && beautified.length <= 240) {
+          setBeautifiedPrediction(beautified);
+          setShowBeautified(true);
+          console.log('✅ AI beautified prediction:', beautified);
+        } else {
+          console.warn('⚠️ AI response length invalid:', beautified.length);
+          setBeautifiedPrediction('');
+          setShowBeautified(false);
+        }
       }
     } catch (error) {
       console.error('❌ AI beautification failed:', error);
@@ -138,11 +199,20 @@ export default function Market() {
   const handleAcceptBeautified = () => {
     setPrediction(beautifiedPrediction);
     setShowBeautified(false);
+    setAiDecided(true);
   };
 
   const handleCancelBeautified = () => {
     setShowBeautified(false);
     setBeautifiedPrediction('');
+    setAiDecided(true);
+  };
+
+  const handleExpiryChange = (newExpiry) => {
+    setExpiry(newExpiry);
+    setCurrentTimeframe(newExpiry);
+    setShowBeautified(false); // Hide AI suggestion when timeframe changes
+    setAiDecided(false); // Reset AI decision
   };
 
   // Cleanup timer on unmount
@@ -263,7 +333,8 @@ export default function Market() {
           stakeAmount: stake,
           duration: duration,
           ticketAmount: ticketAmount,
-          twitterLink: twitterLink.trim() || null
+          twitterLink: twitterLink.trim() || null,
+          websiteLink: websiteLink.trim() || null
         })
       });
 
@@ -311,7 +382,15 @@ export default function Market() {
 
   const isPredictionValid = prediction.length >= MIN_PREDICTION_LENGTH;
   const isStakeValid = parseFloat(stake) >= MIN_STAKE;
-  const canSubmit = isPredictionValid && isStakeValid && !isCreating && authReady;
+  
+  // Block submission if:
+  // 1. Prediction >= 10 chars AND AI suggestion is showing (waiting for accept/decline)
+  // 2. Prediction >= 10 chars AND AI is beautifying
+  // 3. Prediction >= 10 chars AND no AI decision made yet AND not beautifying
+  const needsAiDecision = prediction.trim().length >= 10 && !aiDecided && !isBeautifying;
+  const waitingForAi = showBeautified || isBeautifying;
+  
+  const canSubmit = isPredictionValid && isStakeValid && !isCreating && authReady && !needsAiDecision && !waitingForAi;
 
   return (
     <div className="market-page">
@@ -518,7 +597,7 @@ export default function Market() {
                       <button
                         key={time}
                         className={`create-pill ${expiry === time ? 'active' : ''}`}
-                        onClick={() => !isCreating && setExpiry(time)}
+                        onClick={() => !isCreating && handleExpiryChange(time)}
                         disabled={isCreating}
                       >
                         {time.includes('d') ? time : `${time}h`}
@@ -587,6 +666,26 @@ export default function Market() {
                       />
                       <div className="create-hint" style={{ marginTop: '4px' }}>
                         Link to a relevant tweet or X post
+                      </div>
+                    </div>
+
+                    {/* Website Link */}
+                    <div className="create-subfield">
+                      <label className="create-label">
+                        <span>WEBSITE LINK</span>
+                        <span style={{ fontSize: '10px', color: '#888', fontWeight: 'normal' }}>(OPTIONAL)</span>
+                      </label>
+                      <input
+                        type="url"
+                        className="create-input"
+                        placeholder="https://example.com/..."
+                        value={websiteLink}
+                        onChange={(e) => setWebsiteLink(e.target.value)}
+                        disabled={isCreating}
+                        style={{ width: '100%' }}
+                      />
+                      <div className="create-hint" style={{ marginTop: '4px' }}>
+                        Link to a relevant website or article
                       </div>
                     </div>
                   </div>

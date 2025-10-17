@@ -364,6 +364,7 @@ export default function Bet() {
           resolution_reason,
           banner_url,
           twitter_link,
+          website_link,
           ai_analysis,
           created_at,
           updated_at
@@ -687,7 +688,7 @@ export default function Bet() {
               </span>
             </div>
 
-            {/* Twitter/Website Link */}
+            {/* Twitter Link */}
             {market.twitter_link && (
               <div className="bet-twitter-section">
                 <a 
@@ -699,9 +700,27 @@ export default function Bet() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '6px' }}>
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                   </svg>
-                  {market.twitter_link.includes('twitter.com') || market.twitter_link.includes('x.com') 
-                    ? 'VIEW ON X / TWITTER' 
-                    : 'VIEW SOURCE LINK'}
+                  VIEW ON X / TWITTER
+                </a>
+              </div>
+            )}
+
+            {/* Website Link */}
+            {market.website_link && (
+              <div className="bet-twitter-section">
+                <a 
+                  href={market.website_link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="bet-twitter-link"
+                  style={{ borderColor: 'rgba(100, 210, 255, 0.3)', color: '#64D2FF' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}>
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                  </svg>
+                  VIEW WEBSITE
                 </a>
               </div>
             )}

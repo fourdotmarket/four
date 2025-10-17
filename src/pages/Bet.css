@@ -533,11 +533,11 @@
   overflow: hidden;
 }
 
-.bet-tabs-header {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border-bottom: 1px solid #2a2a2a;
-}
+  .bet-tabs-header {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid #2a2a2a;
+  }
 
 .bet-tab {
   padding: 16px;
