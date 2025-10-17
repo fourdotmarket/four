@@ -112,10 +112,6 @@ export default function SystemCore() {
 
   // Blockchain Admin Operations
   const handlePauseContract = async () => {
-    if (!window.confirm('Are you sure you want to PAUSE the contract?\n\nThis will stop all contract operations.')) {
-      return;
-    }
-
     try {
       setActionLoading(true);
       const token = await getFreshToken();
@@ -148,10 +144,6 @@ export default function SystemCore() {
   };
 
   const handleUnpauseContract = async () => {
-    if (!window.confirm('Are you sure you want to UNPAUSE the contract?\n\nThis will resume all contract operations.')) {
-      return;
-    }
-
     try {
       setActionLoading(true);
       const token = await getFreshToken();
@@ -189,10 +181,6 @@ export default function SystemCore() {
       return;
     }
 
-    if (!window.confirm(`Set protocol fee to ${protocolFee} bps (${protocolFee / 100}%)?`)) {
-      return;
-    }
-
     try {
       setActionLoading(true);
       const token = await getFreshToken();
@@ -226,10 +214,6 @@ export default function SystemCore() {
   };
 
   const handleWithdrawProtocolFees = async () => {
-    if (!window.confirm('Withdraw all accumulated protocol fees to admin wallet?')) {
-      return;
-    }
-
     try {
       setActionLoading(true);
       const token = await getFreshToken();
@@ -262,10 +246,6 @@ export default function SystemCore() {
   const handleBlockchainResolve = async (market) => {
     if (outcome === null) {
       showNotification('Please select an outcome first', 'warning');
-      return;
-    }
-
-    if (!window.confirm(`Resolve market #${market.market_id} on BLOCKCHAIN with outcome: ${outcome ? 'YES (Maker Wins)' : 'NO (Challengers Win)'}?`)) {
       return;
     }
 
@@ -324,10 +304,6 @@ export default function SystemCore() {
   };
 
   const handleBlockchainCancel = async (market) => {
-    if (!window.confirm(`Cancel market #${market.market_id} on BLOCKCHAIN?\n\n"${market.question}"\n\nThis will allow refunds.`)) {
-      return;
-    }
-
     try {
       setActionLoading(true);
       const token = await getFreshToken();
@@ -361,10 +337,6 @@ export default function SystemCore() {
   };
 
   const handleEmergencyWithdraw = async (market) => {
-    if (!window.confirm(`⚠️ EMERGENCY WITHDRAW from market #${market.market_id}?\n\nThis will withdraw ALL funds to admin wallet!\n\nMarket must be cancelled first.`)) {
-      return;
-    }
-
     try {
       setActionLoading(true);
       const token = await getFreshToken();

@@ -275,8 +275,7 @@ export default function Whitepaper() {
               <div className="flow-step">2. Submit prediction (50-256 chars)</div>
               <div className="flow-step">3. Set stake amount (0.05-100 BNB)</div>
               <div className="flow-step">4. Select duration and ticket count</div>
-              <div className="flow-step">5. Approve transaction</div>
-              <div className="flow-step">6. Market becomes active</div>
+              <div className="flow-step">5. Market becomes active</div>
             </div>
           </div>
 
@@ -286,9 +285,8 @@ export default function Whitepaper() {
               <div className="flow-step">1. Browse active markets</div>
               <div className="flow-step">2. Select market to challenge</div>
               <div className="flow-step">3. Choose ticket quantity</div>
-              <div className="flow-step">4. Approve payment</div>
-              <div className="flow-step">5. Tickets assigned to address</div>
-              <div className="flow-step">6. Wait for resolution</div>
+              <div className="flow-step">4. Tickets assigned to address</div>
+              <div className="flow-step">5. Wait for resolution</div>
             </div>
           </div>
 
@@ -299,8 +297,7 @@ export default function Whitepaper() {
               <div className="flow-step">2. Navigate to /winnings</div>
               <div className="flow-step">3. View claimable amount</div>
               <div className="flow-step">4. Click claim button</div>
-              <div className="flow-step">5. Approve transaction</div>
-              <div className="flow-step">6. BNB received in wallet</div>
+              <div className="flow-step">5. BNB received in wallet</div>
             </div>
           </div>
         </section>
@@ -366,25 +363,6 @@ export default function Whitepaper() {
               </ul>
             </div>
 
-            <div className="roadmap-phase">
-              <div className="phase-title">Phase 3: Decentralization (Q2 2026)</div>
-              <ul>
-                <li>Oracle integration</li>
-                <li>Decentralized resolution</li>
-                <li>Governance token</li>
-                <li>DAO structure</li>
-              </ul>
-            </div>
-
-            <div className="roadmap-phase">
-              <div className="phase-title">Phase 4: Expansion (Q3 2026)</div>
-              <ul>
-                <li>Multi-chain deployment</li>
-                <li>Liquidity pools</li>
-                <li>Market makers program</li>
-                <li>API for integrations</li>
-              </ul>
-            </div>
           </div>
         </section>
 
@@ -444,19 +422,6 @@ event WinningsClaimed(
 );`}</pre>
             </div>
           </div>
-        </section>
-
-        <section className="whitepaper-section">
-          <h2>11. Conclusion</h2>
-          <p>
-            four.market demonstrates a viable approach to decentralized prediction markets using 
-            blockchain technology. The protocol's simplicity ensures transparency while the smart 
-            contract architecture provides security and trustlessness.
-          </p>
-          <p>
-            Future development will focus on decentralizing the resolution mechanism, expanding 
-            market types, and building a sustainable ecosystem around prediction market infrastructure.
-          </p>
         </section>
 
         <footer className="whitepaper-footer">

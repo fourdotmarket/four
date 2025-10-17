@@ -175,15 +175,6 @@ export default function Winnings() {
       return; // Prevent multiple simultaneous claims
     }
 
-    // Confirm with user
-    const confirmMessage = type === 'winning' 
-      ? `Claim ${amount.toFixed(4)} BNB in winnings from Market #${marketId}?\n\nThis will submit a blockchain transaction.`
-      : `Claim ${amount.toFixed(4)} BNB refund from Market #${marketId}?\n\nThis will submit a blockchain transaction.`;
-    
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
-
     try {
       setClaiming(marketId);
       setError(null);

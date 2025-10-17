@@ -73,6 +73,24 @@ export default function Home() {
             Read Whitepaper
           </button>
         </div>
+
+        {/* Bottom Footer */}
+        <div className="home-bottom-footer">
+          <div className="footer-logo-section">
+            <img src="/logo.png" alt="four.market" className="footer-logo" />
+          </div>
+          <div className="footer-links-section">
+            <a href="https://x.com/fourdotmarket" target="_blank" rel="noopener noreferrer" className="footer-link">
+              Twitter
+            </a>
+            <a href="https://github.com/fourdotmarket" target="_blank" rel="noopener noreferrer" className="footer-link">
+              GitHub
+            </a>
+            <a href="https://four.meme" target="_blank" rel="noopener noreferrer" className="footer-link">
+              four.meme
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
