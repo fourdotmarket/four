@@ -66,6 +66,12 @@ export default function Home() {
             <span className="tech-separator">•</span>
             <span className="tech-badge">DeFi</span>
           </div>
+          <button 
+            className="home-whitepaper-link"
+            onClick={() => navigate('/whitepaper')}
+          >
+            Read Whitepaper
+          </button>
         </div>
       </div>
     </div>

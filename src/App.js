@@ -17,6 +17,7 @@ import Bet from './pages/Bet';
 import Position from './pages/Position';
 import Winnings from './pages/Winnings';
 import Settings from './pages/Settings';
+import Whitepaper from './pages/Whitepaper';
 import SystemCore from './pages/a7k2m9p3x6q5w8n4';
 
 function AppContent() {
@@ -92,6 +93,7 @@ function AppContent() {
           <Route path="/position" element={<Position />} />
           <Route path="/winnings" element={<Winnings />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/whitepaper" element={<Whitepaper />} />
           {/* Admin route - random token-based access */}
           <Route path="/admin/:token" element={<SystemCore />} />
         </Routes>
