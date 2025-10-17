@@ -43,20 +43,30 @@
     "creating": "CREATING BET...",
     "create": "CREATE BET",
     "minStake": "min {amount} • ticket price: {price} BNB",
-    "charCount": "{current}/{max} characters"
+    "charCount": "{current}/{max} characters",
+    "6hours": "6 HOURS",
+    "12hours": "12 HOURS",
+    "18hours": "18 HOURS",
+    "24hours": "24 HOURS",
+    "3days": "3 DAYS",
+    "7days": "7 DAYS"
   },
   "trending": {
     "title": "TRENDING NOW",
     "subtitle": "Most popular prediction.",
     "topMarket": "Top Market",
-    "otherTrending": "Other Trending Markets",
+    "otherTrending": "TOP MARKETS BY ACTIVITY",
     "noTrending": "No trending markets yet",
-    "beFirst": "Be the first to start trading"
+    "beFirst": "Be the first to start trading",
+    "recentActivity": "Most active in the past 3 hours.",
+    "noMarketsAvailable": "No trending markets available"
   },
   "resolved": {
     "title": "RESOLVED MARKETS",
     "subtitle": "View completed and expired predictions",
-    "noResolved": "No resolved markets yet"
+    "noResolved": "No resolved markets yet",
+    "completedWillAppear": "Completed markets will appear here",
+    "loading": "LOADING RESOLVED MARKETS..."
   },
   "bet": {
     "back": "BACK",
@@ -70,6 +80,7 @@
     "ticketHolders": "Ticket Holders",
     "marketInfo": "Market Info",
     "creator": "Creator",
+    "createdBy": "Created By",
     "stake": "Stake",
     "ticketPrice": "Ticket Price",
     "totalTickets": "Total Tickets",
@@ -79,7 +90,10 @@
     "outcome": "Outcome",
     "resolution": "Resolution",
     "noTransactions": "No transactions yet",
-    "noPosition": "You don't have any tickets"
+    "noPosition": "You don't have any tickets",
+    "waitingForActivity": "Waiting for activity...",
+    "holdersLeft": "HOLDERS LEFT",
+    "challengeTicketsLeft": "{count} challenge tickets left"
   },
   "settings": {
     "title": "SETTINGS",
@@ -120,7 +134,9 @@
     "spent": "Spent",
     "avgPrice": "Avg Price",
     "noPositions": "You don't have any positions yet",
-    "startTrading": "Start trading to see your positions here"
+    "startTrading": "Start trading to see your positions here",
+    "loading": "LOADING POSITIONS...",
+    "back": "BACK"
   },
   "winnings": {
     "title": "MY WINNINGS",
@@ -131,7 +147,9 @@
     "tickets": "Tickets Held",
     "winnings": "Winnings",
     "noWinnings": "No winnings yet",
-    "startTrading": "Participate in markets to earn winnings"
+    "startTrading": "Participate in markets to earn winnings",
+    "loading": "LOADING WINNINGS...",
+    "back": "BACK"
   },
   "common": {
     "yes": "Yes",
@@ -153,6 +171,10 @@
     "close": "Close",
     "cancel": "Cancel",
     "confirm": "Confirm",
-    "save": "Save"
+    "save": "Save",
+    "back": "BACK",
+    "buy": "BUY",
+    "create": "CREATE",
+    "viewMore": "VIEW MORE"
   }
 }

@@ -103,6 +103,12 @@ export default function Market() {
   };
 
   const handleOpenCreateModal = () => {
+    // CRITICAL: Check authReady first to ensure auth is complete
+    if (!authReady) {
+      showNotification('Authenticating, please wait...', 'warning');
+      return;
+    }
+    
     // Check if user has sufficient balance before opening modal
     if (!user) {
       showNotification('Please sign in to create a bet', 'error');

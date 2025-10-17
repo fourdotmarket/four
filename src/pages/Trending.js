@@ -197,6 +197,8 @@ export default function Trending() {
 
   const getBuyDisabledReason = () => {
     if (!topMarket) return 'Loading...';
+    // CRITICAL: Check authReady first
+    if (!authReady) return 'Authenticating, please wait...';
     if (!user) return 'Sign in to buy challenge tickets';
     if (isMarketMaker()) return 'Cannot buy challenge tickets in your own market';
     if (topMarket?.status === 'awaiting_resolution') return 'Market awaiting resolution';
@@ -211,6 +213,12 @@ export default function Trending() {
   const handleBuyTickets = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // CRITICAL: Ensure auth is ready before proceeding
+    if (!authReady) {
+      showNotification('Authentication in progress, please wait...', 'warning');
+      return;
+    }
 
     const disabledReason = getBuyDisabledReason();
     if (disabledReason) {
@@ -359,7 +367,7 @@ export default function Trending() {
     return (
       <div className="trending-page">
         <div className="trending-error">
-          <p>No trending markets available</p>
+          <p>{t('trending.noMarketsAvailable')}</p>
         </div>
       </div>
     );
@@ -700,7 +708,7 @@ export default function Trending() {
       <div className="trending-markets-section">
         <div className="trending-markets-header">
           <h2 className="trending-markets-title">{t('trending.otherTrending')}</h2>
-          <p className="trending-markets-subtitle">Most active in the past 3 hours.</p>
+          <p className="trending-markets-subtitle">{t('trending.recentActivity')}</p>
         </div>
         
         {topMarkets.length === 0 ? (

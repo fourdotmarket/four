@@ -43,20 +43,30 @@
     "creating": "正在创建赌注...",
     "create": "创建赌注",
     "minStake": "最低 {amount} • 票价：{price} BNB",
-    "charCount": "{current}/{max} 字符"
+    "charCount": "{current}/{max} 字符",
+    "6hours": "6 小时",
+    "12hours": "12 小时",
+    "18hours": "18 小时",
+    "24hours": "24 小时",
+    "3days": "3 天",
+    "7days": "7 天"
   },
   "trending": {
     "title": "热门市场",
     "subtitle": "最受欢迎的预测。",
     "topMarket": "顶级市场",
-    "otherTrending": "其他热门市场",
+    "otherTrending": "活跃度最高的市场",
     "noTrending": "暂无热门市场",
-    "beFirst": "成为第一个开始交易的人"
+    "beFirst": "成为第一个开始交易的人",
+    "recentActivity": "过去 3 小时内最活跃。",
+    "noMarketsAvailable": "暂无热门市场"
   },
   "resolved": {
     "title": "已解决市场",
     "subtitle": "查看已完成和过期的预测",
-    "noResolved": "暂无已解决的市场"
+    "noResolved": "暂无已解决的市场",
+    "completedWillAppear": "已完成的市场将显示在这里",
+    "loading": "正在加载已解决的市场..."
   },
   "bet": {
     "back": "返回",
@@ -70,6 +80,7 @@
     "ticketHolders": "持票人",
     "marketInfo": "市场信息",
     "creator": "创建者",
+    "createdBy": "创建者",
     "stake": "赌注",
     "ticketPrice": "票价",
     "totalTickets": "总票数",
@@ -79,7 +90,10 @@
     "outcome": "结果",
     "resolution": "解决方案",
     "noTransactions": "暂无交易",
-    "noPosition": "您没有任何票"
+    "noPosition": "您没有任何票",
+    "waitingForActivity": "等待活动...",
+    "holdersLeft": "剩余持有人",
+    "challengeTicketsLeft": "剩余 {count} 张挑战票"
   },
   "settings": {
     "title": "设置",
@@ -120,7 +134,9 @@
     "spent": "支出",
     "avgPrice": "平均价格",
     "noPositions": "您还没有任何仓位",
-    "startTrading": "开始交易以在此处查看您的仓位"
+    "startTrading": "开始交易以在此处查看您的仓位",
+    "loading": "正在加载仓位...",
+    "back": "返回"
   },
   "winnings": {
     "title": "我的奖金",
@@ -131,7 +147,9 @@
     "tickets": "持有票数",
     "winnings": "奖金",
     "noWinnings": "暂无奖金",
-    "startTrading": "参与市场以赚取奖金"
+    "startTrading": "参与市场以赚取奖金",
+    "loading": "正在加载奖金...",
+    "back": "返回"
   },
   "common": {
     "yes": "是",
@@ -153,6 +171,10 @@
     "close": "关闭",
     "cancel": "取消",
     "confirm": "确认",
-    "save": "保存"
+    "save": "保存",
+    "back": "返回",
+    "buy": "购买",
+    "create": "创建",
+    "viewMore": "查看更多"
   }
 }

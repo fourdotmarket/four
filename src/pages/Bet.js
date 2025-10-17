@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
+import { useLanguage } from '../context/LanguageContext';
 import { useTransactions } from '../hooks/useTransactions';
 import { usePositions } from '../hooks/usePositions';
 import Notification from '../components/Notification';
@@ -259,6 +260,7 @@ export default function Bet() {
   const navigate = useNavigate();
   const { user, authReady, getFreshToken } = useAuth();
   const { notification, showNotification, hideNotification } = useNotification();
+  const { t } = useLanguage();
   const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -393,6 +395,8 @@ export default function Bet() {
   };
 
   const getBuyDisabledReason = () => {
+    // CRITICAL: Check authReady first
+    if (!authReady) return 'Authenticating, please wait...';
     if (!user) return 'Sign in to buy challenge tickets';
     if (isMarketMaker()) return 'Cannot buy challenge tickets in your own market';
     if (market?.status === 'awaiting_resolution') return 'Market awaiting resolution';
@@ -404,6 +408,12 @@ export default function Bet() {
   };
 
   const handleBuyTickets = async () => {
+    // CRITICAL: Ensure auth is ready before proceeding
+    if (!authReady) {
+      showNotification('Authentication in progress, please wait...', 'warning');
+      return;
+    }
+    
     const disabledReason = getBuyDisabledReason();
     if (disabledReason) {
       showNotification(disabledReason, 'warning');
@@ -598,7 +608,7 @@ export default function Bet() {
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
-        <span>BACK</span>
+        <span>{t('bet.back')}</span>
       </button>
 
       <div className="bet-split-container">
@@ -613,7 +623,7 @@ export default function Bet() {
               <h1 className="bet-question">{market.question}</h1>
             </div>
             <div className="bet-creator-section">
-              <span className="bet-label">CREATED BY</span>
+              <span className="bet-label">{t('bet.createdBy')}</span>
               <span className="bet-creator-name">
                 {market.creator_username}
                 {isMarketMaker() && <span style={{ marginLeft: '8px', fontSize: '10px', color: '#FFD43B' }}>(YOU)</span>}
@@ -707,7 +717,7 @@ export default function Bet() {
 
         <div className="bet-right-section">
           <div className="bet-buy-card">
-            <h2 className="bet-buy-title">BUY CHALLENGE TICKETS</h2>
+            <h2 className="bet-buy-title">{t('bet.challengeTickets')}</h2>
             <div className="bet-buy-banner">
               <img 
                 src={market.banner_url || '/default.png'} 
@@ -729,7 +739,7 @@ export default function Bet() {
             
             <div className="bet-buy-content">
               <div className="bet-ticket-selector">
-                <label className="bet-input-label">NUMBER OF CHALLENGE TICKETS</label>
+                <label className="bet-input-label">{t('bet.selectAmount')}</label>
                 <div className="bet-amount-controls">
                   <button 
                     className="bet-amount-btn"
