@@ -136,7 +136,7 @@ module.exports = async function handler(req, res) {
               content: `Format this prediction for the timeframe "${readableTimeframe}": ${prediction}`
             }
           ],
-          model: 'grok-4-latest',
+          model: 'grok-2-1212',
           stream: false,
           temperature: 0
         },

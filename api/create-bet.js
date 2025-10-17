@@ -79,7 +79,7 @@ export default async function handler(req, res) {
     }
 
     // 3. VALIDATE INPUT - NO user_id in body!
-    const { question, stakeAmount, duration, ticketAmount } = req.body;
+    const { question, stakeAmount, duration, ticketAmount, twitterLink } = req.body;
     
     // SECURITY: Enforced server-side validation - cannot be bypassed
     const validationErrors = validateInput(req.body, {
@@ -284,7 +284,8 @@ export default async function handler(req, res) {
             tx_hash: tx.hash,
             block_number: receipt.blockNumber,
             status: 'active',
-            banner_url: null
+            banner_url: null,
+            twitter_link: twitterLink && twitterLink.trim() ? twitterLink.trim() : null
           })
           .select()
           .single();

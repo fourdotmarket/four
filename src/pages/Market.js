@@ -35,6 +35,7 @@ export default function Market() {
   const [isBeautifying, setIsBeautifying] = useState(false);
   const [beautifiedPrediction, setBeautifiedPrediction] = useState('');
   const [showBeautified, setShowBeautified] = useState(false);
+  const [twitterLink, setTwitterLink] = useState('');
   const debounceTimerRef = useRef(null);
 
   // Allow English, Chinese, numbers, and common punctuation
@@ -100,6 +101,7 @@ export default function Market() {
     setStake('0.05');
     setExpiry('24');
     setTickets('100');
+    setTwitterLink('');
     setShowAdvanced(false);
     setIsCreating(false);
     setBeautifiedPrediction('');
@@ -260,7 +262,8 @@ export default function Market() {
           question: prediction,
           stakeAmount: stake,
           duration: duration,
-          ticketAmount: ticketAmount
+          ticketAmount: ticketAmount,
+          twitterLink: twitterLink.trim() || null
         })
       });
 
@@ -564,6 +567,26 @@ export default function Market() {
                             {count}
                           </button>
                         ))}
+                      </div>
+                    </div>
+
+                    {/* Twitter Link */}
+                    <div className="create-subfield">
+                      <label className="create-label">
+                        <span>TWITTER / X LINK</span>
+                        <span style={{ fontSize: '10px', color: '#888', fontWeight: 'normal' }}>(OPTIONAL)</span>
+                      </label>
+                      <input
+                        type="url"
+                        className="create-input"
+                        placeholder="https://twitter.com/username/status/..."
+                        value={twitterLink}
+                        onChange={(e) => setTwitterLink(e.target.value)}
+                        disabled={isCreating}
+                        style={{ width: '100%' }}
+                      />
+                      <div className="create-hint" style={{ marginTop: '4px' }}>
+                        Link to a relevant tweet or X post
                       </div>
                     </div>
                   </div>

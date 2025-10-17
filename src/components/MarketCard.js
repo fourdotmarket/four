@@ -136,6 +136,24 @@ export default function MarketCard({ market }) {
         {/* Question */}
         <h3 className="market-card-question">{market.question}</h3>
 
+        {/* Twitter Link */}
+        {market.twitter_link && (
+          <div className="market-card-twitter">
+            <a 
+              href={market.twitter_link} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="market-card-twitter-link"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              <span>View on X</span>
+            </a>
+          </div>
+        )}
+
         {/* Progress section */}
         <div className="market-card-progress-section">
           <div className="market-card-progress-bar">
