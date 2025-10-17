@@ -64,9 +64,14 @@
   "resolved": {
     "title": "RESOLVED MARKETS",
     "subtitle": "View completed and expired predictions",
+    "subtitleDetailed": "Completed, expired, and awaiting resolution markets",
+    "completedMarkets": "Completed markets will appear here",
     "noResolved": "No resolved markets yet",
     "completedWillAppear": "Completed markets will appear here",
-    "loading": "LOADING RESOLVED MARKETS..."
+    "loading": "LOADING RESOLVED MARKETS...",
+    "errorLoading": "ERROR LOADING MARKETS",
+    "loadMore": "LOAD MORE",
+    "loadingMore": "LOADING..."
   },
   "bet": {
     "back": "BACK",
@@ -116,7 +121,10 @@
     "signInAgainToBuy": "Please sign in again to buy challenge tickets",
     "tooManyPurchases": "You are making too many purchases. Please wait a moment and try again.",
     "cannotBuyOwnTickets": "Market creators cannot purchase challenge tickets in their own markets",
-    "pleaseBuyTickets": "Please sign in to buy tickets"
+    "pleaseBuyTickets": "Please sign in to buy tickets",
+    "preparingTransaction": "Preparing transaction...",
+    "submittingToBlockchain": "Submitting to blockchain...",
+    "successTx": "Success! TX: {txHash}..."
   },
   "settings": {
     "title": "SETTINGS",
@@ -150,15 +158,30 @@
   "positions": {
     "title": "MY POSITIONS",
     "subtitle": "View all your active market positions",
+    "subtitleTrack": "Track your ticket holdings across all markets",
     "totalTickets": "Total Tickets",
     "totalSpent": "Total Spent",
+    "totalTicketsLabel": "TOTAL TICKETS",
+    "totalSpentLabel": "TOTAL SPENT",
+    "marketsLabel": "MARKETS",
+    "ticketsLabel": "TICKETS",
+    "betLabel": "BET",
+    "betIdLabel": "BET ID",
+    "statusLabel": "STATUS",
+    "dateLabel": "DATE",
+    "txLabel": "TX",
     "market": "Market",
     "tickets": "Tickets",
     "spent": "Spent",
     "avgPrice": "Avg Price",
     "noPositions": "You don't have any positions yet",
+    "noPositionsYet": "You don't have any positions yet",
     "startTrading": "Start trading to see your positions here",
+    "browseMarkets": "BROWSE MARKETS",
     "loading": "LOADING POSITIONS...",
+    "loadingPositions": "Loading positions...",
+    "errorLoading": "Error loading positions",
+    "pleaseSignIn": "Please sign in to view your positions",
     "back": "BACK"
   },
   "winnings": {
@@ -200,6 +223,15 @@
     "back": "BACK",
     "buy": "BUY",
     "create": "CREATE",
-    "viewMore": "VIEW MORE"
+    "viewMore": "VIEW MORE",
+    "submittingToBlockchain": "Submitting to blockchain..."
+  },
+  "activity": {
+    "waitingForActivity": "Waiting for activity...",
+    "created": "created",
+    "bought": "bought",
+    "ticket": "ticket",
+    "tickets": "tickets",
+    "in": "in"
   }
 }

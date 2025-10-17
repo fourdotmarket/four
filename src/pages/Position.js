@@ -161,12 +161,12 @@ export default function Position() {
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-          <span>BACK</span>
+          <span>{t('positions.back')}</span>
         </button>
 
         <div className="position-header">
           <h1 className="position-title">{t('positions.title')}</h1>
-          <p className="position-subtitle">Track your ticket holdings across all markets</p>
+          <p className="position-subtitle">{t('positions.subtitleTrack')}</p>
         </div>
 
         <div className="position-empty-state">
@@ -174,7 +174,7 @@ export default function Position() {
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <p>Please sign in to view your positions</p>
+          <p>{t('positions.pleaseSignIn')}</p>
         </div>
       </div>
     );
@@ -188,17 +188,17 @@ export default function Position() {
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-          <span>BACK</span>
+          <span>{t('positions.back')}</span>
         </button>
 
         <div className="position-header">
           <h1 className="position-title">{t('positions.title')}</h1>
-          <p className="position-subtitle">Track your ticket holdings across all markets</p>
+          <p className="position-subtitle">{t('positions.subtitleTrack')}</p>
         </div>
 
         <div className="position-empty-state">
           <div className="loading-spinner"></div>
-          <p>Loading positions...</p>
+          <p>{t('positions.loadingPositions')}</p>
         </div>
       </div>
     );
@@ -212,16 +212,16 @@ export default function Position() {
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-          <span>BACK</span>
+          <span>{t('positions.back')}</span>
         </button>
 
         <div className="position-header">
           <h1 className="position-title">{t('positions.title')}</h1>
-          <p className="position-subtitle">Track your ticket holdings across all markets</p>
+          <p className="position-subtitle">{t('positions.subtitleTrack')}</p>
         </div>
 
         <div className="position-empty-state">
-          <p style={{ color: '#ff6b6b' }}>Error loading positions</p>
+          <p style={{ color: '#ff6b6b' }}>{t('positions.errorLoading')}</p>
         </div>
       </div>
     );
@@ -235,12 +235,12 @@ export default function Position() {
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-          <span>BACK</span>
+          <span>{t('positions.back')}</span>
         </button>
 
         <div className="position-header">
           <h1 className="position-title">{t('positions.title')}</h1>
-          <p className="position-subtitle">Track your ticket holdings across all markets</p>
+          <p className="position-subtitle">{t('positions.subtitleTrack')}</p>
         </div>
 
         <div className="position-empty-state">
@@ -249,9 +249,9 @@ export default function Position() {
             <line x1="3" y1="9" x2="21" y2="9"></line>
             <line x1="9" y1="21" x2="9" y2="9"></line>
           </svg>
-          <p>You don't have any positions yet</p>
+          <p>{t('positions.noPositionsYet')}</p>
           <button className="position-browse-btn" onClick={() => navigate('/market')}>
-            BROWSE MARKETS
+            {t('positions.browseMarkets')}
           </button>
         </div>
       </div>
@@ -265,25 +265,25 @@ export default function Position() {
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
-        <span>BACK</span>
+        <span>{t('positions.back')}</span>
       </button>
 
       <div className="position-header">
-        <h1 className="position-title">MY POSITIONS</h1>
-        <p className="position-subtitle">Track your ticket holdings across all markets</p>
+        <h1 className="position-title">{t('positions.title')}</h1>
+        <p className="position-subtitle">{t('positions.subtitleTrack')}</p>
       </div>
 
       <div className="position-summary">
         <div className="position-stat-card">
-          <span className="position-stat-label">TOTAL TICKETS</span>
+          <span className="position-stat-label">{t('positions.totalTicketsLabel')}</span>
           <span className="position-stat-value">{totalTickets}</span>
         </div>
         <div className="position-stat-card">
-          <span className="position-stat-label">TOTAL SPENT</span>
+          <span className="position-stat-label">{t('positions.totalSpentLabel')}</span>
           <span className="position-stat-value">{totalSpent.toFixed(4)} BNB</span>
         </div>
         <div className="position-stat-card">
-          <span className="position-stat-label">MARKETS</span>
+          <span className="position-stat-label">{t('positions.marketsLabel')}</span>
           <span className="position-stat-value">{allPositions.length}</span>
         </div>
       </div>
@@ -291,12 +291,12 @@ export default function Position() {
       <div className="position-table-container">
         <div className="position-table">
           <div className="position-table-header">
-            <div className="position-table-cell">TICKETS</div>
-            <div className="position-table-cell">BET</div>
-            <div className="position-table-cell">BET ID</div>
-            <div className="position-table-cell">STATUS</div>
-            <div className="position-table-cell">DATE</div>
-            <div className="position-table-cell">TX</div>
+            <div className="position-table-cell">{t('positions.ticketsLabel')}</div>
+            <div className="position-table-cell">{t('positions.betLabel')}</div>
+            <div className="position-table-cell">{t('positions.betIdLabel')}</div>
+            <div className="position-table-cell">{t('positions.statusLabel')}</div>
+            <div className="position-table-cell">{t('positions.dateLabel')}</div>
+            <div className="position-table-cell">{t('positions.txLabel')}</div>
           </div>
           <div className="position-table-body">
             {allPositions.map((position) => (

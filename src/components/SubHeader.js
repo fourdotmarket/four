@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import './SubHeader.css';
 
 const supabase = createClient(
@@ -9,6 +10,7 @@ const supabase = createClient(
 );
 
 export default function SubHeader() {
+  const { t } = useLanguage();
   const [activities, setActivities] = useState([]);
   const processedIds = useRef(new Set());
   const navigate = useNavigate();
@@ -211,7 +213,7 @@ export default function SubHeader() {
         <div className="subheader-content">
           <div className="activity-empty">
             <span className="activity-pulse"></span>
-            <span className="activity-empty-text">Waiting for activity...</span>
+            <span className="activity-empty-text">{t('activity.waitingForActivity')}</span>
           </div>
         </div>
       </div>
@@ -238,7 +240,7 @@ export default function SubHeader() {
                   <>
                     <span className="activity-icon market-icon">+</span>
                     <span className="activity-username">{activity.username}</span>
-                    <span className="activity-action">created</span>
+                    <span className="activity-action">{t('activity.created')}</span>
                     <span 
                       className="activity-detail clickable"
                       onClick={(e) => handleMarketClick(activity.marketId, e)}
@@ -252,13 +254,13 @@ export default function SubHeader() {
                     <span className="activity-icon purchase-icon">↑</span>
                     <span className="activity-username">{activity.username}</span>
                     <span className="activity-action">
-                      bought {activity.ticketCount} {activity.ticketCount === 1 ? 'ticket' : 'tickets'}
+                      {t('activity.bought')} {activity.ticketCount} {activity.ticketCount === 1 ? t('activity.ticket') : t('activity.tickets')}
                     </span>
                     <span 
                       className="activity-detail clickable"
                       onClick={(e) => handleMarketClick(activity.marketId, e)}
                     >
-                      in "{truncateText(activity.marketQuestion, 20)}"
+                      {t('activity.in')} "{truncateText(activity.marketQuestion, 20)}"
                     </span>
                     <span className="activity-time">{formatTimeAgo(activity.timestamp)}</span>
                   </>

@@ -443,7 +443,7 @@ export default function Bet() {
 
     try {
       setIsBuying(true);
-      setBuyStatus('Preparing transaction...');
+      setBuyStatus(t('bet.preparingTransaction'));
 
       console.log('Getting fresh authentication token...');
       const token = await getFreshToken();
@@ -453,7 +453,7 @@ export default function Bet() {
       }
 
       console.log('Token obtained, buying tickets...');
-      setBuyStatus('Submitting to blockchain...');
+      setBuyStatus(t('bet.submittingToBlockchain'));
 
       const response = await fetch('/api/buy-ticket', {
         method: 'POST',

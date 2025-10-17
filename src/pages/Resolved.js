@@ -108,7 +108,7 @@ export default function Resolved() {
       <div className="resolved-header">
         <div className="resolved-title-section">
           <h1 className="resolved-title">{t('resolved.title')}</h1>
-          <p className="resolved-subtitle">Completed, expired, and awaiting resolution markets</p>
+          <p className="resolved-subtitle">{t('resolved.subtitleDetailed')}</p>
         </div>
       </div>
 
@@ -125,7 +125,7 @@ export default function Resolved() {
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
-            <p>ERROR LOADING MARKETS</p>
+            <p>{t('resolved.errorLoading')}</p>
             <span>{error}</span>
           </div>
         </div>
@@ -137,7 +137,7 @@ export default function Resolved() {
             <line x1="9" y1="21" x2="9" y2="9"></line>
           </svg>
           <h3>{t('resolved.noResolved')}</h3>
-          <p>Completed markets will appear here</p>
+          <p>{t('resolved.completedMarkets')}</p>
         </div>
       ) : (
         <>
@@ -157,10 +157,10 @@ export default function Resolved() {
                 {loading ? (
                   <>
                     <div className="btn-spinner"></div>
-                    LOADING...
+                    {t('resolved.loadingMore')}
                   </>
                 ) : (
-                  'LOAD MORE'
+                  t('resolved.loadMore')
                 )}
               </button>
             </div>

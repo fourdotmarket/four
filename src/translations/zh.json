@@ -64,9 +64,14 @@
   "resolved": {
     "title": "已解决市场",
     "subtitle": "查看已完成和过期的预测",
+    "subtitleDetailed": "已完成、已过期和等待解决的市场",
+    "completedMarkets": "已完成的市场将显示在这里",
     "noResolved": "暂无已解决的市场",
     "completedWillAppear": "已完成的市场将显示在这里",
-    "loading": "正在加载已解决的市场..."
+    "loading": "正在加载已解决的市场...",
+    "errorLoading": "加载市场时出错",
+    "loadMore": "加载更多",
+    "loadingMore": "加载中..."
   },
   "bet": {
     "back": "返回",
@@ -116,7 +121,10 @@
     "signInAgainToBuy": "请重新登录以购买挑战票",
     "tooManyPurchases": "您的购买操作过于频繁。请稍候再试。",
     "cannotBuyOwnTickets": "市场创建者不能购买自己市场的挑战票",
-    "pleaseBuyTickets": "请登录以购买票"
+    "pleaseBuyTickets": "请登录以购买票",
+    "preparingTransaction": "正在准备交易...",
+    "submittingToBlockchain": "正在提交到区块链...",
+    "successTx": "成功！交易：{txHash}..."
   },
   "settings": {
     "title": "设置",
@@ -150,15 +158,30 @@
   "positions": {
     "title": "我的仓位",
     "subtitle": "查看您的所有活跃市场仓位",
+    "subtitleTrack": "跟踪您在所有市场的持票情况",
     "totalTickets": "总票数",
     "totalSpent": "总支出",
+    "totalTicketsLabel": "总票数",
+    "totalSpentLabel": "总支出",
+    "marketsLabel": "市场",
+    "ticketsLabel": "票数",
+    "betLabel": "赌注",
+    "betIdLabel": "赌注编号",
+    "statusLabel": "状态",
+    "dateLabel": "日期",
+    "txLabel": "交易",
     "market": "市场",
     "tickets": "票数",
     "spent": "支出",
     "avgPrice": "平均价格",
     "noPositions": "您还没有任何仓位",
+    "noPositionsYet": "您还没有任何仓位",
     "startTrading": "开始交易以在此处查看您的仓位",
+    "browseMarkets": "浏览市场",
     "loading": "正在加载仓位...",
+    "loadingPositions": "正在加载仓位...",
+    "errorLoading": "加载仓位时出错",
+    "pleaseSignIn": "请登录以查看您的仓位",
     "back": "返回"
   },
   "winnings": {
@@ -200,6 +223,15 @@
     "back": "返回",
     "buy": "购买",
     "create": "创建",
-    "viewMore": "查看更多"
+    "viewMore": "查看更多",
+    "submittingToBlockchain": "正在提交到区块链..."
+  },
+  "activity": {
+    "waitingForActivity": "等待活动...",
+    "created": "创建了",
+    "bought": "购买了",
+    "ticket": "张票",
+    "tickets": "张票",
+    "in": "在"
   }
 }
