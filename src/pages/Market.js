@@ -170,10 +170,17 @@ export default function Market() {
 
       console.log('📥 AI Response:', response.data);
 
-      // Check if timeframe changed during request - skip if it did
+      // Check if timeframe changed during request - skip if it did and trigger new request
       if (timeframeAtRequest !== currentTimeframe) {
-        console.log('⏭️ Timeframe changed during AI generation - skipping result');
+        console.log('⏭️ Timeframe changed during AI generation - skipping result and re-triggering');
         setIsBeautifying(false);
+        
+        // Trigger new beautification with current timeframe
+        if (!rateLimited && text.trim().length >= 10) {
+          setTimeout(() => {
+            beautifyPrediction(text, currentTimeframe);
+          }, 100);
+        }
         return;
       }
 

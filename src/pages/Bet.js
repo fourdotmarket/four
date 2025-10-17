@@ -264,13 +264,11 @@ export default function Bet() {
   const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('analysis');
+  const [activeTab, setActiveTab] = useState('transactions');
   const [ticketAmount, setTicketAmount] = useState(1);
   const [ticketInputValue, setTicketInputValue] = useState('1');
   const [isBuying, setIsBuying] = useState(false);
   const [buyStatus, setBuyStatus] = useState('');
-  const [aiAnalysis, setAiAnalysis] = useState(null);
-  const [analysisLoading, setAnalysisLoading] = useState(false);
 
   const { transactions, loading: txLoading } = useTransactions(market?.market_id);
   const { positions, totalTickets, totalSpent, loading: posLoading } = usePositions(user?.user_id, market?.market_id);
@@ -365,7 +363,6 @@ export default function Bet() {
           banner_url,
           twitter_link,
           website_link,
-          ai_analysis,
           created_at,
           updated_at
         `)
@@ -375,7 +372,6 @@ export default function Bet() {
       if (fetchError) throw fetchError;
 
       setMarket(data);
-      setAiAnalysis(data.ai_analysis);
       setError(null);
     } catch (err) {
       console.error('Error fetching market:', err);
@@ -385,51 +381,6 @@ export default function Bet() {
     }
   };
 
-  // Trigger AI Analysis
-  const triggerAiAnalysis = async () => {
-    if (!market || aiAnalysis || analysisLoading) return;
-
-    try {
-      setAnalysisLoading(true);
-      console.log('🤖 Triggering AI analysis for market:', market.market_id);
-
-      const response = await fetch('/api/analyze-market', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          marketId: market.market_id,
-          question: market.question,
-          twitterLink: market.twitter_link
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.analysis) {
-        setAiAnalysis(data.analysis);
-        console.log('✅ AI analysis received:', data.analysis);
-      } else if (data.skipped) {
-        console.log('⏭️ Analysis skipped for this market');
-        setAiAnalysis('Analysis not available for this market type.');
-      }
-    } catch (error) {
-      console.error('❌ Error triggering AI analysis:', error);
-      setAiAnalysis('Failed to generate analysis.');
-    } finally {
-      setAnalysisLoading(false);
-    }
-  };
-
-  // Trigger AI analysis 1 second after market loads
-  useEffect(() => {
-    if (market && !aiAnalysis && !analysisLoading) {
-      const timer = setTimeout(() => {
-        triggerAiAnalysis();
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [market]);
 
   const handleBack = () => {
     navigate('/market');
@@ -993,12 +944,6 @@ export default function Bet() {
       <div className="bet-tabs-container">
         <div className="bet-tabs-header">
           <button 
-            className={`bet-tab ${activeTab === 'analysis' ? 'active' : ''}`}
-            onClick={() => setActiveTab('analysis')}
-          >
-            AI ANALYSIS
-          </button>
-          <button 
             className={`bet-tab ${activeTab === 'transactions' ? 'active' : ''}`}
             onClick={() => setActiveTab('transactions')}
           >
@@ -1019,44 +964,6 @@ export default function Bet() {
         </div>
 
         <div className="bet-tabs-content" style={{ padding: activeTab === 'transactions' || activeTab === 'positions' ? 0 : '40px' }}>
-          {activeTab === 'analysis' && (
-            <div className="bet-tab-panel">
-              {analysisLoading ? (
-                <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
-                  <div className="loading-spinner"></div>
-                  <p>Generating AI analysis...</p>
-                </div>
-              ) : aiAnalysis ? (
-                <div className="bet-ai-analysis">
-                  <div className="bet-ai-header">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                      <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                    </svg>
-                    <h3>AI MARKET ANALYSIS</h3>
-                  </div>
-                  <div className="bet-ai-content">
-                    <p>{aiAnalysis}</p>
-                  </div>
-                  <div className="bet-ai-footer">
-                    <span>Powered by GROK AI</span>
-                    <span style={{ color: '#808080', fontSize: '10px' }}>• Analysis is for informational purposes only</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="bet-empty-state" style={{ padding: '60px 20px' }}>
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                  </svg>
-                  <p>No AI analysis available for this market</p>
-                </div>
-              )}
-            </div>
-          )}
-
           {activeTab === 'transactions' && (
             <div className="bet-tab-panel">
               {txLoading ? (
