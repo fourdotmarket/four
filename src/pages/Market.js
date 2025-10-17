@@ -220,9 +220,9 @@ export default function Market() {
     setExpiry(newExpiry);
     setCurrentTimeframe(newExpiry);
     
-    // If user already accepted AI suggestion, auto-update the prediction with new timeframe
+    // If user already accepted AI suggestion, update the prediction with new timeframe
     if (aiDecided && prediction.trim().length >= 10) {
-      console.log(`⏰ Timeframe changed from ${oldTimeframe} to ${newExpiry}, auto-updating prediction...`);
+      console.log(`⏰ Timeframe changed from ${oldTimeframe} to ${newExpiry}, updating prediction...`);
       
       // Extract the core prediction by removing timeframe references
       let corePrediction = prediction;
@@ -239,8 +239,9 @@ export default function Market() {
         corePrediction = corePrediction.replace(pattern, '');
       }
       
-      // Hide any showing beautified suggestion
+      // Re-trigger AI beautification with new timeframe
       setShowBeautified(false);
+      setAiDecided(false); // Allow re-beautification
       
       if (!rateLimited) {
         // Clear previous timer
@@ -248,29 +249,10 @@ export default function Market() {
           clearTimeout(debounceTimerRef.current);
         }
         
-        // Mark as beautifying
-        setIsBeautifying(true);
-        
-        // Call beautification API
-        (async () => {
-          try {
-            const response = await axios.post('/api/beautify-prediction', {
-              prediction: corePrediction.trim(),
-              timeframe: newExpiry
-            });
-
-            if (response.data && response.data.success && response.data.beautified) {
-              const beautified = response.data.beautified;
-              // Auto-accept since user already trusted AI
-              setPrediction(beautified);
-              console.log('✅ Auto-applied new timeframe prediction:', beautified);
-            }
-          } catch (error) {
-            console.error('❌ Auto-update failed:', error);
-          } finally {
-            setIsBeautifying(false);
-          }
-        })();
+        // Trigger beautification immediately with core prediction
+        debounceTimerRef.current = setTimeout(() => {
+          beautifyPrediction(corePrediction.trim(), newExpiry);
+        }, 300);
       }
     } 
     // If AI suggestion is showing but user hasn't decided, re-trigger with new timeframe
