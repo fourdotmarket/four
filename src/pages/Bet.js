@@ -395,9 +395,11 @@ export default function Bet() {
   };
 
   const getBuyDisabledReason = () => {
-    // CRITICAL: Check authReady first
-    if (!authReady) return 'Authenticating, please wait...';
-    if (!user) return 'Sign in to buy challenge tickets';
+    // Smart auth check: only show "Authenticating" if no user AND authReady is false
+    if (!user) {
+      if (!authReady) return 'Authenticating, please wait...';
+      return 'Sign in to buy challenge tickets';
+    }
     if (isMarketMaker()) return 'Cannot buy challenge tickets in your own market';
     if (market?.status === 'awaiting_resolution') return 'Market awaiting resolution';
     if (market?.status === 'resolved') return 'Market has been resolved';
@@ -408,9 +410,13 @@ export default function Bet() {
   };
 
   const handleBuyTickets = async () => {
-    // CRITICAL: Ensure auth is ready before proceeding
-    if (!authReady) {
-      showNotification('Authentication in progress, please wait...', 'warning');
+    // Smart auth check: if user exists, proceed
+    if (!user) {
+      if (!authReady) {
+        showNotification('Authenticating, please wait...', 'warning');
+        return;
+      }
+      showNotification('Please sign in to buy tickets', 'error');
       return;
     }
     

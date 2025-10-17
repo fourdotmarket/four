@@ -103,14 +103,13 @@ export default function Market() {
   };
 
   const handleOpenCreateModal = () => {
-    // CRITICAL: Check authReady first to ensure auth is complete
-    if (!authReady) {
-      showNotification('Authenticating, please wait...', 'warning');
-      return;
-    }
-    
-    // Check if user has sufficient balance before opening modal
+    // Smart auth check: if user exists, they're authenticated (bypass authReady)
     if (!user) {
+      // Only check authReady if there's no user
+      if (!authReady) {
+        showNotification('Authenticating, please wait...', 'warning');
+        return;
+      }
       showNotification('Please sign in to create a bet', 'error');
       return;
     }
@@ -125,6 +124,16 @@ export default function Market() {
   };
 
   const handleCreateBet = async () => {
+    // Smart auth check: if user exists, proceed
+    if (!user) {
+      if (!authReady) {
+        showNotification('Authenticating, please wait...', 'warning');
+        return;
+      }
+      showNotification('Please sign in to create a bet', 'error');
+      return;
+    }
+    
     // Validation
     if (!prediction.trim()) {
       showNotification('Please enter a prediction', 'error');
@@ -139,11 +148,6 @@ export default function Market() {
     const stakeValue = parseFloat(stake);
     if (!stake || isNaN(stakeValue) || stakeValue < MIN_STAKE) {
       showNotification(`Please enter a valid stake amount (minimum ${MIN_STAKE} BNB)`, 'error');
-      return;
-    }
-
-    if (!user) {
-      showNotification('Please sign in to create a bet', 'error');
       return;
     }
 

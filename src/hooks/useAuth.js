@@ -67,10 +67,11 @@ export function useAuth() {
 
   useEffect(() => {
     if (!ready || !authenticated) {
+      console.log('🔴 Not ready or not authenticated - clearing state', { ready, authenticated });
       setUser(null);
       setAccessToken(null);
       setLoading(false);
-      setAuthReady(false);
+      setAuthReady(true); // CRITICAL: Auth check is "complete" - user just isn't signed in
       setShowPrivateKeyUI(false);
       setPrivateKeyData(null);
       privateKeyCheckRef.current = false;
@@ -115,7 +116,7 @@ export function useAuth() {
       setAccessToken(cachedData.token);
       setLoading(false);
       setAuthReady(true);
-      console.log('✅ Auth ready from cache');
+      console.log('✅ Auth ready from cache - user can proceed immediately');
       return;
     }
 
@@ -182,6 +183,7 @@ export function useAuth() {
         setLoading(false);
         // Set authReady to true immediately so components can proceed
         setAuthReady(true);
+        console.log('✅ User authenticated successfully - authReady=true, user:', userData.username);
 
         // Check if this is a new user who hasn't seen their private key yet
         const hasSeenPrivateKey = localStorage.getItem(`pkui_shown_${currentPrivyUserId}`) === 'true';
@@ -229,7 +231,7 @@ export function useAuth() {
         setUser(null);
         setAccessToken(null);
         setLoading(false);
-        setAuthReady(false);
+        setAuthReady(true); // CRITICAL: Auth check is "complete" even if it failed
       }
     }
 
