@@ -24,6 +24,7 @@ export default function Winnings() {
   const [totalRefunds, setTotalRefunds] = useState(0);
   const [claiming, setClaiming] = useState(null); // Track which market is being claimed
   const [claimSuccess, setClaimSuccess] = useState(null); // Show success message
+  const [claimedItems, setClaimedItems] = useState(new Set()); // Track claimed market IDs
 
   useEffect(() => {
     if (user) {
@@ -191,6 +192,9 @@ export default function Winnings() {
       if (response.data.success) {
         console.log('✅ Claim successful:', response.data);
         
+        // Mark as claimed immediately (no refresh needed)
+        setClaimedItems(prev => new Set([...prev, marketId]));
+        
         // Show success message with transaction details
         const successMsg = {
           type,
@@ -201,11 +205,10 @@ export default function Winnings() {
         };
         setClaimSuccess(successMsg);
 
-        // Refresh winnings after 2 seconds
+        // Auto-hide success message after 5 seconds
         setTimeout(() => {
-          fetchWinnings();
           setClaimSuccess(null);
-        }, 3000);
+        }, 5000);
       }
 
     } catch (err) {
@@ -361,11 +364,18 @@ export default function Winnings() {
                         <span className="winnings-amount-value">{winning.winAmount.toFixed(4)} BNB</span>
                       </div>
                       <button 
-                        className="winnings-claim-btn"
+                        className={`winnings-claim-btn ${claimedItems.has(winning.market_id) ? 'claimed' : ''}`}
                         onClick={(e) => handleClaim(e, winning.market_id, winning.winAmount, 'winning')}
-                        disabled={claiming === winning.market_id}
+                        disabled={claiming === winning.market_id || claimedItems.has(winning.market_id)}
                       >
-                        {claiming === winning.market_id ? (
+                        {claimedItems.has(winning.market_id) ? (
+                          <>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            CLAIMED
+                          </>
+                        ) : claiming === winning.market_id ? (
                           <>
                             <div className="btn-spinner"></div>
                             CLAIMING...
@@ -407,11 +417,18 @@ export default function Winnings() {
                         <span className="winnings-amount-value">{refund.winAmount.toFixed(4)} BNB</span>
                       </div>
                       <button 
-                        className="winnings-claim-btn refund"
+                        className={`winnings-claim-btn refund ${claimedItems.has(refund.market_id) ? 'claimed' : ''}`}
                         onClick={(e) => handleClaim(e, refund.market_id, refund.winAmount, 'refund')}
-                        disabled={claiming === refund.market_id}
+                        disabled={claiming === refund.market_id || claimedItems.has(refund.market_id)}
                       >
-                        {claiming === refund.market_id ? (
+                        {claimedItems.has(refund.market_id) ? (
+                          <>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            CLAIMED
+                          </>
+                        ) : claiming === refund.market_id ? (
                           <>
                             <div className="btn-spinner"></div>
                             CLAIMING...
