@@ -499,6 +499,38 @@
   border-color: #2196f3;
 }
 
+/* Cancelled Display */
+.market-card-cancelled {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid #ff6b6b;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.market-card-cancelled svg {
+  color: #ff6b6b;
+  flex-shrink: 0;
+}
+
+.market-card-cancelled span {
+  font-family: var(--font-primary);
+  font-size: 10px;
+  font-weight: 700;
+  color: #ff6b6b;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.market-card-status-badge.cancelled {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.9) 0%, rgba(255, 82, 82, 0.9) 100%);
+  color: #ffffff;
+  border-color: #ff6b6b;
+}
+
 /* Responsive - Maintain Compact */
 @media (max-width: 768px) {
   .market-card {
