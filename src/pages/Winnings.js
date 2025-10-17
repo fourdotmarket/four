@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
+import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../context/LanguageContext';
 import MarketCard from '../components/MarketCard';
@@ -13,7 +14,7 @@ const supabase = createClient(
 
 export default function Winnings() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, getFreshToken } = useAuth();
   const { t } = useLanguage();
   const [winnings, setWinnings] = useState([]);
   const [refunds, setRefunds] = useState([]);
@@ -21,6 +22,8 @@ export default function Winnings() {
   const [error, setError] = useState(null);
   const [totalWinnings, setTotalWinnings] = useState(0);
   const [totalRefunds, setTotalRefunds] = useState(0);
+  const [claiming, setClaiming] = useState(null); // Track which market is being claimed
+  const [claimSuccess, setClaimSuccess] = useState(null); // Show success message
 
   useEffect(() => {
     if (user) {
@@ -140,11 +143,88 @@ export default function Winnings() {
     navigate(-1);
   };
 
-  const handleClaim = (e, marketId, amount, type) => {
+  const handleClaim = async (e, marketId, amount, type) => {
     e.stopPropagation(); // Prevent card click
-    // TODO: Implement claim functionality
-    console.log(`Claiming ${type}:`, { marketId, amount });
-    alert(`Claim functionality coming soon!\n\nMarket ID: ${marketId}\nAmount: ${amount.toFixed(4)} BNB\nType: ${type}`);
+
+    if (claiming) {
+      return; // Prevent multiple simultaneous claims
+    }
+
+    // Confirm with user
+    const confirmMessage = type === 'winning' 
+      ? `Claim ${amount.toFixed(4)} BNB in winnings from Market #${marketId}?\n\nThis will submit a blockchain transaction.`
+      : `Claim ${amount.toFixed(4)} BNB refund from Market #${marketId}?\n\nThis will submit a blockchain transaction.`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      setClaiming(marketId);
+      setError(null);
+      setClaimSuccess(null);
+
+      console.log(`🔄 Claiming ${type} for Market #${marketId}...`);
+
+      // Get fresh JWT token
+      const token = await getFreshToken();
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      // Choose the appropriate API endpoint
+      const endpoint = type === 'winning' 
+        ? '/api/claim-winnings'
+        : '/api/claim-refund';
+
+      // Call the API
+      const response = await axios.post(endpoint, 
+        { marketId },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        console.log('✅ Claim successful:', response.data);
+        
+        // Show success message with transaction details
+        const successMsg = {
+          type,
+          marketId,
+          amount: type === 'winning' ? response.data.grossWinnings : response.data.refundAmount,
+          txHash: response.data.transactionHash,
+          netReceived: response.data.netReceived
+        };
+        setClaimSuccess(successMsg);
+
+        // Refresh winnings after 2 seconds
+        setTimeout(() => {
+          fetchWinnings();
+          setClaimSuccess(null);
+        }, 3000);
+      }
+
+    } catch (err) {
+      console.error(`❌ Claim ${type} failed:`, err);
+      
+      let errorMessage = 'Failed to claim';
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
+      
+      // Clear error after 5 seconds
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setClaiming(null);
+    }
   };
 
   if (!user) {
@@ -168,9 +248,54 @@ export default function Winnings() {
       </button>
 
       <div className="winnings-header">
-          <h1 className="winnings-title">{t('winnings.title')}</h1>
+        <h1 className="winnings-title">{t('winnings.title')}</h1>
         <p className="winnings-subtitle">{t('winnings.subtitle')}</p>
       </div>
+
+      {/* Success Message */}
+      {claimSuccess && (
+        <div className="claim-success-banner">
+          <div className="claim-success-content">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div className="claim-success-text">
+              <strong>
+                {claimSuccess.type === 'winning' ? 'WINNINGS CLAIMED!' : 'REFUND CLAIMED!'}
+              </strong>
+              <span>
+                {claimSuccess.amount} BNB • Market #{claimSuccess.marketId}
+              </span>
+              <a 
+                href={`https://bscscan.com/tx/${claimSuccess.txHash}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="claim-tx-link"
+              >
+                View Transaction →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="claim-error-banner">
+          <div className="claim-error-content">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div className="claim-error-text">
+              <strong>CLAIM FAILED</strong>
+              <span>{error}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="winnings-loading">
@@ -238,11 +363,21 @@ export default function Winnings() {
                       <button 
                         className="winnings-claim-btn"
                         onClick={(e) => handleClaim(e, winning.market_id, winning.winAmount, 'winning')}
+                        disabled={claiming === winning.market_id}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        CLAIM WINNINGS
+                        {claiming === winning.market_id ? (
+                          <>
+                            <div className="btn-spinner"></div>
+                            CLAIMING...
+                          </>
+                        ) : (
+                          <>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            CLAIM WINNINGS
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -274,11 +409,21 @@ export default function Winnings() {
                       <button 
                         className="winnings-claim-btn refund"
                         onClick={(e) => handleClaim(e, refund.market_id, refund.winAmount, 'refund')}
+                        disabled={claiming === refund.market_id}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        CLAIM REFUND
+                        {claiming === refund.market_id ? (
+                          <>
+                            <div className="btn-spinner"></div>
+                            CLAIMING...
+                          </>
+                        ) : (
+                          <>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            CLAIM REFUND
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
