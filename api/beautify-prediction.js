@@ -94,17 +94,19 @@ export default async function handler(req, res) {
     }
 
     // Check for API key
-    if (!process.env.API_KEY_GROK) {
-      console.error('❌ API_KEY_GROK not configured');
+    const apiKey = process.env.API_KEY_GROK;
+    if (!apiKey) {
+      console.error('❌ API_KEY_GROK not configured in environment');
       return res.status(500).json({ 
         error: 'AI service not configured',
-        message: 'API key missing'
+        message: 'API key missing from environment'
       });
     }
 
     console.log('🤖 Beautifying prediction with GROK AI...');
-    console.log('Original:', prediction);
-    console.log('Timeframe:', timeframe);
+    console.log('✅ API Key found:', apiKey.substring(0, 10) + '...');
+    console.log('📝 Original prediction:', prediction);
+    console.log('⏱️  Timeframe:', timeframe);
 
     // Map timeframe values to readable format
     const timeframeMap = {
@@ -119,31 +121,53 @@ export default async function handler(req, res) {
     const readableTimeframe = timeframeMap[timeframe] || timeframe;
 
     // Call GROK AI API (x.ai)
-    const grokResponse = await axios.post(
-      'https://api.x.ai/v1/chat/completions',
-      {
-        messages: [
-          {
-            role: 'system',
-            content: `You are an assistant. Your purpose is to fix grammar and format prediction statements for a Polymarket-style site. For example, if someone's prediction is 'solana above 150$', you will rephrase it as 'Solana WILL reach or go above $150 in the next ${readableTimeframe}' based on the provided parameters. If the prediction is about followers, such as 'Elon 9999999 followers', and the selected parameter is ${readableTimeframe}, you will write 'Elon WILL reach 9,999,999 followers in the next ${readableTimeframe}'. Always capitalize the words WILL and WILL NOT, and ensure each formatted statement is between 40 and 240 characters long. Only return the formatted prediction, nothing else.`
-          },
-          {
-            role: 'user',
-            content: `Format this prediction for the timeframe "${readableTimeframe}": ${prediction}`
-          }
-        ],
-        model: 'grok-beta',
-        stream: false,
-        temperature: 0.7
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.API_KEY_GROK}`
+    let grokResponse;
+    try {
+      grokResponse = await axios.post(
+        'https://api.x.ai/v1/chat/completions',
+        {
+          messages: [
+            {
+              role: 'system',
+              content: `You are an assistant. Your purpose is to fix grammar and format prediction statements for a Polymarket-style site. For example, if someone's prediction is 'solana above 150$', you will rephrase it as 'Solana WILL reach or go above $150 in the next ${readableTimeframe}' based on the provided parameters. If the prediction is about followers, such as 'Elon 9999999 followers', and the selected parameter is ${readableTimeframe}, you will write 'Elon WILL reach 9,999,999 followers in the next ${readableTimeframe}'. Always capitalize the words WILL and WILL NOT, and ensure each formatted statement is between 40 and 240 characters long. Only return the formatted prediction, nothing else.`
+            },
+            {
+              role: 'user',
+              content: `Format this prediction for the timeframe "${readableTimeframe}": ${prediction}`
+            }
+          ],
+          model: 'grok-beta',
+          stream: false,
+          temperature: 0.7
         },
-        timeout: 10000 // 10 second timeout
-      }
-    );
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          timeout: 15000, // 15 second timeout
+          validateStatus: function (status) {
+            return status < 500; // Accept any status code below 500
+          }
+        }
+      );
+    } catch (axiosError) {
+      console.error('❌ Axios Error Details:');
+      console.error('Status:', axiosError.response?.status);
+      console.error('Status Text:', axiosError.response?.statusText);
+      console.error('Data:', JSON.stringify(axiosError.response?.data, null, 2));
+      console.error('Headers:', axiosError.response?.headers);
+      throw axiosError;
+    }
+
+    console.log('📦 GROK Response Status:', grokResponse.status);
+    console.log('📦 GROK Response Data:', JSON.stringify(grokResponse.data, null, 2));
+
+    // Validate response structure
+    if (!grokResponse.data || !grokResponse.data.choices || !grokResponse.data.choices[0]) {
+      console.error('❌ Invalid GROK response structure:', grokResponse.data);
+      throw new Error('Invalid response from AI service');
+    }
 
     const beautifiedPrediction = grokResponse.data.choices[0].message.content.trim();
 
