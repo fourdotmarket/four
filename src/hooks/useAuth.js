@@ -7,6 +7,37 @@ const authRequestsInFlight = new Map();
 const completedAuthUsers = new Map();
 const AUTH_TIMEOUT_MS = 15000; // 15 seconds timeout
 const MAX_RETRIES = 3;
+const TOKEN_REFRESH_INTERVAL = 55 * 60 * 1000; // 55 minutes (tokens last 60 min)
+
+// Helper to safely use localStorage
+const safeLocalStorage = {
+  getItem: (key) => {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.warn('localStorage getItem failed:', e);
+      return null;
+    }
+  },
+  setItem: (key, value) => {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch (e) {
+      console.warn('localStorage setItem failed:', e);
+      return false;
+    }
+  },
+  removeItem: (key) => {
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch (e) {
+      console.warn('localStorage removeItem failed:', e);
+      return false;
+    }
+  }
+};
 
 export function useAuth() {
   const { ready, authenticated, user: privyUser, getAccessToken } = usePrivy();
@@ -22,6 +53,53 @@ export function useAuth() {
   const privateKeyCheckRef = useRef(false);
   const authTimeoutRef = useRef(null);
   const retryCountRef = useRef(0);
+  const hasLoadedFromCacheRef = useRef(false);
+
+  // Helper to cache user data to both memory and localStorage
+  const cacheUserData = useCallback((userId, userData, token) => {
+    // Cache to memory
+    completedAuthUsers.set(userId, { user: userData, token });
+    
+    // Cache to localStorage for persistence across refreshes
+    safeLocalStorage.setItem(`auth_user_${userId}`, JSON.stringify({
+      user: userData,
+      cachedAt: Date.now()
+    }));
+    
+    console.log('✅ Auth data cached to memory and localStorage');
+  }, []);
+
+  // Helper to load user data from cache
+  const loadFromCache = useCallback((userId) => {
+    // Try memory cache first (fastest)
+    if (completedAuthUsers.has(userId)) {
+      console.log('✅ Loading from memory cache');
+      return completedAuthUsers.get(userId);
+    }
+
+    // Try localStorage cache
+    const cached = safeLocalStorage.getItem(`auth_user_${userId}`);
+    if (cached) {
+      try {
+        const { user: userData, cachedAt } = JSON.parse(cached);
+        // Cache is valid for 24 hours
+        if (Date.now() - cachedAt < 24 * 60 * 60 * 1000) {
+          console.log('✅ Loading from localStorage cache');
+          // Restore to memory cache
+          completedAuthUsers.set(userId, { user: userData, token: null });
+          return { user: userData, token: null };
+        } else {
+          console.log('⚠️ localStorage cache expired');
+          safeLocalStorage.removeItem(`auth_user_${userId}`);
+        }
+      } catch (e) {
+        console.error('Failed to parse cached auth data:', e);
+        safeLocalStorage.removeItem(`auth_user_${userId}`);
+      }
+    }
+
+    return null;
+  }, []);
 
   const closePrivateKeyUI = useCallback(() => {
     console.log('🔒 Closing Private Key UI');
@@ -31,28 +109,22 @@ export function useAuth() {
     
     const currentPrivyUserId = privyUser?.id || privyUser?.sub;
     if (currentPrivyUserId) {
-      try {
-        localStorage.setItem(`pkui_shown_${currentPrivyUserId}`, 'true');
-        console.log('✅ Marked private key as shown in localStorage');
-        
-        if (user && accessToken) {
-          completedAuthUsers.set(currentPrivyUserId, {
-            user: user,
-            token: accessToken
-          });
-          console.log('✅ Auth data cached for future sessions');
-        }
-      } catch (e) {
-        console.error('Failed to save private key UI state:', e);
+      safeLocalStorage.setItem(`pkui_shown_${currentPrivyUserId}`, 'true');
+      console.log('✅ Marked private key as shown');
+      
+      // Cache user data now that private key UI is closed
+      if (user && accessToken) {
+        cacheUserData(currentPrivyUserId, user, accessToken);
       }
     }
-  }, [privyUser, user, accessToken]);
+  }, [privyUser, user, accessToken, cacheUserData]);
 
   const getFreshToken = useCallback(async (retries = 3) => {
     for (let i = 0; i < retries; i++) {
       try {
         const token = await getAccessToken();
         if (token) {
+          setAccessToken(token);
           return token;
         }
       } catch (error) {
@@ -64,6 +136,43 @@ export function useAuth() {
     }
     throw new Error('Failed to get access token after retries');
   }, [getAccessToken]);
+
+  // Setup automatic token refresh
+  useEffect(() => {
+    if (!authenticated || !user) {
+      // Clear refresh timer if not authenticated
+      if (tokenRefreshTimeoutRef.current) {
+        clearTimeout(tokenRefreshTimeoutRef.current);
+        tokenRefreshTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    const refreshToken = async () => {
+      try {
+        console.log('🔄 Auto-refreshing token...');
+        const newToken = await getFreshToken();
+        if (newToken) {
+          console.log('✅ Token refreshed successfully');
+          // Schedule next refresh
+          tokenRefreshTimeoutRef.current = setTimeout(refreshToken, TOKEN_REFRESH_INTERVAL);
+        }
+      } catch (error) {
+        console.error('❌ Failed to refresh token:', error);
+        // Retry in 5 minutes on failure
+        tokenRefreshTimeoutRef.current = setTimeout(refreshToken, 5 * 60 * 1000);
+      }
+    };
+
+    // Initial token refresh schedule
+    tokenRefreshTimeoutRef.current = setTimeout(refreshToken, TOKEN_REFRESH_INTERVAL);
+
+    return () => {
+      if (tokenRefreshTimeoutRef.current) {
+        clearTimeout(tokenRefreshTimeoutRef.current);
+      }
+    };
+  }, [authenticated, user, getFreshToken]);
 
   // Clear stuck auth requests after timeout
   const clearStuckAuth = useCallback((userId) => {
@@ -94,6 +203,7 @@ export function useAuth() {
       setPrivateKeyData(null);
       privateKeyCheckRef.current = false;
       retryCountRef.current = 0;
+      hasLoadedFromCacheRef.current = false;
       
       // Clear cache on logout
       completedAuthUsers.clear();
@@ -102,8 +212,8 @@ export function useAuth() {
       try {
         const keys = Object.keys(localStorage);
         keys.forEach(key => {
-          if (key.startsWith('pkui_shown_')) {
-            localStorage.removeItem(key);
+          if (key.startsWith('pkui_shown_') || key.startsWith('auth_user_')) {
+            safeLocalStorage.removeItem(key);
           }
         });
         console.log('🧹 Cleared auth cache on logout');
@@ -126,18 +236,31 @@ export function useAuth() {
 
     console.log('✅ Privy user ID available:', currentPrivyUserId);
 
-    // Check cache first
-    const hasSeenPrivateKey = localStorage.getItem(`pkui_shown_${currentPrivyUserId}`) === 'true';
-    
-    if (completedAuthUsers.has(currentPrivyUserId) && hasSeenPrivateKey) {
-      const cachedData = completedAuthUsers.get(currentPrivyUserId);
-      console.log('✅ Loading from cache for user:', currentPrivyUserId);
-      setUser(cachedData.user);
-      setAccessToken(cachedData.token);
-      setLoading(false);
-      setAuthReady(true);
-      retryCountRef.current = 0;
-      return;
+    // FIX: Try to load from cache first (memory or localStorage)
+    // This doesn't depend on private key UI check anymore!
+    if (!hasLoadedFromCacheRef.current) {
+      const cachedData = loadFromCache(currentPrivyUserId);
+      if (cachedData && cachedData.user) {
+        console.log('✅ Restored user from cache for:', currentPrivyUserId);
+        setUser(cachedData.user);
+        setLoading(false);
+        setAuthReady(true);
+        hasLoadedFromCacheRef.current = true;
+        retryCountRef.current = 0;
+        
+        // Get fresh token in background
+        if (!cachedData.token) {
+          getFreshToken().then(token => {
+            console.log('✅ Fresh token obtained for cached user');
+            cacheUserData(currentPrivyUserId, cachedData.user, token);
+          }).catch(err => {
+            console.error('⚠️ Failed to get fresh token for cached user:', err);
+          });
+        } else {
+          setAccessToken(cachedData.token);
+        }
+        return;
+      }
     }
 
     // Check if request is already in flight
@@ -245,11 +368,16 @@ export function useAuth() {
         setLoading(false);
         setAuthReady(true);
         retryCountRef.current = 0; // Reset retry count on success
+        hasLoadedFromCacheRef.current = true;
 
         console.log('✅ User authenticated - authReady=true');
 
+        // FIX: Cache user data immediately for ALL users
+        // Don't wait for private key UI to be closed
+        cacheUserData(currentPrivyUserId, userData, token);
+
         // Handle private key UI for new users
-        const hasSeenPrivateKey = localStorage.getItem(`pkui_shown_${currentPrivyUserId}`) === 'true';
+        const hasSeenPrivateKey = safeLocalStorage.getItem(`pkui_shown_${currentPrivyUserId}`) === 'true';
         
         if (isNewUser && privateKey && userData.wallet_address && !hasSeenPrivateKey) {
           console.log('🔐 NEW USER! Showing Private Key UI');
@@ -262,17 +390,10 @@ export function useAuth() {
             });
             setShowPrivateKeyUI(true);
           }, 100);
-          
-          authRequestsInFlight.delete(currentPrivyUserId);
-        } else {
-          // Cache for existing users
-          completedAuthUsers.set(currentPrivyUserId, {
-            user: userData,
-            token: token
-          });
-          console.log('✅ Auth complete, data cached');
-          authRequestsInFlight.delete(currentPrivyUserId);
         }
+        
+        // Clean up in-flight tracking
+        authRequestsInFlight.delete(currentPrivyUserId);
 
       } catch (error) {
         // Clear timeout
@@ -317,7 +438,7 @@ export function useAuth() {
       }
     };
 
-  }, [ready, authenticated, privyUser, getFreshToken, clearStuckAuth]);
+  }, [ready, authenticated, privyUser, getFreshToken, clearStuckAuth, loadFromCache, cacheUserData]);
 
   // Expose method to manually trigger auth retry
   const retryAuth = useCallback(() => {
