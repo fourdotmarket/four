@@ -113,7 +113,7 @@ Example: "38% Probability: Bitcoin currently at $67,234 (CoinGecko, 2 min ago). 
             content: `Analyze this prediction market. You MUST search the web for current prices/data first:\n\nQuestion: ${question}${context}\n\nSearch for real-time data and provide your analysis based on what you find.`
           }
         ],
-        model: 'grok-beta', // Model with web search
+        model: 'grok-2-latest', // Latest GROK model with web search
         stream: false,
         temperature: 0.2, // Lower temp for more factual responses
         max_tokens: 1000
