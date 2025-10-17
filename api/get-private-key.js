@@ -42,10 +42,10 @@ module.exports = async function handler(req, res) {
 
     const privyUserId = payload.sub;
 
-    // Get user's private key from database
+    // First, get user_id and wallet_address (safe query without private key)
     const { data: user, error: fetchError } = await supabase
-      .from('users')
-      .select('wallet_private_key, wallet_address')
+      .from('users_safe')
+      .select('user_id, wallet_address')
       .eq('privy_user_id', privyUserId)
       .single();
 
@@ -54,17 +54,33 @@ module.exports = async function handler(req, res) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    if (!user.wallet_private_key) {
+    // Get client IP for audit log
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+
+    // Call secure RPC function to get private key (with service role key)
+    // This function logs all access attempts
+    const { data: privateKey, error: keyError } = await supabase
+      .rpc('get_user_private_key_secure', {
+        p_user_id: user.user_id,
+        p_ip: clientIp
+      });
+
+    if (keyError) {
+      console.error('🚨 Private key fetch error:', keyError);
+      return res.status(500).json({ error: 'Failed to retrieve private key' });
+    }
+
+    if (!privateKey) {
       return res.status(404).json({ error: 'Private key not found' });
     }
 
     // SECURITY: Log this action for audit trail
-    console.log(`🔑 Private key retrieved by user: ${privyUserId} at ${new Date().toISOString()}`);
+    console.log(`🔑 Private key retrieved by user: ${privyUserId} (${user.wallet_address}) from IP: ${clientIp} at ${new Date().toISOString()}`);
 
     // Return private key
     return res.status(200).json({
       success: true,
-      privateKey: user.wallet_private_key,
+      privateKey: privateKey,
       walletAddress: user.wallet_address
     });
 

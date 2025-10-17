@@ -168,6 +168,8 @@ export default function Market() {
         timeframe: timeframeAtRequest
       });
 
+      console.log('📥 AI Response:', response.data);
+
       // Check if timeframe changed during request - skip if it did
       if (timeframeAtRequest !== currentTimeframe) {
         console.log('⏭️ Timeframe changed during AI generation - skipping result');
@@ -175,18 +177,23 @@ export default function Market() {
         return;
       }
 
-      if (response.data.success) {
+      if (response.data && response.data.success && response.data.beautified) {
         const beautified = response.data.beautified;
+        console.log(`📏 Beautified length: ${beautified.length} chars`);
+        
         // Validate length (60-240 characters)
         if (beautified.length >= 60 && beautified.length <= 240) {
           setBeautifiedPrediction(beautified);
           setShowBeautified(true);
-          console.log('✅ AI beautified prediction:', beautified);
+          console.log('✅ AI suggestion shown:', beautified);
         } else {
-          console.warn('⚠️ AI response length invalid:', beautified.length);
-          setBeautifiedPrediction('');
-          setShowBeautified(false);
+          console.warn(`⚠️ AI response length invalid: ${beautified.length} (need 60-240)`);
+          // Still set it for debugging
+          setBeautifiedPrediction(beautified);
+          setShowBeautified(true);
         }
+      } else {
+        console.warn('⚠️ Invalid response structure:', response.data);
       }
     } catch (error) {
       console.error('❌ AI beautification failed:', error);

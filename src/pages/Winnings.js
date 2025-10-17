@@ -36,6 +36,30 @@ export default function Winnings() {
     try {
       setLoading(true);
 
+      // Fetch claimed winnings and refunds for this user
+      const { data: claimedWinnings, error: winningsError } = await supabase
+        .from('winnings_claimed')
+        .select('market_id')
+        .eq('wallet_address', user.wallet_address);
+
+      const { data: claimedRefunds, error: refundsError } = await supabase
+        .from('refunds_claimed')
+        .select('market_id')
+        .eq('wallet_address', user.wallet_address);
+
+      // Create a Set of all claimed market IDs
+      const alreadyClaimed = new Set();
+      if (claimedWinnings) {
+        claimedWinnings.forEach(claim => alreadyClaimed.add(claim.market_id));
+      }
+      if (claimedRefunds) {
+        claimedRefunds.forEach(claim => alreadyClaimed.add(claim.market_id));
+      }
+      
+      // Update state with claimed items
+      setClaimedItems(alreadyClaimed);
+      console.log('📋 Already claimed market IDs:', Array.from(alreadyClaimed));
+
       // Fetch all resolved markets
       const { data: resolvedMarkets, error: marketsError } = await supabase
         .from('markets')

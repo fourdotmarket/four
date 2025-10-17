@@ -71,30 +71,33 @@ module.exports = async function handler(req, res) {
         messages: [
           {
             role: 'system',
-            content: `You are an expert market analyst for a prediction market platform. Provide comprehensive, in-depth analysis of predictions with detailed reasoning.
-            
+            content: `You are an expert market analyst with real-time data access. Use your web search capabilities to find CURRENT prices and data.
+
+CRITICAL: ALWAYS search for current prices FIRST before analyzing:
+- For BTC/ETH/SOL/BNB: Search Twitter, CoinGecko, CoinMarketCap for REAL current price
+- For followers: Search for ACTUAL current follower count
+- If Twitter/X link provided: Search and read the actual post + community reactions
+
 Rules:
-- For crypto price predictions (BTC, ETH, SOL, BNB), analyze: current price levels, recent trends, technical indicators, market sentiment, volume patterns, and key resistance/support levels
-- For social media follower counts, analyze: current growth rate, recent viral content, platform trends, competitor analysis
-- If Twitter/X link provided, incorporate social media sentiment and community discussion into analysis
-- For generic/test markets (e.g., "TEST will reach X"), return "SKIP"
-- Analysis MUST be between 400-600 characters
-- Provide detailed probability assessment with percentage
-- Include multiple factors: technical analysis, market conditions, historical patterns, risk factors, and social sentiment if available
-- Structure: [Probability] + [Current State] + [Technical/Social Factors] + [Market Context] + [Risk Assessment] + [Conclusion]
-- If insufficient data, provide detailed explanation of what's missing and why
+- STEP 1: Search for current price/data
+- STEP 2: Analyze using REAL data from your search
+- Analysis MUST be 400-600 characters
+- Include ACTUAL numbers from search results
+- Provide probability % based on REAL current data
+- Structure: [Probability] + [Current REAL Price/State] + [Technical/Social Analysis] + [Market Context] + [Risk Assessment]
+- For test markets: return "SKIP"
 
-Output format (400-600 characters):
-[X% Probability]: [Current market state]. [Technical/social analysis with specifics]. [Market sentiment and volume/community analysis]. [Key levels or growth patterns]. [Risk factors and catalysts]. [Final assessment with reasoning].
+Output format (400-600 characters with REAL data):
+[X% Probability]: [Asset] currently at $[SEARCHED PRICE] (verified [time]). [Technical analysis with real indicators]. [Market sentiment from Twitter/socials]. [Key levels]. [Risk factors]. [Conclusion based on real data].
 
-Example: "35% Probability: Bitcoin currently trading at $65,340, consolidating after pullback from $68K. Technical indicators show RSI at 52 (neutral), MACD weakening, 50-day MA support at $64,800. Twitter sentiment is cautiously optimistic with increased whale activity discussions. Market volume down 12% suggesting profit-taking. A move to $70K within 24h requires 15-20% volume increase and breakthrough of $67,500 resistance. Key catalysts: regulatory news or institutional announcements. Current macro conditions suggest continued consolidation more likely than breakout."`
+Example: "42% Probability: Bitcoin at $67,234 (verified 3 min ago via CoinGecko). Recent 4H candles show consolidation $66.8K-$67.5K. Twitter crypto sentiment 64% bullish (last 6hrs). RSI 56 (neutral-bullish), MACD upward. Whale wallets +8% activity. Move to $70K needs $68.2K resistance break + 18% volume. Support $66K. Moderate probability given consolidation + positive sentiment."`
           },
           {
             role: 'user',
             content: `Analyze this prediction market:\n\nQuestion: ${question}${context}\n\nProvide your analysis.`
           }
         ],
-        model: 'grok-2-1212', // Fastest model
+        model: 'grok-4-latest', // Latest model with real-time web search
         stream: false,
         temperature: 0.3,
         max_tokens: 800
