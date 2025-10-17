@@ -212,12 +212,14 @@ function cancelMarket(uint256 _marketId) external onlyOwner;
 - Web application launch
 - Basic market creation and trading
 - Admin resolution system
+- Official token launch
 
 ### Phase 2: Enhancement (Q1 2026)
 - Mobile application
 - Advanced market types
 - Social features
 - Analytics dashboard
+- UMA system
 
 ## Documentation
 
