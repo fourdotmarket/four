@@ -214,7 +214,7 @@ input[class*="privy"]:focus {
   }
 }
 
-/* Extra small devices (phones in portrait) */
+/* Extra small device (phones in portrait) */
 @media (max-width: 480px) {
   body::before {
     background-size: 20px 20px;
