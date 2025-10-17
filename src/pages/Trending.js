@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useAuth } from '../hooks/useAuth';
+import { useNotification } from '../hooks/useNotification';
 import { useTransactions } from '../hooks/useTransactions';
 import MarketCard from '../components/MarketCard';
+import Notification from '../components/Notification';
 import './Trending.css';
 
 const supabase = createClient(
@@ -20,6 +22,7 @@ const COLORS = [
 export default function Trending() {
   const navigate = useNavigate();
   const { user, authReady, getFreshToken } = useAuth();
+  const { notification, showNotification, hideNotification } = useNotification();
   const [topMarket, setTopMarket] = useState(null);
   const [topMarkets, setTopMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -209,24 +212,24 @@ export default function Trending() {
 
     const disabledReason = getBuyDisabledReason();
     if (disabledReason) {
-      alert(disabledReason);
+      showNotification(disabledReason, 'warning');
       return;
     }
 
     const ticketsRemaining = topMarket.total_tickets - topMarket.tickets_sold;
 
     if (ticketAmount < 1) {
-      alert('Please select at least 1 challenge ticket');
+      showNotification('Please select at least 1 challenge ticket', 'error');
       return;
     }
 
     if (ticketAmount > ticketsRemaining) {
-      alert(`Only ${ticketsRemaining} challenge tickets remaining`);
+      showNotification(`Only ${ticketsRemaining} challenge tickets remaining`, 'warning');
       return;
     }
 
     if (!authReady) {
-      alert('Authentication is still loading. Please wait a moment and try again.');
+      showNotification('Authentication is still loading. Please wait a moment and try again.', 'warning');
       return;
     }
 
@@ -286,13 +289,13 @@ export default function Trending() {
       setTicketInputValue(ticketAmount.toString());
 
       if (error.message.includes('Authentication required')) {
-        alert('Please sign in again to buy challenge tickets');
+        showNotification('Please sign in again to buy challenge tickets', 'error');
       } else if (error.message.includes('Too many requests')) {
-        alert('You are making too many purchases. Please wait a moment and try again.');
+        showNotification('You are making too many purchases. Please wait a moment and try again.', 'warning');
       } else if (error.message.includes('Cannot buy your own tickets')) {
-        alert('Market creators cannot purchase challenge tickets in their own markets');
+        showNotification('Market creators cannot purchase challenge tickets in their own markets', 'error');
       } else {
-        alert(`Failed to buy challenge tickets: ${error.message}`);
+        showNotification(`Failed to buy challenge tickets: ${error.message}`, 'error');
       }
     }
   };
@@ -372,6 +375,13 @@ export default function Trending() {
 
   return (
     <div className="trending-page">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={hideNotification}
+        />
+      )}
       {/* Header */}
       <div className="trending-header">
         <div className="trending-title-section">

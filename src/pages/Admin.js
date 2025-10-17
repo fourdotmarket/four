@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '../hooks/useAuth';
+import { useNotification } from '../hooks/useNotification';
+import Notification from '../components/Notification';
 import './Admin.css';
 
 const supabase = createClient(
@@ -13,6 +15,7 @@ export default function Admin() {
   const navigate = useNavigate();
   const { token } = useParams();
   const { user, getFreshToken } = useAuth();
+  const { notification, showNotification, hideNotification } = useNotification();
   const [markets, setMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -107,7 +110,7 @@ export default function Admin() {
 
   const handleResolveMarket = async () => {
     if (!selectedMarket || outcome === null || !resolutionReason.trim()) {
-      alert('Please select outcome and provide resolution reason');
+      showNotification('Please select outcome and provide resolution reason', 'warning');
       return;
     }
 
@@ -133,7 +136,7 @@ export default function Admin() {
         throw new Error(errorData.error || 'Failed to resolve market');
       }
 
-      alert('✅ Market resolved successfully!');
+      showNotification('Market resolved successfully!', 'success');
       setActiveAction(null);
       setSelectedMarket(null);
       setResolutionReason('');
@@ -142,7 +145,7 @@ export default function Admin() {
       
     } catch (err) {
       console.error('Error resolving market:', err);
-      alert(`❌ Error: ${err.message}`);
+      showNotification(`Error: ${err.message}`, 'error');
     } finally {
       setActionLoading(false);
     }
@@ -173,12 +176,12 @@ export default function Admin() {
         throw new Error(errorData.error || 'Failed to cancel market');
       }
 
-      alert('✅ Market cancelled successfully!');
+      showNotification('Market cancelled successfully!', 'success');
       fetchAllMarkets();
       
     } catch (err) {
       console.error('Error cancelling market:', err);
-      alert(`❌ Error: ${err.message}`);
+      showNotification(`Error: ${err.message}`, 'error');
     } finally {
       setActionLoading(false);
     }
@@ -237,6 +240,13 @@ export default function Admin() {
 
   return (
     <div className="admin-page">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={hideNotification}
+        />
+      )}
       {/* Sidebar */}
       <div className="admin-sidebar">
         <div className="admin-sidebar-header">

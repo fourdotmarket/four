@@ -524,7 +524,7 @@
 /* Pills */
 .create-pills {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
 }
 
@@ -852,6 +852,10 @@
   }
 
   .create-pills {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .create-pills:has(> button:nth-child(6)) {
     grid-template-columns: repeat(3, 1fr);
   }
 }

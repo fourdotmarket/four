@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import './Market.css';
 import { useAuth } from '../hooks/useAuth';
+import { useNotification } from '../hooks/useNotification';
 import MarketCard from '../components/MarketCard';
 import { useMarkets } from '../hooks/useMarkets';
+import Notification from '../components/Notification';
 
 const CONTRACT_ADDRESS = "0x1975B27384a4B2597Bc105C5CB37c2ee486957fF";
 const MIN_STAKE = 0.05;
@@ -11,6 +13,7 @@ const MAX_PREDICTION_LENGTH = 256;
 
 export default function Market() {
   const { user, authReady, getFreshToken } = useAuth();
+  const { notification, showNotification, hideNotification } = useNotification();
   const [page, setPage] = useState(1);
   const { markets, loading: marketsLoading, error: marketsError, hasMore } = useMarkets(page);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -20,15 +23,13 @@ export default function Market() {
   const [expiry, setExpiry] = useState('24');
   const [tickets, setTickets] = useState('100');
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [banner, setBanner] = useState(null);
-  const [bannerPreview, setBannerPreview] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   const allowedChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,?!-';
 
   // Map expiry to duration index
   const expiryToDuration = {
-    '6': 0, '12': 1, '24': 2, '3d': 3, '7d': 4
+    '6': 0, '12': 1, '18': 2, '24': 3, '3d': 4, '7d': 5
   };
 
   // Map tickets to ticketAmount index
@@ -36,21 +37,6 @@ export default function Market() {
     '1': 0, '10': 1, '50': 2, '100': 3
   };
 
-  const handleBannerSelect = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      setBanner(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setBannerPreview(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeBanner = () => {
-    setBanner(null);
-    setBannerPreview('');
-  };
-  
   const handlePredictionChange = (e) => {
     const value = e.target.value;
     const filtered = value.split('').filter(char => allowedChars.includes(char)).join('');
@@ -87,8 +73,6 @@ export default function Market() {
     setExpiry('24');
     setTickets('100');
     setShowAdvanced(false);
-    setBanner(null);
-    setBannerPreview('');
     setIsCreating(false);
   };
 
@@ -111,28 +95,28 @@ export default function Market() {
   const handleCreateBet = async () => {
     // Validation
     if (!prediction.trim()) {
-      alert('Please enter a prediction');
+      showNotification('Please enter a prediction', 'error');
       return;
     }
 
     if (prediction.length < MIN_PREDICTION_LENGTH) {
-      alert(`Prediction must be at least ${MIN_PREDICTION_LENGTH} characters (currently ${prediction.length})`);
+      showNotification(`Prediction must be at least ${MIN_PREDICTION_LENGTH} characters (currently ${prediction.length})`, 'error');
       return;
     }
 
     const stakeValue = parseFloat(stake);
     if (!stake || isNaN(stakeValue) || stakeValue < MIN_STAKE) {
-      alert(`Please enter a valid stake amount (minimum ${MIN_STAKE} BNB)`);
+      showNotification(`Please enter a valid stake amount (minimum ${MIN_STAKE} BNB)`, 'error');
       return;
     }
 
     if (!user) {
-      alert('Please sign in to create a bet');
+      showNotification('Please sign in to create a bet', 'error');
       return;
     }
 
     if (!authReady) {
-      alert('Authentication is still loading. Please wait a moment and try again.');
+      showNotification('Authentication is still loading. Please wait a moment and try again.', 'warning');
       return;
     }
 
@@ -185,14 +169,11 @@ export default function Market() {
         throw new Error(result.error || result.details || 'Failed to create bet');
       }
       
-      console.log('âœ… Market created!');
+      console.log('✅ Market created!');
       console.log('TX Hash:', result.txHash);
       console.log('Market ID:', result.marketId);
 
-      // Banner upload would go here if needed
-      if (banner) {
-        console.log('ðŸ“¸ Banner upload for market:', result.marketId);
-      }
+      showNotification('Market created successfully!', 'success');
 
       setTimeout(() => {
         handleClose();
@@ -204,11 +185,11 @@ export default function Market() {
       
       // Handle specific error messages
       if (error.message.includes('Authentication required')) {
-        alert('Please sign in again to create a bet');
+        showNotification('Please sign in again to create a bet', 'error');
       } else if (error.message.includes('Too many markets created')) {
-        alert('You have created too many markets recently. Please wait before creating another.');
+        showNotification('You have created too many markets recently. Please wait before creating another.', 'warning');
       } else {
-        alert(`Failed to create bet: ${error.message}`);
+        showNotification(`Failed to create bet: ${error.message}`, 'error');
       }
     }
   };
@@ -219,6 +200,13 @@ export default function Market() {
 
   return (
     <div className="market-page">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={hideNotification}
+        />
+      )}
       {/* Header */}
       <div className="market-header">
         <div className="market-title-section">
@@ -365,7 +353,7 @@ export default function Market() {
                 <div className="create-field">
                   <label className="create-label">EXPIRES IN</label>
                   <div className="create-pills">
-                    {['6', '12', '24', '3d', '7d'].map((time) => (
+                    {['6', '12', '18', '24', '3d', '7d'].map((time) => (
                       <button
                         key={time}
                         className={`create-pill ${expiry === time ? 'active' : ''}`}
@@ -419,45 +407,6 @@ export default function Market() {
                           </button>
                         ))}
                       </div>
-                    </div>
-
-                    {/* Banner */}
-                    <div className="create-subfield">
-                      <label className="create-label">
-                        <span>BANNER IMAGE</span>
-                        <span className="create-optional">OPTIONAL</span>
-                      </label>
-                      {bannerPreview ? (
-                        <div className="create-banner-preview">
-                          <img src={bannerPreview} alt="Banner" />
-                          <button 
-                            className="create-banner-remove"
-                            onClick={removeBanner}
-                            disabled={isCreating}
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <line x1="18" y1="6" x2="6" y2="18"></line>
-                              <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="create-banner-upload">
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                            <polyline points="21 15 16 10 5 21"></polyline>
-                          </svg>
-                          <span>Click to upload image</span>
-                          <input 
-                            type="file" 
-                            accept="image/*"
-                            onChange={handleBannerSelect}
-                            style={{ display: 'none' }}
-                            disabled={isCreating}
-                          />
-                        </label>
-                      )}
                     </div>
                   </div>
                 </div>

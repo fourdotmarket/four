@@ -2,14 +2,17 @@ import React, { useState, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useNotification } from '../hooks/useNotification';
 import { useBalance } from '../hooks/useBalance';
 import DepositModal from './DepositModal';
 import ProfileDropdown from './ProfileDropdown';
+import Notification from './Notification';
 import './Header.css';
 
 export default function Header() {
   const { ready, authenticated, login, logout } = usePrivy();
   const { user, loading, authReady } = useAuth();
+  const { notification, showNotification, hideNotification } = useNotification();
   const { balance, loading: balanceLoading } = useBalance(user?.wallet_address);
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,7 +27,7 @@ export default function Header() {
       setShowDepositModal(true);
     } else {
       console.warn('⚠️ No wallet address available for deposit');
-      alert('Wallet address not available. Please try refreshing the page.');
+      showNotification('Wallet address not available. Please try refreshing the page.', 'error');
     }
   };
 
@@ -39,6 +42,13 @@ export default function Header() {
 
   return (
     <>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={hideNotification}
+        />
+      )}
       <header className="header">
         <div className="header-left">
           <div className="header-logo-brand" onClick={() => navigate('/')}>

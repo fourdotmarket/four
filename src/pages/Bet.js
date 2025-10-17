@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useAuth } from '../hooks/useAuth';
+import { useNotification } from '../hooks/useNotification';
 import { useTransactions } from '../hooks/useTransactions';
 import { usePositions } from '../hooks/usePositions';
+import Notification from '../components/Notification';
 import './Bet.css';
 
 const supabase = createClient(
@@ -256,6 +258,7 @@ export default function Bet() {
   const { betId } = useParams();
   const navigate = useNavigate();
   const { user, authReady, getFreshToken } = useAuth();
+  const { notification, showNotification, hideNotification } = useNotification();
   const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -270,10 +273,10 @@ export default function Bet() {
 
   const getMarketIdFromBetId = async (betId) => {
     // SECURITY FIX: Select only market_id, not all columns
+    // Query all markets regardless of status to support resolved/cancelled routes
     const { data: markets, error: fetchError } = await supabase
       .from('markets')
-      .select('market_id')
-      .eq('status', 'active');
+      .select('market_id');
 
     if (fetchError) throw fetchError;
 
@@ -403,22 +406,22 @@ export default function Bet() {
   const handleBuyTickets = async () => {
     const disabledReason = getBuyDisabledReason();
     if (disabledReason) {
-      alert(disabledReason);
+      showNotification(disabledReason, 'warning');
       return;
     }
 
     if (ticketAmount < 1) {
-      alert('Please select at least 1 challenge ticket');
+      showNotification('Please select at least 1 challenge ticket', 'error');
       return;
     }
 
     if (ticketAmount > ticketsRemaining) {
-      alert(`Only ${ticketsRemaining} challenge tickets remaining`);
+      showNotification(`Only ${ticketsRemaining} challenge tickets remaining`, 'warning');
       return;
     }
 
     if (!authReady) {
-      alert('Authentication is still loading. Please wait a moment and try again.');
+      showNotification('Authentication is still loading. Please wait a moment and try again.', 'warning');
       return;
     }
 
@@ -482,13 +485,13 @@ export default function Bet() {
       setTicketInputValue(ticketAmount.toString());
       
       if (error.message.includes('Authentication required')) {
-        alert('Please sign in again to buy challenge tickets');
+        showNotification('Please sign in again to buy challenge tickets', 'error');
       } else if (error.message.includes('Too many requests')) {
-        alert('You are making too many purchases. Please wait a moment and try again.');
+        showNotification('You are making too many purchases. Please wait a moment and try again.', 'warning');
       } else if (error.message.includes('Cannot buy your own tickets')) {
-        alert('Market creators cannot purchase challenge tickets in their own markets');
+        showNotification('Market creators cannot purchase challenge tickets in their own markets', 'error');
       } else {
-        alert(`Failed to buy challenge tickets: ${error.message}`);
+        showNotification(`Failed to buy challenge tickets: ${error.message}`, 'error');
       }
     }
   };
@@ -583,6 +586,13 @@ export default function Bet() {
 
   return (
     <div className="bet-page">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={hideNotification}
+        />
+      )}
       <button className="bet-back-btn" onClick={handleBack}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="19" y1="12" x2="5" y2="12"></line>

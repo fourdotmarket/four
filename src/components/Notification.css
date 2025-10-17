@@ -1,0 +1,117 @@
+/* Notification - Cyberpunk Theme */
+.notification {
+  position: fixed;
+  top: 100px;
+  right: 32px;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #0a0a0a;
+  border: 1px solid #2a2a2a;
+  min-width: 300px;
+  max-width: 500px;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  animation: notificationSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes notificationSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.notification-error .notification-icon {
+  background: rgba(255, 107, 107, 0.15);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: #ff6b6b;
+}
+
+.notification-success .notification-icon {
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  color: #4caf50;
+}
+
+.notification-warning .notification-icon {
+  background: rgba(255, 212, 59, 0.15);
+  border: 1px solid rgba(255, 212, 59, 0.3);
+  color: #FFD43B;
+}
+
+.notification-message {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+}
+
+.notification-close {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #808080;
+  transition: all 0.2s ease;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+
+.notification-close:hover {
+  border-color: #FFD43B;
+  color: #FFD43B;
+}
+
+/* Error specific styles */
+.notification-error {
+  border-color: rgba(255, 107, 107, 0.4);
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.05) 0%, #0a0a0a 100%);
+}
+
+/* Success specific styles */
+.notification-success {
+  border-color: rgba(76, 175, 80, 0.4);
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, #0a0a0a 100%);
+}
+
+/* Warning specific styles */
+.notification-warning {
+  border-color: rgba(255, 212, 59, 0.4);
+  background: linear-gradient(135deg, rgba(255, 212, 59, 0.05) 0%, #0a0a0a 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .notification {
+    top: 80px;
+    right: 16px;
+    left: 16px;
+    min-width: unset;
+    max-width: unset;
+  }
+}
+
